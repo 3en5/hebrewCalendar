@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch: # manual rebuild (e.g. after adding/rotating secrets)
 
 env:
   FLUTTER_VERSION: "3.32.5"
