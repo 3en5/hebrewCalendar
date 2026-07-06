@@ -1,4 +1,4 @@
-import 'dart:async' show unawaited;
+import 'dart:async' show Timer, unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,19 +79,89 @@ class SettingsScreen extends ConsumerWidget {
 /// `SettingsScreen.build` can skip watching `googleSyncStateProvider`/
 /// `googleSyncTriggerServiceProvider` entirely in demo mode (task brief
 /// #5), rather than building them and discarding the result.
-class _RealGoogleSyncSection extends ConsumerWidget {
+///
+/// A `ConsumerStatefulWidget` (not stateless) purely to hold
+/// [_loadingWatchdog]: real-device report #2, round 2's last line of
+/// defense. `google_sync_providers.dart`/`google_sync_trigger_service.dart`
+/// now bound every layer of the load (settings-store read, provider/service
+/// construction) to an explicit timeout that always ends in an `_emit()` —
+/// but should some *future* change to that chain reintroduce a path that
+/// never emits, this widget must still be provably unable to spin forever
+/// on its own, independent of how well-behaved the providers are.
+class _RealGoogleSyncSection extends ConsumerStatefulWidget {
   const _RealGoogleSyncSection({required this.l10n});
 
   final AppLocalizations l10n;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RealGoogleSyncSection> createState() =>
+      _RealGoogleSyncSectionState();
+}
+
+class _RealGoogleSyncSectionState
+    extends ConsumerState<_RealGoogleSyncSection> {
+  static const Duration _watchdogDuration = Duration(seconds: 12);
+
+  Timer? _watchdog;
+  bool _watchdogFired = false;
+
+  @override
+  void dispose() {
+    _watchdog?.cancel();
+    super.dispose();
+  }
+
+  void _armWatchdogIfNeeded() {
+    if (_watchdog != null || _watchdogFired) {
+      return;
+    }
+    _watchdog = Timer(_watchdogDuration, () {
+      debugPrint(
+        '[sync-settings] widget-level loading watchdog fired after '
+        '$_watchdogDuration — forcing the retry card',
+      );
+      if (mounted) {
+        setState(() => _watchdogFired = true);
+      }
+    });
+  }
+
+  void _disarmWatchdog() {
+    _watchdog?.cancel();
+    _watchdog = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = widget.l10n;
     final AsyncValue<GoogleSyncSettingsState> syncState = ref.watch(
       googleSyncStateProvider,
     );
     final GoogleSyncTriggerService service = ref.read(
       googleSyncTriggerServiceProvider,
     );
+
+    if (syncState.isLoading) {
+      _armWatchdogIfNeeded();
+    } else {
+      _disarmWatchdog();
+    }
+
+    if (_watchdogFired && syncState.isLoading) {
+      return GoogleSyncSection(
+        state: GoogleSyncSettingsState(
+          initialLoadFailed: true,
+          errorMessage: l10n.settingsGoogleSyncWatchdogMessage,
+        ),
+        onEnabledChanged: (bool enabled) =>
+            unawaited(_onEnabledChanged(context, service, l10n, enabled)),
+        onSyncNow: () => unawaited(service.syncNow()),
+        onRetryLoad: () {
+          setState(() => _watchdogFired = false);
+          unawaited(service.retryLoad());
+        },
+      );
+    }
 
     return syncState.when(
       data: (GoogleSyncSettingsState state) => GoogleSyncSection(
@@ -101,13 +171,15 @@ class _RealGoogleSyncSection extends ConsumerWidget {
         onSyncNow: () => unawaited(service.syncNow()),
         onRetryLoad: () => unawaited(service.retryLoad()),
       ),
-      // `GoogleSyncTriggerService.start()` now always reaches an `_emit()`
-      // call within `_startTimeout` at the very worst (success, or a
-      // caught/timed-out failure) — so this spinner is bounded, not endless
-      // (real-device report #2's root cause).
+      // Bounded by `GoogleSyncTriggerService.start()`'s timeout *and* this
+      // widget's own `_watchdogDuration` fallback above — never endless
+      // (real-device report #2).
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (Object error, StackTrace stackTrace) => GoogleSyncSection(
-        state: const GoogleSyncSettingsState(initialLoadFailed: true),
+        state: GoogleSyncSettingsState(
+          initialLoadFailed: true,
+          errorMessage: error.toString(),
+        ),
         onEnabledChanged: (bool enabled) =>
             unawaited(_onEnabledChanged(context, service, l10n, enabled)),
         onSyncNow: () => unawaited(service.syncNow()),

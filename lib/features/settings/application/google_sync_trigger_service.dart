@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
+
 import '../../../data/sync/google_calendar_api.dart';
 import '../../../data/sync/sync_engine.dart';
 import '../../../domain/event/event_occurrence.dart';
@@ -42,6 +44,7 @@ class GoogleSyncTriggerService {
     Duration startTimeout = const Duration(seconds: 10),
     BackgroundSyncScheduler backgroundScheduler =
         const NoopBackgroundSyncScheduler(),
+    Object? constructionError,
   }) : _engine = engine,
        _settingsStore = settingsStore,
        _api = api,
@@ -51,7 +54,8 @@ class GoogleSyncTriggerService {
        _editDebounce = editDebounce,
        _openThrottle = openThrottle,
        _startTimeout = startTimeout,
-       _backgroundScheduler = backgroundScheduler;
+       _backgroundScheduler = backgroundScheduler,
+       _constructionError = constructionError;
 
   final SyncEngine _engine;
   final SyncSettingsStore _settingsStore;
@@ -70,6 +74,17 @@ class GoogleSyncTriggerService {
   /// [start] always reaches an `_emit()` call one way or another.
   final Duration _startTimeout;
 
+  /// Real-device report #2, round 2: a caught error from *constructing*
+  /// this service's dependencies (`google_sync_providers.dart`'s
+  /// `googleSyncTriggerServiceProvider` — e.g. a `googleCalendarApiProvider`/
+  /// `syncSettingsStoreProvider` that throws synchronously while being
+  /// built). When set, this service was built with safe placeholder
+  /// dependencies purely so it has *something* non-null to hold — [start]
+  /// never touches them and instead emits the failure immediately, so the
+  /// retry card's error text reflects the true construction failure rather
+  /// than a misleading "settings load" message.
+  final Object? _constructionError;
+
   /// M5b: registers/cancels the periodic background sync task alongside
   /// enable/disable/sign-out — defaults to a no-op so pre-M5b callers
   /// (and any construction site that genuinely doesn't care) are
@@ -86,9 +101,62 @@ class GoogleSyncTriggerService {
   Timer? _debounceTimer;
   bool _disposed = false;
 
+  /// Raw broadcast stream of state changes — only delivers events emitted
+  /// *after* whoever calls `.listen()` on it subscribes (standard Dart
+  /// broadcast-stream semantics). Safe for a listener that subscribes
+  /// before [start] ever runs (e.g. the trigger-service tests below, and
+  /// `retryLoad()`'s own re-emission while already subscribed), but NOT
+  /// safe for a subscriber that attaches long after [start] already ran —
+  /// see [watchState] and its doc for why the settings screen uses that
+  /// instead (real-device report #2, round 2's actual root cause).
   Stream<GoogleSyncSettingsState> get states => _controller.stream;
 
   GoogleSyncSettingsState get state => _state;
+
+  /// Returns a **fresh** stream that immediately replays the current
+  /// [state] to its subscriber before forwarding every future update.
+  ///
+  /// Real-device report #2, round 2's actual root cause: `CalendarShellScreen`
+  /// keeps this service alive (and therefore [start] running) for the whole
+  /// signed-in session by watching `googleSyncTriggerServiceProvider`
+  /// directly, but the settings screen is opened *later*, as a separate
+  /// navigation — its `googleSyncStateProvider` (a `StreamProvider.autoDispose`)
+  /// only starts listening at that point. [start]'s single `_emit()` call
+  /// (even with round 1's try/catch/timeout fix — which does fire
+  /// correctly) had already happened and been delivered to nobody by then,
+  /// because [states] is backed by a single plain broadcast
+  /// `StreamController`: per Dart's broadcast-stream contract, a listener
+  /// that subscribes after an event was added never receives that event.
+  /// The settings screen was therefore always watching a stream whose one
+  /// and only historical emission was already gone — stuck in
+  /// `AsyncValue.loading()` forever, regardless of how well [start]'s own
+  /// timeout worked. [watchState] fixes this by seeding every new
+  /// subscription with [state] synchronously in `onListen`, so a late
+  /// subscriber (opening settings minutes after app start) sees the
+  /// already-resolved state immediately instead of an empty stream.
+  Stream<GoogleSyncSettingsState> watchState() {
+    late final StreamController<GoogleSyncSettingsState> controller;
+    StreamSubscription<GoogleSyncSettingsState>? subscription;
+    controller = StreamController<GoogleSyncSettingsState>.broadcast(
+      onListen: () {
+        controller.add(_state);
+        subscription = _controller.stream.listen(
+          controller.add,
+          onError: controller.addError,
+        );
+      },
+      onCancel: () async {
+        await subscription?.cancel();
+        subscription = null;
+        // A `StreamProvider`'s single subscription never re-listens after
+        // cancelling (a fresh `watchState()` call is made instead — see
+        // `googleSyncStateProvider`), so this per-call controller is done
+        // for good once its one subscriber goes away.
+        await controller.close();
+      },
+    );
+    return controller.stream;
+  }
 
   /// Loads the persisted enabled/last-synced state and, if already enabled,
   /// starts watching for local edits and (re-)registers the M5b periodic
@@ -102,10 +170,30 @@ class GoogleSyncTriggerService {
   /// place its failure ever reaches the UI (task brief M5b §5: "surface
   /// error state in settings store").
   Future<void> start() async {
+    debugPrint('[sync-settings] service.start() called');
+    if (_constructionError != null) {
+      // The service itself failed to be built with real dependencies
+      // (`google_sync_providers.dart` caught it and substituted safe
+      // placeholders) — there is nothing to load, surface the real cause
+      // immediately rather than pretending a settings load was attempted.
+      debugPrint(
+        '[sync-settings] start() short-circuits on construction error: '
+        '$_constructionError',
+      );
+      _state = _state.copyWith(
+        status: SyncStatus.error,
+        initialLoadFailed: true,
+        errorMessage: _constructionError.toString(),
+      );
+      _emit();
+      return;
+    }
     try {
+      debugPrint('[sync-settings] settings store load() starting');
       final SyncSettings settings = await _settingsStore.load().timeout(
         _startTimeout,
       );
+      debugPrint('[sync-settings] settings store load() done');
       _lastRunAt = settings.lastSyncedAt;
       _state = GoogleSyncSettingsState(
         enabled: settings.enabled,
@@ -125,6 +213,7 @@ class GoogleSyncTriggerService {
       // without an emission: whatever the cause — permission-denied from
       // stale/undeployed Security Rules, no network, or the `_startTimeout`
       // above firing — this is a retryable error state, not silence.
+      debugPrint('[sync-settings] settings store load() failed: $error');
       _state = _state.copyWith(
         status: SyncStatus.error,
         initialLoadFailed: true,

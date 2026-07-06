@@ -387,5 +387,58 @@ void main() {
       expect(loadFailedEmissions, contains(true));
       await svc.stop();
     });
+
+    test(
+      'watchState() replays the current state to a late subscriber, unlike '
+      'the raw states broadcast stream — this was the actual root cause: '
+      'CalendarShellScreen keeps start() running from app-open, but the '
+      'settings screen only subscribes once opened, often well after '
+      "start()'s one and only emission on the raw stream already happened",
+      () async {
+        await service.start();
+        expect(service.state.status, SyncStatus.idle);
+
+        // Simulates the settings screen opening *after* start() already
+        // ran and emitted once: a subscriber attaching only now.
+        final GoogleSyncSettingsState replayed = await service
+            .watchState()
+            .first;
+
+        expect(replayed.status, SyncStatus.idle);
+        expect(replayed.enabled, isFalse);
+        await service.stop();
+      },
+    );
+
+    test(
+      'a constructionError short-circuits start() and is surfaced '
+      'immediately without ever touching the (placeholder) dependencies',
+      () async {
+        final GoogleSyncTriggerService broken = GoogleSyncTriggerService(
+          engine: SyncEngine(
+            repository: repository,
+            api: api,
+            settingsStore: settingsStore,
+            engine: _engine,
+            now: () => _now,
+          ),
+          settingsStore: settingsStore,
+          api: api,
+          repository: repository,
+          hebrewEngine: _engine,
+          now: () => _now,
+          constructionError: StateError('בנייה נכשלה'),
+        );
+
+        await broken.start();
+
+        expect(broken.state.status, SyncStatus.error);
+        expect(broken.state.initialLoadFailed, isTrue);
+        expect(broken.state.errorMessage, contains('בנייה נכשלה'));
+        // The otherwise-real settingsStore was never touched.
+        expect((await settingsStore.load()).enabled, isFalse);
+        await broken.stop();
+      },
+    );
   });
 }

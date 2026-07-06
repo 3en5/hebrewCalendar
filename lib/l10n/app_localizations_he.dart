@@ -248,6 +248,9 @@ class AppLocalizationsHe extends AppLocalizations {
   String get settingsGoogleSyncRetryButton => 'נסה שוב';
 
   @override
+  String get settingsGoogleSyncWatchdogMessage => 'תקלה בטעינה';
+
+  @override
   String get settingsGoogleSyncDisabledDemoMessage => 'דורש התחברות עם Google';
 
   @override

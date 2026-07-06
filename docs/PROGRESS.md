@@ -1,10 +1,66 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: סבב משוב מכשיר #1 הושלם — 5 תיקונים ממשוב ראשוני על מכשיר
-אמיתי (עורך אירועים חתוך, ספינר אינסופי בהגדרות, overflow בגריד החודש, מסך
-אודות, מצב הדגמה ל-Google Play). v1.0 עדיין ממתין לפריסת Security Rules +
-הגשה ל-Store.** M6 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md.
-(ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: סבב משוב מכשיר #2 הושלם — השורש האמיתי של ספינר ההגדרות
+האינסופי (שחזר לאחר תיקון #2 של סבב #1) אותר ותוקן. v1.0 עדיין ממתין
+לפריסת Security Rules + הגשה ל-Store.** M6 (שיתוף והעשרה) נדחה בהחלטת
+משתמש — ראה WISHLIST.md. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — סבב משוב מכשיר #2 — ספינר ההגדרות (השורש האמיתי)
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 348 טסטים עוברים (343
+  קיימים + 5 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500
+  שורות עוברת.
+- **דיווח:** לאחר תיקון #2 של סבב משוב מכשיר #1 (`start()` עטוף
+  ב-`try/catch`+`.timeout`), המשתמש בדק שוב על מכשיר אמיתי — הספינר
+  **עדיין** אינסופי מעל סעיף הגיבוי, ואף פעם לא מופיע כרטיס "נסה שוב".
+- **השורש האמיתי (ראה LESSONS.md לפירוט מלא):** תיקון #2 של סבב #1 עובד
+  נכון — `start()` תמיד מגיע ל-`_emit()` תוך 10 שניות. הבאג היה **לא**
+  שם, אלא בממשק בין ה-producer (השירות) וה-consumer (מסך ההגדרות):
+  `CalendarShellScreen` שומר את `GoogleSyncTriggerService` חי מעליית
+  האפליקציה (צופה ב-`googleSyncTriggerServiceProvider`, לא ב-
+  `googleSyncStateProvider`), כך ש-`start()` רץ ופולט אירוע יחיד **מוקדם**
+  — הרבה לפני שהמשתמש בכלל פותח את מסך ההגדרות. `googleSyncStateProvider`
+  (`StreamProvider.autoDispose`) מתחיל להאזין ל-`service.states` (broadcast
+  `StreamController` פשוט) רק כשמסך ההגדרות נפתח בפועל — ו-broadcast
+  streams לא משדרים אירועים היסטוריים למאזין חדש. מסך ההגדרות תמיד "מפספס"
+  את האירוע היחיד שכבר נפלט, ונשאר תקוע ב-`AsyncValue.loading()` לצמיתות,
+  ללא קשר לאיכות ה-timeout הפנימי.
+- **התיקון (כל השכבות):**
+  1. `GoogleSyncTriggerService.watchState()` חדש (`google_sync_trigger_service.dart`)
+     — בונה broadcast stream טרי לכל קריאה, שמשדר סינכרונית את `state`
+     הנוכחי ל-`onListen` לפני שהוא מעביר עדכונים עתידיים; `googleSyncStateProvider`
+     (`google_sync_providers.dart`) קורא לה במקום לחשוף את `states` הגולמי.
+  2. `googleSyncTriggerServiceProvider` עוטף גם את **בניית** התלויות
+     (לא רק את `start()` הפנימי) ב-`try/catch` — `_UnavailableGoogleCalendarApi`
+     placeholder + פרמטר `constructionError` חדש ב-`GoogleSyncTriggerService`
+     שגורם ל-`start()` לדלג ישר לשגיאה בלי לגעת בתלויות (אמיתיות או
+     placeholder).
+  3. `settings_screen.dart`'s `_RealGoogleSyncSection` הפך ל-`ConsumerStatefulWidget`
+     עם Timer watchdog מקומי (12 שניות, מבוטל ב-`dispose`) שכופה את כרטיס
+     השגיאה גם אם שכבת ה-provider כולה משתבשת בעתיד; ענף השגיאה של
+     `.when` מעביר עכשיו את `error.toString()` בפועל כ-`errorMessage`
+     (במקום כרטיס גנרי בלי פירוט).
+  4. אבחון: `debugPrint` עם קידומת `'[sync-settings]'` בכל שלב אסינכרוני
+     (בניית provider, התחלת/סיום/כישלון טעינת store, `start()`) לאיתור
+     תקלות עתידיות במכשיר אמיתי דרך `adb logcat`.
+  5. מחרוזת ARB חדשה: `settingsGoogleSyncWatchdogMessage` ("תקלה בטעינה")
+     — מוצגת ספציפית כשה-watchdog של ה-widget (לא `start()`) הוא זה
+     שסיים את הספינר.
+- **אומת אמפירית (לא רק היסק):** נבדק ישירות ש-`GoogleCalendarApiImpl()`'s
+  קונסטרוקטור (הנוגע ב-`GoogleSignIn.instance` בלי לקרוא לו) לא זורק/תקוע
+  תחת `flutter test` — מסך ההגדרות מרנדר תקין **בלי** override ל-
+  `googleCalendarApiProvider` כלל, כלומר רינדור הסעיף מעולם לא היה תלוי
+  ב-Google auth בפועל (שלא כמו ההשערה הראשונית של המשימה).
+- **טסטים:** `test/features/settings/application/google_sync_trigger_service_test.dart`
+  (2 חדשים: `watchState()` משדר מחדש למאזין מאוחר, `constructionError`
+  מדלג ישר לשגיאה בלי לגעת בתלויות), `test/features/settings/presentation/settings_screen_test.dart`
+  (`group` חדש, 3 טסטים: רינדור בלי override ל-`googleCalendarApiProvider`,
+  provider שזורק סינכרונית -> כרטיס שגיאה עם הטקסט האמיתי לא קריסה,
+  `googleSyncStateProvider` שמוחלף ב-`Stream.empty()` -> ה-watchdog
+  המקומי של ה-widget מציל אחרי 12 שניות).
+- **דורש פעולת משתמש:** בדיקה חוזרת על מכשיר אמיתי (לא ניתן לאמת חזותית
+  בסביבת הסוכן — אין Android SDK/emulator); פריסת ה-Security Rules
+  בפועל עדיין ממתינה (ראה `firebase/README.md`, לא קשור לתיקון הזה).
 
 ## 2026-07-06 — סבב משוב מכשיר #1 (5 תיקונים מבדיקה ראשונה על מכשיר אמיתי)
 

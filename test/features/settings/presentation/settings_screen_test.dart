@@ -13,6 +13,7 @@ import 'package:hebrew_calendar/features/auth/application/auth_providers.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
 import 'package:hebrew_calendar/features/settings/application/backup_providers.dart';
 import 'package:hebrew_calendar/features/settings/application/google_sync_providers.dart';
+import 'package:hebrew_calendar/features/settings/application/google_sync_settings_state.dart';
 import 'package:hebrew_calendar/features/settings/presentation/settings_screen.dart';
 import 'package:hebrew_calendar/l10n/app_localizations.dart';
 import 'package:hebrew_calendar/l10n/app_localizations_he.dart';
@@ -288,5 +289,137 @@ void main() {
     expect(find.text(l10n.appTitle), findsWidgets);
     expect(find.text(l10n.aboutDeveloperCredit), findsOneWidget);
     expect(find.textContaining('1.0.0'), findsOneWidget);
+  });
+
+  group('real-device report #2, round 2 — the spinner was outliving '
+      "start()'s own timeout", () {
+    testWidgets(
+      'rendering the sync section needs no GoogleCalendarApi override at '
+      'all — the section never constructs/awaits Google auth to display '
+      '(if this ever required an override again, that would be the '
+      'smoking gun)',
+      (WidgetTester tester) async {
+        final FakeAuthRepository auth = FakeAuthRepository(
+          initialUser: testUser,
+        );
+        final InMemoryEventRepository repository = InMemoryEventRepository();
+        addTearDown(auth.dispose);
+        addTearDown(repository.dispose);
+
+        await tester.pumpWidget(
+          _wrap(<Override>[
+            authRepositoryProvider.overrideWithValue(auth),
+            eventRepositoryProvider.overrideWithValue(repository),
+            // Deliberately NOT overriding `googleCalendarApiProvider`: the
+            // real `GoogleCalendarApiImpl` (which only stores a
+            // `GoogleSignIn.instance` reference — never calls it) is
+            // constructed here.
+            syncSettingsStoreProvider.overrideWithValue(
+              InMemorySyncSettingsStore(),
+            ),
+            backgroundSyncSchedulerProvider.overrideWithValue(
+              FakeBackgroundSyncScheduler(),
+            ),
+            backupServiceProvider.overrideWithValue(FakeBackupService()),
+          ]),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.byType(SwitchListTile), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'a provider that throws synchronously during construction shows the '
+      'retry card with the real error text, not a crash or an endless '
+      'spinner',
+      (WidgetTester tester) async {
+        final FakeAuthRepository auth = FakeAuthRepository(
+          initialUser: testUser,
+        );
+        final InMemoryEventRepository repository = InMemoryEventRepository();
+        addTearDown(auth.dispose);
+        addTearDown(repository.dispose);
+
+        await tester.pumpWidget(
+          _wrap(<Override>[
+            authRepositoryProvider.overrideWithValue(auth),
+            eventRepositoryProvider.overrideWithValue(repository),
+            googleCalendarApiProvider.overrideWith(
+              (Ref ref) => throw StateError('כשל מכוון בבנייה לבדיקה'),
+            ),
+            syncSettingsStoreProvider.overrideWithValue(
+              InMemorySyncSettingsStore(),
+            ),
+            backgroundSyncSchedulerProvider.overrideWithValue(
+              FakeBackgroundSyncScheduler(),
+            ),
+            backupServiceProvider.overrideWithValue(FakeBackupService()),
+          ]),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        final AppLocalizationsHe l10n = AppLocalizationsHe();
+        expect(find.text(l10n.settingsGoogleSyncRetryButton), findsOneWidget);
+        expect(find.textContaining('כשל מכוון בבנייה לבדיקה'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      "a googleSyncStateProvider stream that never emits at all (every "
+      "provider layer failing to emit, hypothetically, despite start()'s "
+      "own timeout) is still saved by the widget's own 12s loading "
+      'watchdog — never an endless spinner',
+      (WidgetTester tester) async {
+        final FakeAuthRepository auth = FakeAuthRepository(
+          initialUser: testUser,
+        );
+        final InMemoryEventRepository repository = InMemoryEventRepository();
+        addTearDown(auth.dispose);
+        addTearDown(repository.dispose);
+
+        await tester.pumpWidget(
+          _wrap(<Override>[
+            authRepositoryProvider.overrideWithValue(auth),
+            eventRepositoryProvider.overrideWithValue(repository),
+            googleCalendarApiProvider.overrideWithValue(
+              FakeGoogleCalendarApi(),
+            ),
+            syncSettingsStoreProvider.overrideWithValue(
+              InMemorySyncSettingsStore(),
+            ),
+            backgroundSyncSchedulerProvider.overrideWithValue(
+              FakeBackgroundSyncScheduler(),
+            ),
+            backupServiceProvider.overrideWithValue(FakeBackupService()),
+            // Simulates every provider layer above the widget failing to
+            // ever emit anything (a stream that closes without a single
+            // event) — the scenario the widget's own watchdog exists for,
+            // independent of how well `start()`/`watchState()` behave.
+            googleSyncStateProvider.overrideWith(
+              (Ref ref) => const Stream<GoogleSyncSettingsState>.empty(),
+            ),
+          ]),
+        );
+        await tester.pump();
+
+        final AppLocalizationsHe l10n = AppLocalizationsHe();
+        expect(find.text(l10n.settingsGoogleSyncWatchdogMessage), findsNothing);
+
+        await tester.pump(const Duration(seconds: 13));
+        await tester.pump();
+
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(
+          find.text(l10n.settingsGoogleSyncWatchdogMessage),
+          findsOneWidget,
+        );
+        expect(find.text(l10n.settingsGoogleSyncRetryButton), findsOneWidget);
+      },
+    );
   });
 }

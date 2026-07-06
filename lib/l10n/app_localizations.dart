@@ -544,6 +544,12 @@ abstract class AppLocalizations {
   /// **'נסה שוב'**
   String get settingsGoogleSyncRetryButton;
 
+  /// Shown instead of settingsGoogleSyncLoadFailedMessage when the settings screen's own local loading watchdog (not GoogleSyncTriggerService.start()'s timeout) is what ended the spinner — a last-resort fallback in case every provider layer misbehaves (real-device report #2, round 2).
+  ///
+  /// In he, this message translates to:
+  /// **'תקלה בטעינה'**
+  String get settingsGoogleSyncWatchdogMessage;
+
   /// Shown instead of the Google Calendar sync switch/controls while in demo mode (no signed-in account to sync with).
   ///
   /// In he, this message translates to:

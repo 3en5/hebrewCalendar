@@ -407,3 +407,48 @@
   800x600 הנדיבה של `flutter test`) **וגם** ב-`textScaleFactor` מוגדל, לא
   רק בגודל/סקייל ברירת המחדל — שני הגורמים יחד (לא כל אחד לחוד) הם שחישפו
   את הבאג הזה בפועל.
+
+- **2026-07-06 · סבב משוב מכשיר #2 — אותו ספינר אינסופי במסך ההגדרות חזר
+  אחרי תיקון #2 של סבב #1:** המשתמש בדק שוב על מכשיר אמיתי אחרי סבב #1's
+  תיקון (`start()` עטוף ב-`try/catch`+`.timeout`) — הספינר **עדיין** אינסופי,
+  ואף פעם לא מופיע כרטיס השגיאה. חקירה מקיפה של כל שרשרת ה-provider
+  (`settings_screen.dart` -> `google_sync_providers.dart` ->
+  `google_sync_trigger_service.dart` -> `firestore_sync_settings_store.dart`)
+  אימתה ש-`start()`'s התיקון **עובד כמו שצריך** — `_emit()` תמיד נקרא תוך
+  10 שניות לכל היותר, גם בהצלחה וגם בכישלון. הבעיה לא הייתה שם בכלל.
+  **השורש האמיתי:** `CalendarShellScreen` צופה ב-`googleSyncTriggerServiceProvider`
+  (לא ב-`googleSyncStateProvider`) כדי לשמור את השירות חי לאורך כל
+  הסשן המחובר — כלומר `start()` רץ **פעם אחת**, מוקדם, כש-`CalendarShellScreen`
+  עולה לראשונה, ופולט אירוע יחיד ל-`_controller` (broadcast
+  `StreamController` פשוט) לפני שהמשתמש בכלל פתח את מסך ההגדרות. מסך
+  ההגדרות נפתח **מאוחר יותר**, כניווט נפרד — ורק אז `googleSyncStateProvider`
+  (`StreamProvider.autoDispose`) לראשונה עושה `.listen()` על `service.states`.
+  אבל `StreamController.broadcast()` הרגיל **לא** משדר אירועים היסטוריים
+  למאזין חדש — הוא מוסר רק אירועים שנוספו *אחרי* שהמאזין נרשם. כלומר מסך
+  ההגדרות תמיד נרשם למאזין הרבה אחרי שהאירוע היחיד של `start()` כבר נפלט
+  ונמסר ל"אף אחד" — נשאר תקוע ב-`AsyncValue.loading()` לצמיתות, **ללא קשר
+  לאיכות ה-`timeout` של `start()`**. זה בדיוק התסמין: התיקון של סבב #1
+  היה נכון וממשיך לעבוד, אבל הוא פשוט לא רלוונטי לבאג — האירוע שהוא מבטיח
+  אף פעם לא מגיע ליעד כי שום דבר לא האזין לו בזמן. **התיקון:** נוסף
+  `GoogleSyncTriggerService.watchState()` — במקום לחשוף את ה-`states` הגולמי,
+  זו מתודה שבונה `StreamController.broadcast` חדש *לכל קריאה* עם
+  `onListen` שמשדר סינכרונית את ה-`state` הנוכחי **לפני** שהוא מתחיל להעביר
+  את העדכונים העתידיים מה-controller הפנימי — כך שמאזין מאוחר (מסך הגדרות
+  שנפתח דקות אחרי עליית האפליקציה) מקבל מיד את המצב שכבר נפתר, במקום סטרים
+  ריק. בנוסף נוספה הגנה שכבתית: `google_sync_providers.dart`'s
+  `googleSyncTriggerServiceProvider` עוטף את *בניית* התלויות (לא רק את
+  `start()`) ב-`try/catch` (עם `_UnavailableGoogleCalendarApi` placeholder
+  ופרמטר `constructionError` חדש ב-`GoogleSyncTriggerService` שגורם ל-`start()`
+  לדלג ישר לשגיאה), ו-`settings_screen.dart`'s `_RealGoogleSyncSection` הפך
+  ל-`ConsumerStatefulWidget` עם Timer watchdog מקומי (12 שניות, מבוטל
+  ב-`dispose`) שכופה את כרטיס השגיאה גם אם שכבת ה-provider כולה משתבשת
+  איכשהו בעתיד — הוכח בטסט עם `googleSyncStateProvider.overrideWith((ref) =>
+  const Stream.empty())`. **לקח כללי:** `Stream` פנימי המחשוף ל-Riverpod
+  `StreamProvider.autoDispose` שנועד "לשקף מצב עדכני" (לא רק "לשדר אירועים
+  עתידיים") חייב תמיד לשדר את המצב הנוכחי סינכרונית ל**כל** מנוי חדש (לא
+  רק לראשון) — אחרת כל צרכן ש-autoDispose שלו מתחיל להאזין באיחור (במקרה
+  שלנו: מסך שנפתח מאוחר מ-provider ש"אב" אחר כבר שומר חי) יפספס בשקט
+  אירועים שכבר נפלטו, בלי שום חריגה/שגיאה שתרמוז על כך. תיקון try/catch
+  סביב ה-*producer* (`start()`) לא מספיק אם ה-*consumer* עלול להירשם
+  אחרי שהפליטה כבר קרתה — צריך לתקן את הממשק בין השניים (broadcast סטרים
+  יחיד -> "שדר-נוכחי-ואז-עתידי" per-subscriber).
