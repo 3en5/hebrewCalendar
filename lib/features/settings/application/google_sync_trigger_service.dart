@@ -9,6 +9,7 @@ import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../domain/sync/sync_run_result.dart';
 import '../../../domain/sync/sync_settings_store.dart';
 import '../../../domain/sync/sync_state.dart';
+import '../../../l10n/app_localizations_he.dart';
 import 'background_sync_scheduler.dart';
 import 'google_sync_settings_state.dart';
 
@@ -38,6 +39,7 @@ class GoogleSyncTriggerService {
     DateTime Function() now = DateTime.now,
     Duration editDebounce = const Duration(seconds: 30),
     Duration openThrottle = const Duration(minutes: 5),
+    Duration startTimeout = const Duration(seconds: 10),
     BackgroundSyncScheduler backgroundScheduler =
         const NoopBackgroundSyncScheduler(),
   }) : _engine = engine,
@@ -48,6 +50,7 @@ class GoogleSyncTriggerService {
        _now = now,
        _editDebounce = editDebounce,
        _openThrottle = openThrottle,
+       _startTimeout = startTimeout,
        _backgroundScheduler = backgroundScheduler;
 
   final SyncEngine _engine;
@@ -58,6 +61,14 @@ class GoogleSyncTriggerService {
   final DateTime Function() _now;
   final Duration _editDebounce;
   final Duration _openThrottle;
+
+  /// Real-device report #2: `start()`'s initial `_settingsStore.load()`
+  /// (a Firestore read) could previously hang or throw silently (see
+  /// `docs/LESSONS.md`) with nothing ever calling `_emit()` — leaving the
+  /// settings screen's `StreamProvider` stuck in `AsyncValue.loading()`
+  /// forever (an endless spinner, never an error). This bounds that wait so
+  /// [start] always reaches an `_emit()` call one way or another.
+  final Duration _startTimeout;
 
   /// M5b: registers/cancels the periodic background sync task alongside
   /// enable/disable/sign-out — defaults to a no-op so pre-M5b callers
@@ -91,22 +102,44 @@ class GoogleSyncTriggerService {
   /// place its failure ever reaches the UI (task brief M5b §5: "surface
   /// error state in settings store").
   Future<void> start() async {
-    final SyncSettings settings = await _settingsStore.load();
-    _lastRunAt = settings.lastSyncedAt;
-    _state = GoogleSyncSettingsState(
-      enabled: settings.enabled,
-      lastSyncedAt: settings.lastSyncedAt,
-      status: settings.lastErrorMessage == null
-          ? SyncStatus.idle
-          : SyncStatus.error,
-      errorMessage: settings.lastErrorMessage,
-    );
-    _emit();
-    if (settings.enabled) {
-      _subscribeToLocalChanges();
-      await _backgroundScheduler.registerPeriodic();
+    try {
+      final SyncSettings settings = await _settingsStore.load().timeout(
+        _startTimeout,
+      );
+      _lastRunAt = settings.lastSyncedAt;
+      _state = GoogleSyncSettingsState(
+        enabled: settings.enabled,
+        lastSyncedAt: settings.lastSyncedAt,
+        status: settings.lastErrorMessage == null
+            ? SyncStatus.idle
+            : SyncStatus.error,
+        errorMessage: settings.lastErrorMessage,
+      );
+      _emit();
+      if (settings.enabled) {
+        _subscribeToLocalChanges();
+        await _backgroundScheduler.registerPeriodic();
+      }
+    } catch (error) {
+      // Never leave the caller (and the settings screen watching `states`)
+      // without an emission: whatever the cause — permission-denied from
+      // stale/undeployed Security Rules, no network, or the `_startTimeout`
+      // above firing — this is a retryable error state, not silence.
+      _state = _state.copyWith(
+        status: SyncStatus.error,
+        initialLoadFailed: true,
+        errorMessage: AppLocalizationsHe().settingsGoogleSyncLoadFailedMessage,
+      );
+      _emit();
     }
   }
+
+  /// Retries the initial settings load after [initialLoadFailed] — the
+  /// settings screen's "נסה שוב" button. Simply re-running [start] is safe:
+  /// [_subscribeToLocalChanges] is idempotent and re-registering the
+  /// background task uses `existingWorkPolicy: keep` (see
+  /// `background_sync_scheduler.dart`).
+  Future<void> retryLoad() => start();
 
   /// Enables sync: requests the `calendar.events` scope as incremental
   /// authorization (ARCHITECTURE.md §5 — not at sign-in) and, if granted,

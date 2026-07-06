@@ -59,31 +59,57 @@ class MonthGrid extends ConsumerWidget {
       children: <Widget>[
         _WeekdayHeaderRow(),
         Expanded(
-          child: GridView.builder(
-            padding: EdgeInsetsDirectional.all(spacingSm),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: _daysPerWeek,
-            ),
-            itemCount: cells.length,
-            itemBuilder: (BuildContext context, int index) {
-              final HebrewDate cellDate = cells[index];
-              final bool inDisplayedMonth =
-                  cellDate.year == displayedMonth.year &&
-                  cellDate.month == displayedMonth.month;
-              final DateTime gregorianDate = engine.toGregorian(cellDate);
-              final List<EventOccurrence> dayOccurrences = inDisplayedMonth
-                  ? (occurrencesByDay[cellDate.day] ??
-                        const <EventOccurrence>[])
-                  : const <EventOccurrence>[];
-              return DayCell(
-                hebrewDay: cellDate.day,
-                gregorianDay: gregorianDate.day,
-                isInDisplayedMonth: inDisplayedMonth,
-                isToday: cellDate == today,
-                hasEvents: dayOccurrences.isNotEmpty,
-                onTap: dayOccurrences.isEmpty
-                    ? null
-                    : () => _showDayEvents(context, cellDate, dayOccurrences),
+          // A fixed `childAspectRatio` (the previous implementation's
+          // implicit default of 1.0, i.e. square cells) forces each cell's
+          // height to match its width — on a narrow phone that's ~50dp,
+          // less than `DayCell`'s content needs, which overflowed the
+          // bottom of every cell on a real device ("BOTTOM OVERFLOWED BY 20
+          // PIXELS"). `LayoutBuilder` derives the aspect ratio from the
+          // *actual available height* for the fixed 6-week grid instead, so
+          // rows always fill the space they're given rather than being
+          // forced square.
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final double gridPadding = spacingSm * 2;
+              final double cellWidth =
+                  (constraints.maxWidth - gridPadding) / _daysPerWeek;
+              const int rowCount = _gridCellCount ~/ _daysPerWeek;
+              final double availableHeight = constraints.maxHeight;
+              final double cellHeight = availableHeight.isFinite
+                  ? (availableHeight - gridPadding) / rowCount
+                  : cellWidth;
+              final double aspectRatio = (cellHeight > 0 && cellWidth > 0)
+                  ? cellWidth / cellHeight
+                  : 1.0;
+              return GridView.builder(
+                padding: EdgeInsetsDirectional.all(spacingSm),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _daysPerWeek,
+                  childAspectRatio: aspectRatio,
+                ),
+                itemCount: cells.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final HebrewDate cellDate = cells[index];
+                  final bool inDisplayedMonth =
+                      cellDate.year == displayedMonth.year &&
+                      cellDate.month == displayedMonth.month;
+                  final DateTime gregorianDate = engine.toGregorian(cellDate);
+                  final List<EventOccurrence> dayOccurrences = inDisplayedMonth
+                      ? (occurrencesByDay[cellDate.day] ??
+                            const <EventOccurrence>[])
+                      : const <EventOccurrence>[];
+                  return DayCell(
+                    hebrewDay: cellDate.day,
+                    gregorianDay: gregorianDate.day,
+                    isInDisplayedMonth: inDisplayedMonth,
+                    isToday: cellDate == today,
+                    hasEvents: dayOccurrences.isNotEmpty,
+                    onTap: dayOccurrences.isEmpty
+                        ? null
+                        : () =>
+                              _showDayEvents(context, cellDate, dayOccurrences),
+                  );
+                },
               );
             },
           ),

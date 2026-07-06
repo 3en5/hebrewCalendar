@@ -161,4 +161,38 @@ void main() {
         .isNotEmpty;
     expect(showsNext || showsPrevious, isTrue);
   });
+
+  testWidgets(
+    'month grid has no overflow on a small screen at 1.3x text scale',
+    (WidgetTester tester) async {
+      // Regression test for the real-device report "BOTTOM OVERFLOWED BY 20
+      // PIXELS" in every day cell: a fixed square `childAspectRatio` forced
+      // cell height to match cell width, which is too little on a narrow
+      // phone (360dp / 7 columns) for the cell's content — worse still
+      // under a larger system font scale. Render at a realistic small
+      // surface (360x640) with `textScaleFactor` 1.3 (RULES.md §4.2 — the
+      // app must not break under a larger system font) and assert no
+      // `FlutterError` (RenderFlex overflow) was thrown during layout.
+      final Size originalSize = tester.view.physicalSize;
+      final double originalRatio = tester.view.devicePixelRatio;
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1.0;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(() {
+        tester.view.physicalSize = originalSize;
+        tester.view.devicePixelRatio = originalRatio;
+        tester.platformDispatcher.clearTextScaleFactorTestValue();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: _signedInOverrides(),
+          child: const HebrewCalendarApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

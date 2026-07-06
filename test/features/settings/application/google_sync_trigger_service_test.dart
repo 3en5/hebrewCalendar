@@ -4,6 +4,8 @@
 // InMemorySyncSettingsStore (no network/Firebase, matching
 // ReminderSyncService's testing pattern for M4).
 
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
 import 'package:hebrew_calendar/data/sync/in_memory_sync_settings_store.dart';
@@ -12,10 +14,12 @@ import 'package:hebrew_calendar/domain/event/event.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date_engine.dart';
 import 'package:hebrew_calendar/domain/sync/sync_state.dart';
+import 'package:hebrew_calendar/features/settings/application/google_sync_settings_state.dart';
 import 'package:hebrew_calendar/features/settings/application/google_sync_trigger_service.dart';
 
 import '../../../test_support/fake_background_sync_scheduler.dart';
 import '../../../test_support/fake_google_calendar_api.dart';
+import '../../../test_support/fake_hanging_sync_settings_store.dart';
 
 const HebrewDateEngine _engine = HebrewDateEngine();
 final DateTime _now = DateTime(2026, 6, 15, 9);
@@ -308,5 +312,80 @@ void main() {
     expect(service.state.status, SyncStatus.error);
     expect(service.state.errorMessage, 'הרשאה בוטלה');
     await service.stop();
+  });
+
+  group('real-device report #2: settings load never hangs the UI forever', () {
+    test('start() times out a settings load that never completes and surfaces '
+        'a retryable error instead of never emitting', () async {
+      final FakeHangingSyncSettingsStore hangingStore =
+          FakeHangingSyncSettingsStore();
+      final GoogleSyncTriggerService svc = GoogleSyncTriggerService(
+        engine: SyncEngine(
+          repository: repository,
+          api: api,
+          settingsStore: hangingStore,
+          engine: _engine,
+          now: () => _now,
+        ),
+        settingsStore: hangingStore,
+        api: api,
+        repository: repository,
+        hebrewEngine: _engine,
+        now: () => _now,
+        // A tiny timeout so the test doesn't wait for the real 10s
+        // production default — the timeout mechanism itself is what's
+        // under test, not its exact duration.
+        startTimeout: const Duration(milliseconds: 20),
+      );
+
+      await svc.start();
+
+      expect(svc.state.status, SyncStatus.error);
+      expect(svc.state.initialLoadFailed, isTrue);
+      expect(svc.state.errorMessage, isNotNull);
+      await svc.stop();
+    });
+
+    test('retryLoad() re-attempts start() and can recover', () async {
+      final FakeHangingSyncSettingsStore hangingStore =
+          FakeHangingSyncSettingsStore();
+      final GoogleSyncTriggerService svc = GoogleSyncTriggerService(
+        engine: SyncEngine(
+          repository: repository,
+          api: api,
+          settingsStore: settingsStore,
+          engine: _engine,
+          now: () => _now,
+        ),
+        settingsStore: hangingStore,
+        api: api,
+        repository: repository,
+        hebrewEngine: _engine,
+        now: () => _now,
+        startTimeout: const Duration(milliseconds: 20),
+      );
+
+      await svc.start();
+      expect(svc.state.initialLoadFailed, isTrue);
+
+      // The stream never leaves the app stuck: every failed attempt still
+      // re-emits, so a widget bound to `svc.states` sees a fresh error
+      // state (not silence) on every retry too.
+      final List<bool> loadFailedEmissions = <bool>[];
+      final StreamSubscription<GoogleSyncSettingsState> sub = svc.states.listen(
+        (GoogleSyncSettingsState state) =>
+            loadFailedEmissions.add(state.initialLoadFailed),
+      );
+      await svc.retryLoad();
+      // The broadcast stream's async (non-`sync`) delivery to listeners
+      // isn't guaranteed to have run yet immediately after `retryLoad()`'s
+      // own Future resolves — `_settle()` (used the same way elsewhere in
+      // this file for debounced effects) gives it a real event-loop turn.
+      await _settle();
+      await sub.cancel();
+
+      expect(loadFailedEmissions, contains(true));
+      await svc.stop();
+    });
   });
 }

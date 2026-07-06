@@ -60,53 +60,64 @@ class DayCell extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: EdgeInsetsDirectional.all(spacingXs),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Container(
-                width: rem(2.0),
-                height: rem(2.0),
-                alignment: Alignment.center,
-                decoration: isToday
-                    ? BoxDecoration(
-                        color: colorScheme.primary,
-                        shape: BoxShape.circle,
-                      )
-                    : null,
-                child: Text(
-                  hebrewDayNumeral(hebrewDay),
-                  style: TextStyle(
-                    fontSize: bodyLargeRem,
-                    fontWeight: FontWeight.w600,
-                    color: hebrewDayColor,
+          // The grid delegate in `month_grid.dart` derives the cell's
+          // aspect ratio from the *available* height so this fits at the
+          // default text scale — but `FittedBox` is a safety net on top of
+          // that: it guarantees no `RenderFlex` overflow (RULES.md-adjacent
+          // real-device requirement) even under a larger system font scale
+          // (up to 1.3, per the task brief) or an unusually short cell,
+          // by scaling the whole column down to fit instead of clipping.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  width: rem(2.0),
+                  height: rem(2.0),
+                  alignment: Alignment.center,
+                  decoration: isToday
+                      ? BoxDecoration(
+                          color: colorScheme.primary,
+                          shape: BoxShape.circle,
+                        )
+                      : null,
+                  child: Text(
+                    hebrewDayNumeral(hebrewDay),
+                    style: TextStyle(
+                      fontSize: bodyLargeRem,
+                      fontWeight: FontWeight.w600,
+                      color: hebrewDayColor,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: spacingXs),
-              Text(
-                '$gregorianDay',
-                style: TextStyle(
-                  fontSize: captionRem,
-                  color: gregorianDayColor,
+                SizedBox(height: spacingXs),
+                Text(
+                  '$gregorianDay',
+                  style: TextStyle(
+                    fontSize: captionRem,
+                    color: gregorianDayColor,
+                  ),
                 ),
-              ),
-              SizedBox(height: spacingXs),
-              SizedBox(
-                width: spacingSm,
-                height: spacingSm,
-                child: hasEvents
-                    ? DecoratedBox(
-                        key: ValueKey<String>('event-dot-$hebrewDay'),
-                        decoration: BoxDecoration(
-                          color: colorScheme.secondary.withValues(
-                            alpha: opacity,
+                SizedBox(height: spacingXs),
+                SizedBox(
+                  width: spacingSm,
+                  height: spacingSm,
+                  child: hasEvents
+                      ? DecoratedBox(
+                          key: ValueKey<String>('event-dot-$hebrewDay'),
+                          decoration: BoxDecoration(
+                            color: colorScheme.secondary.withValues(
+                              alpha: opacity,
+                            ),
+                            shape: BoxShape.circle,
                           ),
-                          shape: BoxShape.circle,
-                        ),
-                      )
-                    : null,
-              ),
-            ],
+                        )
+                      : null,
+                ),
+              ],
+            ),
           ),
         ),
       ),

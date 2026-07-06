@@ -189,6 +189,14 @@
   "@signInErrorMessage": {
     "description": "Snackbar message shown when Google sign-in fails for a reason other than user cancellation."
   },
+  "signInDemoModeButton": "כניסה במצב הדגמה",
+  "@signInDemoModeButton": {
+    "description": "Secondary button on the sign-in screen (M5c, Google Play review requirement) that enters the full calendar UI with sample data and no authentication at all."
+  },
+  "signInReturnToSignInAction": "התחבר",
+  "@signInReturnToSignInAction": {
+    "description": "Overflow menu label shown instead of signOutAction while in demo mode — returns to the sign-in screen and clears demo state (M5c)."
+  },
   "signOutAction": "התנתקות",
   "@signOutAction": {
     "description": "Label for the sign-out overflow menu item, and the confirm button in the sign-out confirmation dialog."
@@ -304,6 +312,18 @@
   "@settingsBackgroundSyncStatusOff": {
     "description": "Background sync status value (M5b) when Google Calendar sync is disabled, so no periodic background task is registered."
   },
+  "settingsGoogleSyncLoadFailedMessage": "לא ניתן היה לטעון את הגדרות הסנכרון. בדוק את החיבור לאינטרנט ונסה שוב.",
+  "@settingsGoogleSyncLoadFailedMessage": {
+    "description": "Error message shown instead of the Google Calendar sync section when its initial settings failed to load or timed out (real-device report: previously an endless spinner instead of this message)."
+  },
+  "settingsGoogleSyncRetryButton": "נסה שוב",
+  "@settingsGoogleSyncRetryButton": {
+    "description": "Retry button label shown alongside settingsGoogleSyncLoadFailedMessage."
+  },
+  "settingsGoogleSyncDisabledDemoMessage": "דורש התחברות עם Google",
+  "@settingsGoogleSyncDisabledDemoMessage": {
+    "description": "Shown instead of the Google Calendar sync switch/controls while in demo mode (no signed-in account to sync with)."
+  },
   "settingsBackupSectionTitle": "גיבוי ושחזור",
   "@settingsBackupSectionTitle": {
     "description": "Section heading for the local-file backup/restore settings (M7)."
@@ -372,5 +392,25 @@
         "type": "String"
       }
     }
+  },
+  "settingsAboutTooltip": "אודות",
+  "@settingsAboutTooltip": {
+    "description": "Label for the settings screen list item that opens the About screen (M5c)."
+  },
+  "aboutScreenTitle": "אודות",
+  "@aboutScreenTitle": {
+    "description": "App bar title for the About screen (M5c)."
+  },
+  "aboutTagline": "יומן עברי",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name on the About screen (M5c)."
+  },
+  "aboutDeveloperCredit": "מבית kalit",
+  "@aboutDeveloperCredit": {
+    "description": "Modest developer/maker credit on the About screen (M5c) — the first place kalit branding appears in the app."
+  },
+  "aboutLicensesButton": "רישיונות קוד פתוח",
+  "@aboutLicensesButton": {
+    "description": "Button on the About screen that opens Flutter's built-in open-source licenses page (M5c)."
   }
 }

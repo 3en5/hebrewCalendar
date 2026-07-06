@@ -145,4 +145,62 @@ void main() {
     expect(savedEvent.recurrence.type, RecurrenceType.weekly);
     expect(savedEvent.recurrence.until, isNotNull);
   });
+
+  testWidgets(
+    'the last form field stays reachable by scrolling on a small screen',
+    (WidgetTester tester) async {
+      // Regression test for the "form cut off, no scrolling" device report:
+      // render at a small real-device-like surface (360x640, e.g. a compact
+      // phone) instead of flutter test's roomy default (800x600) and prove
+      // the bottom-most field ("עד תאריך", only shown once a recurrence type
+      // is picked) can still be scrolled into view and tapped.
+      final Size originalSize = tester.view.physicalSize;
+      final double originalRatio = tester.view.devicePixelRatio;
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.physicalSize = originalSize;
+        tester.view.devicePixelRatio = originalRatio;
+      });
+
+      final InMemoryEventRepository repository = InMemoryEventRepository();
+      addTearDown(repository.dispose);
+
+      const EventEditorArgs args = (initialDate: _fixedDate, existing: null);
+
+      await tester.pumpWidget(
+        _wrap(const EventEditorScreen(args: args), repository),
+      );
+      await tester.pumpAndSettle();
+
+      // The recurrence type chips sit below the fold on this small surface.
+      await tester.dragUntilVisible(
+        find.text('כל שבוע'),
+        find.byType(ListView),
+        const Offset(0, -100),
+      );
+      await tester.drag(find.byType(ListView), const Offset(0, -50));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('כל שבוע'));
+      await tester.pumpAndSettle();
+
+      // Now the very last field, "עד תאריך", must also be reachable and
+      // tappable (not cut off past the bottom of the screen).
+      await tester.dragUntilVisible(
+        find.text('עד תאריך'),
+        find.byType(ListView),
+        const Offset(0, -100),
+      );
+      await tester.drag(find.byType(ListView), const Offset(0, -50));
+      await tester.pumpAndSettle();
+
+      final Finder untilField = find.text('עד תאריך');
+      expect(untilField, findsOneWidget);
+      final Offset position = tester.getCenter(untilField);
+      expect(position.dy, lessThan(tester.view.physicalSize.height));
+      await tester.tap(untilField);
+      await tester.pumpAndSettle();
+      expect(find.text('אישור'), findsOneWidget);
+    },
+  );
 }

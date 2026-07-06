@@ -22,6 +22,7 @@ import '../../../test_support/fake_auth_repository.dart';
 import '../../../test_support/fake_background_sync_scheduler.dart';
 import '../../../test_support/fake_backup_service.dart';
 import '../../../test_support/fake_google_calendar_api.dart';
+import '../../../test_support/fake_hanging_sync_settings_store.dart';
 
 Widget _wrap(List<Override> overrides) {
   return ProviderScope(
@@ -181,5 +182,111 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining(':'), findsWidgets);
+  });
+
+  testWidgets(
+    'a settings load that never completes shows a retry error, not an '
+    'endless spinner (real-device report #2)',
+    (WidgetTester tester) async {
+      final FakeAuthRepository auth = FakeAuthRepository(initialUser: testUser);
+      final InMemoryEventRepository repository = InMemoryEventRepository();
+      final FakeGoogleCalendarApi api = FakeGoogleCalendarApi();
+      final FakeHangingSyncSettingsStore hangingStore =
+          FakeHangingSyncSettingsStore();
+      addTearDown(auth.dispose);
+      addTearDown(repository.dispose);
+
+      await tester.pumpWidget(
+        _wrap(<Override>[
+          authRepositoryProvider.overrideWithValue(auth),
+          eventRepositoryProvider.overrideWithValue(repository),
+          googleCalendarApiProvider.overrideWithValue(api),
+          syncSettingsStoreProvider.overrideWithValue(hangingStore),
+          // Short enough that the test doesn't wait for the real
+          // production default (10s) — proves the bounded-loading
+          // mechanism works, not its exact duration.
+          syncStartTimeoutProvider.overrideWithValue(
+            const Duration(milliseconds: 20),
+          ),
+          backgroundSyncSchedulerProvider.overrideWithValue(
+            FakeBackgroundSyncScheduler(),
+          ),
+          backupServiceProvider.overrideWithValue(FakeBackupService()),
+        ]),
+      );
+
+      // Give the timeout a chance to fire; well under flutter test's
+      // default async-guard budget.
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump();
+
+      final AppLocalizationsHe l10n = AppLocalizationsHe();
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(
+        find.text(l10n.settingsGoogleSyncLoadFailedMessage),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.settingsGoogleSyncRetryButton), findsOneWidget);
+
+      await tester.tap(find.text(l10n.settingsGoogleSyncRetryButton));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump();
+
+      // Retrying re-attempts the (still-hanging) load and times out again —
+      // still a clear error, never silence or a stuck spinner.
+      expect(
+        find.text(l10n.settingsGoogleSyncLoadFailedMessage),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('the About entry opens a screen with the app name and version', (
+    WidgetTester tester,
+  ) async {
+    final FakeAuthRepository auth = FakeAuthRepository(initialUser: testUser);
+    final InMemoryEventRepository repository = InMemoryEventRepository();
+    addTearDown(auth.dispose);
+    addTearDown(repository.dispose);
+
+    await tester.pumpWidget(
+      _wrap(<Override>[
+        authRepositoryProvider.overrideWithValue(auth),
+        eventRepositoryProvider.overrideWithValue(repository),
+        googleCalendarApiProvider.overrideWithValue(FakeGoogleCalendarApi()),
+        syncSettingsStoreProvider.overrideWithValue(
+          InMemorySyncSettingsStore(),
+        ),
+        backgroundSyncSchedulerProvider.overrideWithValue(
+          FakeBackgroundSyncScheduler(),
+        ),
+        backupServiceProvider.overrideWithValue(FakeBackupService()),
+      ]),
+    );
+    await tester.pumpAndSettle();
+
+    final AppLocalizationsHe l10n = AppLocalizationsHe();
+    // The "אודות" entry sits below the sync/backup sections, past the fold
+    // on the test surface's default size — scroll it into view first.
+    await tester.dragUntilVisible(
+      find.text(l10n.settingsAboutTooltip),
+      find.byType(ListView),
+      const Offset(0, -100),
+    );
+    // `dragUntilVisible` stops once the widget enters the sliver's cache
+    // extent, which can be just before it's actually hit-testable within
+    // the viewport (docs/LESSONS.md) — a small extra drag guarantees `tap`
+    // lands on it.
+    await tester.drag(find.byType(ListView), const Offset(0, -50));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settingsAboutTooltip));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.aboutScreenTitle), findsWidgets);
+    // The app name and tagline are (deliberately, per the task brief) the
+    // same Hebrew text, so both render as "יומן עברי" — hence findsWidgets.
+    expect(find.text(l10n.appTitle), findsWidgets);
+    expect(find.text(l10n.aboutDeveloperCredit), findsOneWidget);
+    expect(find.textContaining('1.0.0'), findsOneWidget);
   });
 }

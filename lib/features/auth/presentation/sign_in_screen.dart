@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/dimens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/auth_providers.dart';
+import '../application/demo_mode_provider.dart';
 
 /// The signed-out landing screen: app name, a Google sign-in button, a
 /// loading state while the flow is in progress, and an error snackbar if it
@@ -57,12 +58,25 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 SizedBox(height: spacingXxl),
                 if (_isSigningIn)
                   const CircularProgressIndicator()
-                else
+                else ...<Widget>[
                   FilledButton.icon(
                     onPressed: _signIn,
                     icon: const Icon(Icons.login),
                     label: Text(l10n.signInWithGoogleButton),
                   ),
+                  SizedBox(height: spacingMd),
+                  // Task brief #5 — Google Play review requirement: a
+                  // reviewer must be able to see the full calendar UI
+                  // without creating/using a Google account. This enters
+                  // `CalendarShellScreen` with an in-memory repository
+                  // seeded with sample events and no Firebase/Google calls
+                  // at all (see `demoModeProvider`/`eventRepositoryProvider`).
+                  TextButton(
+                    onPressed: () =>
+                        ref.read(demoModeProvider.notifier).enable(),
+                    child: Text(l10n.signInDemoModeButton),
+                  ),
+                ],
               ],
             ),
           ),

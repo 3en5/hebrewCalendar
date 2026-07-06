@@ -354,3 +354,56 @@
   הפיתוח אי אפשר להריץ `flutter build` (ראה לקח dl.google.com), ג'וב
   ה-build ב-CI הוא **האימות היחיד** לשינויי Gradle/פלאגינים — חובה לוודא
   שהוא ירוק אחרי כל milestone שמוסיף פלאגין עם קוד נטיבי.
+
+- **2026-07-06 · סבב משוב מכשיר #1, תיקון #2 — ספינר אינסופי במסך ההגדרות:**
+  שורש הבעיה **לא** היה מה שהמשימה שיערה כסביר ביותר (חוסר-התאמה בין
+  `firestore.rules`'s `isValidUserDoc` `hasOnly` whitelist לבין השדות
+  שהאפליקציה בפועל כותבת/קוראת ב-`users/{uid}`) — נבדק לעומק ואומת: הרשימה
+  הלבנה כבר כללה את כל ארבעת שדות הסנכרון מאז M5a/M5b. השורש האמיתי: ב-
+  `google_sync_trigger_service.dart`'s `start()`, הקריאה
+  `await _settingsStore.load()` (קריאת Firestore) הייתה **לא מוגנת בכלל** —
+  לא `try/catch`, לא timeout. `googleSyncTriggerServiceProvider`
+  (ב-`google_sync_providers.dart`) קורא ל-`start()` דרך
+  `unawaited(service.start()...)`, כך שאם ה-`Future` נכשל (permission-denied
+  כי ה-Rules האמיתיות שרצות מול הפרויקט טרם פורסמו — ראה סעיף "נותר / דורש
+  פעולת משתמש" שחוזר על עצמו אחרי כל milestone; או סתם timeout רשת), החריגה
+  פשוט "נבלעת" ב-Zone (בלי לקרוס, בזכות `runZonedGuarded` ב-`main.dart`),
+  אבל **`_emit()` אף פעם לא נקרא** — כלומר ה-`StreamController` הפנימי (ש-
+  `googleSyncStateProvider`'s `StreamProvider` צופה בו) אף פעם לא פולט אירוע
+  ראשון, כך ש-`AsyncValue` נשאר ב-`loading()` **לצמיתות** — ספינר אינסופי,
+  בדיוק כמו שדווח. התיקון: `start()` עוטף את הקריאה כולה ב-`try/catch` +
+  `.timeout(_startTimeout)` (ניתן להזרקה, ברירת מחדל 10 שניות) — בכל מקרה
+  (הצלחה, כישלון, timeout) מגיע ל-`_emit()` אחד, כך שה-UI תמיד יוצא מ-
+  `loading()` תוך זמן חסום. לקח כללי: **כל** `unawaited(future...)` שמזין
+  `Stream`/state ש-UI צופה בו חייב לתפוס ולמפות כל חריגה למצב-שגיאה שנפלט
+  במפורש — אחרת "נראה בטוח כי יש runZonedGuarded גלובלי" הוא מלכודת: החריגה
+  אכן לא מקריסה את האפליקציה, אבל גם לא מגיעה לשום מקום שה-UI יכול להגיב
+  אליו, מה שמשאיר widget תלוי ב-state הביניים (`loading`) לנצח. בנוסף:
+  טסט widget שרוצה לדמות "תלות חיצונית שלעולם לא מסתיימת" (למשל store שה-
+  `load()` שלו לעולם לא נפתר) צריך provider נפרד להזרקת ה-timeout (כאן:
+  `syncStartTimeoutProvider`) כדי שהטסט יוכל לקצר אותו במכוון — ואחרי
+  שממתינים ל-`Future` שמסתיים ב-timeout, בדיקה על `Stream` broadcast חייבת
+  `await` נוסף (כמו ה-`_settle()` helper הקיים בקובץ) לפני שבודקים את
+  התוצאה: סיום ה-`Future` וה"מסירה" בפועל של האירוע למאזין ה-`Stream` הם
+  שתי תזמונים אסינכרוניים נפרדים (לא זהים), אז `await theFuture;` לבד לא
+  מבטיח שהמאזין כבר קיבל את האירוע.
+
+- **2026-07-06 · סבב משוב מכשיר #1, תיקון #3 — `childAspectRatio` קבוע ב-
+  `GridView` שובר על מסכים צרים:** `SliverGridDelegateWithFixedCrossAxisCount`
+  בלי `childAspectRatio` מפורש בררת המחדל שלו היא `1.0` (תא ריבועי) —
+  ב-`month_grid.dart` זה אילץ גובה תא = רוחב תא, ובמכשיר עם 7 עמודות ורוחב
+  מסך ~360dp, גובה כל תא יצא ~50dp: פחות ממה ש-`DayCell`'s content באמת צריך
+  (~70dp+), ומכאן "BOTTOM OVERFLOWED BY 20 PIXELS" **בכל תא**, לא רק בקצה
+  מסך. התיקון בשתי שכבות: (1) `LayoutBuilder` סביב ה-`GridView` מחשב
+  `childAspectRatio` מהגובה *הזמין בפועל* לגריד (`constraints.maxHeight`)
+  חלקי 6 השורות, במקום להסתמך על ברירת המחדל הריבועית — כך שהתא תמיד ממלא
+  את השטח שהוקצה לו בפועל; (2) `FittedBox(fit: BoxFit.scaleDown)` בתוך
+  `DayCell` עצמו כרשת ביטחון נוספת — גם אם התא עדיין צר מדי (למשל תחת
+  `textScaleFactor` גבוה מ-1.0), אין overflow לעולם כי כל התוכן מצטמצם יחד
+  במקום לחרוג. לקח כללי: `GridView`/`SliverGridDelegateWithFixedCrossAxisCount`
+  עם תוכן שאינו טקסט-בודד-קצר צריך תמיד `childAspectRatio` מחושב מהמידות
+  האמיתיות (או `LayoutBuilder`), לא את ברירת המחדל הריבועית — וטסט widget
+  שמאמת "אין overflow" חייב לרנדר בגודל מסך קטן ריאליסטי (לא ברירת המחדל
+  800x600 הנדיבה של `flutter test`) **וגם** ב-`textScaleFactor` מוגדל, לא
+  רק בגודל/סקייל ברירת המחדל — שני הגורמים יחד (לא כל אחד לחוד) הם שחישפו
+  את הבאג הזה בפועל.

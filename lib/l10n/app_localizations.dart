@@ -370,6 +370,18 @@ abstract class AppLocalizations {
   /// **'אירעה שגיאה בכניסה. נסה שוב.'**
   String get signInErrorMessage;
 
+  /// Secondary button on the sign-in screen (M5c, Google Play review requirement) that enters the full calendar UI with sample data and no authentication at all.
+  ///
+  /// In he, this message translates to:
+  /// **'כניסה במצב הדגמה'**
+  String get signInDemoModeButton;
+
+  /// Overflow menu label shown instead of signOutAction while in demo mode — returns to the sign-in screen and clears demo state (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'התחבר'**
+  String get signInReturnToSignInAction;
+
   /// Label for the sign-out overflow menu item, and the confirm button in the sign-out confirmation dialog.
   ///
   /// In he, this message translates to:
@@ -520,6 +532,24 @@ abstract class AppLocalizations {
   /// **'כבוי'**
   String get settingsBackgroundSyncStatusOff;
 
+  /// Error message shown instead of the Google Calendar sync section when its initial settings failed to load or timed out (real-device report: previously an endless spinner instead of this message).
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן היה לטעון את הגדרות הסנכרון. בדוק את החיבור לאינטרנט ונסה שוב.'**
+  String get settingsGoogleSyncLoadFailedMessage;
+
+  /// Retry button label shown alongside settingsGoogleSyncLoadFailedMessage.
+  ///
+  /// In he, this message translates to:
+  /// **'נסה שוב'**
+  String get settingsGoogleSyncRetryButton;
+
+  /// Shown instead of the Google Calendar sync switch/controls while in demo mode (no signed-in account to sync with).
+  ///
+  /// In he, this message translates to:
+  /// **'דורש התחברות עם Google'**
+  String get settingsGoogleSyncDisabledDemoMessage;
+
   /// Section heading for the local-file backup/restore settings (M7).
   ///
   /// In he, this message translates to:
@@ -603,6 +633,36 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'גרסה {version}'**
   String settingsVersionLabel(String version);
+
+  /// Label for the settings screen list item that opens the About screen (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'אודות'**
+  String get settingsAboutTooltip;
+
+  /// App bar title for the About screen (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'אודות'**
+  String get aboutScreenTitle;
+
+  /// Short tagline shown under the app name on the About screen (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'יומן עברי'**
+  String get aboutTagline;
+
+  /// Modest developer/maker credit on the About screen (M5c) — the first place kalit branding appears in the app.
+  ///
+  /// In he, this message translates to:
+  /// **'מבית kalit'**
+  String get aboutDeveloperCredit;
+
+  /// Button on the About screen that opens Flutter's built-in open-source licenses page (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'רישיונות קוד פתוח'**
+  String get aboutLicensesButton;
 }
 
 class _AppLocalizationsDelegate

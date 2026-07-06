@@ -55,6 +55,14 @@ final Provider<BackgroundSyncScheduler> backgroundSyncSchedulerProvider =
       (Ref ref) => const WorkmanagerBackgroundSyncScheduler(),
     );
 
+/// Bounds `GoogleSyncTriggerService.start()`'s initial settings load
+/// (real-device report #2 — see docs/LESSONS.md). Overridden with a much
+/// shorter duration in tests that simulate a settings load which never
+/// completes, so those tests don't have to wait out the real 10s default.
+final Provider<Duration> syncStartTimeoutProvider = Provider<Duration>(
+  (Ref ref) => const Duration(seconds: 10),
+);
+
 /// Not `autoDispose`: a sync engine, like the repository it wraps, is a
 /// data-layer service rather than screen-scoped UI state.
 final Provider<SyncEngine> syncEngineProvider = Provider<SyncEngine>((Ref ref) {
@@ -82,6 +90,7 @@ final Provider<GoogleSyncTriggerService> googleSyncTriggerServiceProvider =
         repository: ref.watch(eventRepositoryProvider),
         hebrewEngine: ref.watch(hebrewDateEngineProvider),
         backgroundScheduler: ref.watch(backgroundSyncSchedulerProvider),
+        startTimeout: ref.watch(syncStartTimeoutProvider),
       );
       // `start()` must finish loading the persisted enabled flag before
       // `triggerAppOpen()` can meaningfully check it.

@@ -71,7 +71,16 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final bool isEditing = widget.args.existing != null;
 
+    // The save action lives in the app bar (not the scrollable body) so it
+    // is always reachable regardless of scroll position or keyboard state.
+    // `resizeToAvoidBottomInset` (default true, kept explicit here) shrinks
+    // the body when the keyboard opens; on top of that the ListView's own
+    // bottom padding must grow by `MediaQuery.viewInsets.bottom` so the last
+    // field (the recurrence "until date" row) can still be scrolled fully
+    // above the keyboard instead of staying cut off behind it.
+    final double keyboardInset = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(
           isEditing ? l10n.eventEditorTitleEdit : l10n.eventEditorTitleNew,
@@ -85,7 +94,12 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
         ],
       ),
       body: ListView(
-        padding: EdgeInsetsDirectional.all(spacingMd),
+        padding: EdgeInsetsDirectional.only(
+          start: spacingMd,
+          end: spacingMd,
+          top: spacingMd,
+          bottom: spacingMd + spacingXxl + keyboardInset,
+        ),
         children: <Widget>[
           TextField(
             controller: _titleController,

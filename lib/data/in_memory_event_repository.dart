@@ -254,6 +254,19 @@ class InMemoryEventRepository implements EventRepository {
     }
   }
 
+  /// Seeds the repository directly with pre-built events, bypassing
+  /// [create]'s id/timestamp assignment (M5c demo mode — the events already
+  /// carry their final ids/timestamps, built by
+  /// `lib/domain/event/demo_events.dart`). Not part of [EventRepository];
+  /// used only by `eventRepositoryProvider` to populate the demo-mode
+  /// repository before anything reads from it.
+  void seedForDemo(List<Event> events) {
+    for (final Event event in events) {
+      _events[event.id] = event;
+    }
+    _notify();
+  }
+
   /// Closes the broadcast change stream. Not part of [EventRepository] —
   /// call it from test teardown for a repository built inside a single
   /// test; the app-wide provider instance intentionally lives for the

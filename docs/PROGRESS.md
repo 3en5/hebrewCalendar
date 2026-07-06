@@ -1,9 +1,78 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: M7 הושלם — גיבוי/שחזור מקומי, הכנת שחרור (חתימה אמיתית +
-ProGuard/R8 + workflow ידני), וליטוש. v1.0 feature-complete בהמתנה לבדיקה
-ידנית על מכשיר אמיתי + הגשה ל-Store.** M6 (שיתוף והעשרה) נדחה בהחלטת משתמש —
-ראה WISHLIST.md. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: סבב משוב מכשיר #1 הושלם — 5 תיקונים ממשוב ראשוני על מכשיר
+אמיתי (עורך אירועים חתוך, ספינר אינסופי בהגדרות, overflow בגריד החודש, מסך
+אודות, מצב הדגמה ל-Google Play). v1.0 עדיין ממתין לפריסת Security Rules +
+הגשה ל-Store.** M6 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md.
+(ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — סבב משוב מכשיר #1 (5 תיקונים מבדיקה ראשונה על מכשיר אמיתי)
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 343 טסטים עוברים (334 קיימים
+  + 9 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות עוברת.
+- **תיקון #1 — עורך האירועים חתוך, בלי גלילה:** `event_editor_screen.dart`'s
+  `body` כבר היה `ListView` (הגלילה עצמה עבדה), אבל כפתור השמירה ב-App Bar
+  כבר היה תמיד נגיש; הבעיה האמיתית: ריפוד תחתון קבוע (`spacingMd` בלבד) לא
+  התחשב במקלדת — השדה האחרון (בורר "עד תאריך") יכול היה להישאר מוסתר
+  מאחוריה בלי אפשרות לגלול מספיק כדי לחשוף אותו. תוקן: הריפוד התחתון גדל
+  לפי `MediaQuery.of(context).viewInsets.bottom` + `resizeToAvoidBottomInset:
+  true` מפורש. טסט widget חדש ב-360x640 מאמת שהשדה האחרון נגיש בגלילה
+  ולחיץ. תוך כדי כתיבת הטסט התגלה overflow קטן (0.75px) נפרד ב-
+  `hebrew_date_picker_sheet.dart`'s שלוש הרשימות הנפתחות במסך צר — תוקן
+  עם `isExpanded: true` (ללא זה, `DropdownButtonFormField` מתאים את עצמו
+  לרוחב האינטרינזי של הפריט הרחב ביותר, לא לשטח שה-`Expanded` מסביבו נותן).
+- **תיקון #2 — ספינר אינסופי בהגדרות (החשוב ביותר, ראה LESSONS.md):** שורש
+  הבעיה **לא** היה מה שהמשימה שיערה כסביר (חוסר-התאמה ב-whitelist של
+  `firestore.rules`'s `isValidUserDoc`) — הרשימה כבר כללה את כל שדות
+  הסנכרון מ-M5a/M5b. השורש האמיתי: `google_sync_trigger_service.dart`'s
+  `start()` קרא ל-`_settingsStore.load()` (קריאת Firestore) בלי `try/catch`
+  ובלי timeout; `google_sync_providers.dart` קורא ל-`start()` דרך
+  `unawaited(...)`, כך שכל כישלון (permission-denied כי ה-Rules האמיתיות
+  טרם פורסמו בפועל, או timeout רשת) נבלע בשקט בלי לקרוס (בזכות
+  `runZonedGuarded`), אבל **`_emit()` אף פעם לא נקרא** — ה-`StreamProvider`
+  שהמסך צופה בו נשאר ב-`AsyncValue.loading()` לצמיתות. תוקן: `start()` עוטף
+  את כל הקריאה ב-`try/catch`+`.timeout(_startTimeout)` (ניתן להזרקה,
+  ברירת מחדל 10 שניות, `syncStartTimeoutProvider` לדריסה בטסטים) — בכל
+  מקרה מגיע ל-`_emit()` אחד; `GoogleSyncSettingsState.initialLoadFailed`
+  חדש; `GoogleSyncSection` מציג כרטיס שגיאה+כפתור "נסה שוב" (`retryLoad()`)
+  במקום הפקדים הרגילים. **`firestore.rules` עצמו לא השתנה** (כבר תקין) —
+  ראה `firebase/README.md` להבהרה ותזכורת לפרוס בפועל.
+- **תיקון #3 — overflow בגריד החודש ("BOTTOM OVERFLOWED BY 20 PIXELS"):**
+  שורש: `SliverGridDelegateWithFixedCrossAxisCount` בלי `childAspectRatio`
+  מפורש (ברירת מחדל 1.0, תא ריבועי) אילץ גובה תא = רוחב תא — על מסך צר
+  (360dp / 7 עמודות) זה ~50dp, פחות ממה ש-`DayCell`'s תוכן צריך. תוקן בשתי
+  שכבות: `LayoutBuilder` ב-`month_grid.dart` מחשב `childAspectRatio` מהגובה
+  הזמין בפועל (לא ריבוע קבוע), ו-`FittedBox(scaleDown)` ב-`day_cell.dart`
+  כרשת ביטחון נגד overflow תחת `textScaleFactor` גדול. טסט widget חדש
+  ב-360x640 + textScale 1.3 מאמת `tester.takeException()` ריק.
+- **תיקון #4 — מסך "אודות":** נוסף פריט "אודות" בהגדרות שפותח
+  `AboutScreen` חדש (שם/תגית/גרסה מותקנת דרך `appVersionProvider`/קרדיט
+  "מבית kalit" — הופעה ראשונה וצנועה של המיתוג — וכפתור ל-`showLicensePage`
+  המובנה של Flutter), כולו דרך ARB.
+- **תיקון #5 — מצב הדגמה (דרישת Google Play review):** מסך הכניסה קיבל
+  כפתור משני "כניסה במצב הדגמה" (`demoModeProvider`, `NotifierProvider<bool>`
+  לא-autoDispose); `AuthGate` מציג `CalendarShellScreen` במצב הדגמה בלי
+  אימות בכלל; `eventRepositoryProvider` זורע `InMemoryEventRepository` עם
+  שלושה אירועי דמו עבריים אמיתיים (`lib/domain/event/demo_events.dart`'s
+  `buildDemoEvents` — יום הולדת חוזר-שנתי, פגישה עם שעה, אירוע יום שלם).
+  ב-`CalendarShellScreen`: `reminderSyncServiceProvider`/
+  `googleSyncTriggerServiceProvider` כלל לא נצפים במצב הדגמה (בלי בקשת
+  הרשאת התראות, בלי קריאות Google/Firestore), ותפריט ה-overflow מציג
+  "התחבר" (מנקה את מצב הדגמה) במקום "התנתקות". ב-`SettingsScreen`: סעיף
+  הסנכרון מוצג עם `demoModeDisabled: true` (הודעה קבועה "דורש התחברות עם
+  Google", בלי לצפות כלל ב-`googleSyncStateProvider`/
+  `googleSyncTriggerServiceProvider`); ייצוא/שחזור גיבוי ממשיכים לעבוד
+  (עובדים ישירות מול ה-repository הנוכחי, לא מודעים למצב הדגמה).
+- **טסטים:** `test/features/event_editor/presentation/event_editor_screen_test.dart`
+  (טסט 360x640), `test/features/calendar/presentation/month_view_body_test.dart`
+  (טסט 360x640 + textScale 1.3), `test/features/settings/application/google_sync_trigger_service_test.dart`
+  (2 טסטים חדשים עם `FakeHangingSyncSettingsStore`), `test/features/settings/presentation/settings_screen_test.dart`
+  (טסט ספינר-לא-אינסופי + טסט מסך אודות), `test/features/auth/presentation/demo_mode_test.dart`
+  (קובץ חדש, 3 טסטים — כפתור דמו/תפריט overflow/הגדרות מנוטרלות).
+- **דורש פעולת משתמש:** פריסת ה-Security Rules בפועל (עדיין לא בוצעה —
+  ראה `firebase/README.md`, הערה חדשה שמבהירה שזה לא שינוי-תוכן אלא תזכורת
+  דחופה); בדיקה ידנית חוזרת על מכשיר אמיתי של חמשת התיקונים (לא ניתן לאמת
+  חזותית בסביבת הסוכן — אין Android SDK/emulator).
 
 ## 2026-07-06 — M7 הושלם (גיבוי/שחזור, הכנת שחרור, ליטוש) — v1.0 feature-complete
 

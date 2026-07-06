@@ -96,6 +96,13 @@ class _HebrewDatePickerSheetState extends ConsumerState<HebrewDatePickerSheet> {
     final int rangeEnd = widget.initialDate.year + _yearRangeRadius;
     return DropdownButtonFormField<int>(
       value: _year,
+      // Without `isExpanded`, a `DropdownButtonFormField` sizes its closed
+      // display to its widest item's intrinsic width rather than the space
+      // `Expanded` actually gives it in the row above — on a narrow phone
+      // (360dp / 3 columns) that overflowed the row by a fraction of a
+      // pixel, the same class of real-device layout bug as the month grid
+      // fix (`day_cell.dart`/`month_grid.dart`).
+      isExpanded: true,
       decoration: InputDecoration(labelText: l10n.hebrewDatePickerYearLabel),
       items: <DropdownMenuItem<int>>[
         for (int year = rangeStart; year <= rangeEnd; year++)
@@ -119,6 +126,7 @@ class _HebrewDatePickerSheetState extends ConsumerState<HebrewDatePickerSheet> {
   ) {
     return DropdownButtonFormField<HebrewMonth>(
       value: _month,
+      isExpanded: true,
       decoration: InputDecoration(labelText: l10n.hebrewDatePickerMonthLabel),
       items: <DropdownMenuItem<HebrewMonth>>[
         for (final HebrewMonth month in months)
@@ -138,6 +146,7 @@ class _HebrewDatePickerSheetState extends ConsumerState<HebrewDatePickerSheet> {
   Widget _dayDropdown(int maxDay, AppLocalizations l10n) {
     return DropdownButtonFormField<int>(
       value: _day,
+      isExpanded: true,
       decoration: InputDecoration(labelText: l10n.hebrewDatePickerDayLabel),
       items: <DropdownMenuItem<int>>[
         for (int day = 1; day <= maxDay; day++)

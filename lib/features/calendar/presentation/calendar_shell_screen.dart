@@ -8,6 +8,7 @@ import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/auth_providers.dart';
+import '../../auth/application/demo_mode_provider.dart';
 import '../../event_editor/presentation/event_editor_screen.dart';
 import '../../notifications/application/reminder_providers.dart';
 import '../../settings/application/google_sync_providers.dart';
@@ -40,31 +41,42 @@ class CalendarShellScreen extends ConsumerWidget {
     final CalendarViewState state = ref.watch(calendarViewProvider);
     final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final bool demoMode = ref.watch(demoModeProvider);
 
-    // M4: keeps `ReminderSyncService` alive (subscribed + scheduling) for as
-    // long as this screen — the only one shown while signed in — is on
-    // screen; `autoDispose` tears it down (subscription + every scheduled
-    // notification cancelled) once it isn't, i.e. on sign-out.
-    ref.watch(reminderSyncServiceProvider);
-    // M5a: same lifecycle for the Google Calendar sync trigger service —
-    // keeps its app-open/post-edit-debounce triggers alive whenever the
-    // calendar shell is on screen (not just while the settings screen
-    // itself is open), torn down on sign-out.
-    ref.watch(googleSyncTriggerServiceProvider);
-    // Requests notification permission once ever (persisted flag); shows a
-    // Hebrew rationale snackbar only if it was denied.
-    ref.listen<AsyncValue<bool>>(reminderPermissionProvider, (
-      AsyncValue<bool>? previous,
-      AsyncValue<bool> next,
-    ) {
-      next.whenData((bool granted) {
-        if (!granted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.notificationsPermissionDeniedMessage)),
-          );
-        }
+    // Task brief #5 (demo mode): none of the background services below may
+    // start while in demo mode — no notification permission prompt, no
+    // Google/Firestore sync trigger at all, matching "no Firestore/Google
+    // calls at all in demo mode". Skipping `ref.watch`/`ref.listen`
+    // entirely (rather than starting and immediately no-op-ing) means the
+    // underlying `autoDispose` providers are never even built.
+    if (!demoMode) {
+      // M4: keeps `ReminderSyncService` alive (subscribed + scheduling) for
+      // as long as this screen — the only one shown while signed in — is on
+      // screen; `autoDispose` tears it down (subscription + every scheduled
+      // notification cancelled) once it isn't, i.e. on sign-out.
+      ref.watch(reminderSyncServiceProvider);
+      // M5a: same lifecycle for the Google Calendar sync trigger service —
+      // keeps its app-open/post-edit-debounce triggers alive whenever the
+      // calendar shell is on screen (not just while the settings screen
+      // itself is open), torn down on sign-out.
+      ref.watch(googleSyncTriggerServiceProvider);
+      // Requests notification permission once ever (persisted flag); shows a
+      // Hebrew rationale snackbar only if it was denied.
+      ref.listen<AsyncValue<bool>>(reminderPermissionProvider, (
+        AsyncValue<bool>? previous,
+        AsyncValue<bool> next,
+      ) {
+        next.whenData((bool granted) {
+          if (!granted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.notificationsPermissionDeniedMessage),
+              ),
+            );
+          }
+        });
       });
-    });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -88,14 +100,25 @@ class CalendarShellScreen extends ConsumerWidget {
             onSelected: (_OverflowAction action) {
               switch (action) {
                 case _OverflowAction.signOut:
-                  unawaited(_confirmSignOut(context, ref, l10n));
+                  if (demoMode) {
+                    // Task brief #5: leaving demo mode just clears the flag
+                    // — there is no real session to sign out of, and the
+                    // auth gate immediately swaps back to `SignInScreen`.
+                    ref.read(demoModeProvider.notifier).disable();
+                  } else {
+                    unawaited(_confirmSignOut(context, ref, l10n));
+                  }
               }
             },
             itemBuilder: (BuildContext context) =>
                 <PopupMenuEntry<_OverflowAction>>[
                   PopupMenuItem<_OverflowAction>(
                     value: _OverflowAction.signOut,
-                    child: Text(l10n.signOutAction),
+                    child: Text(
+                      demoMode
+                          ? l10n.signInReturnToSignInAction
+                          : l10n.signOutAction,
+                    ),
                   ),
                 ],
           ),

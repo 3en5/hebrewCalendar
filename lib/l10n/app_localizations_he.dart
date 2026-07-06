@@ -152,6 +152,12 @@ class AppLocalizationsHe extends AppLocalizations {
   String get signInErrorMessage => 'אירעה שגיאה בכניסה. נסה שוב.';
 
   @override
+  String get signInDemoModeButton => 'כניסה במצב הדגמה';
+
+  @override
+  String get signInReturnToSignInAction => 'התחבר';
+
+  @override
   String get signOutAction => 'התנתקות';
 
   @override
@@ -235,6 +241,16 @@ class AppLocalizationsHe extends AppLocalizations {
   String get settingsBackgroundSyncStatusOff => 'כבוי';
 
   @override
+  String get settingsGoogleSyncLoadFailedMessage =>
+      'לא ניתן היה לטעון את הגדרות הסנכרון. בדוק את החיבור לאינטרנט ונסה שוב.';
+
+  @override
+  String get settingsGoogleSyncRetryButton => 'נסה שוב';
+
+  @override
+  String get settingsGoogleSyncDisabledDemoMessage => 'דורש התחברות עם Google';
+
+  @override
   String get settingsBackupSectionTitle => 'גיבוי ושחזור';
 
   @override
@@ -282,4 +298,19 @@ class AppLocalizationsHe extends AppLocalizations {
   String settingsVersionLabel(String version) {
     return 'גרסה $version';
   }
+
+  @override
+  String get settingsAboutTooltip => 'אודות';
+
+  @override
+  String get aboutScreenTitle => 'אודות';
+
+  @override
+  String get aboutTagline => 'יומן עברי';
+
+  @override
+  String get aboutDeveloperCredit => 'מבית kalit';
+
+  @override
+  String get aboutLicensesButton => 'רישיונות קוד פתוח';
 }
