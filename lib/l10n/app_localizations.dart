@@ -285,6 +285,36 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'אישור'**
   String get hebrewDatePickerConfirm;
+
+  /// Label for the Google sign-in button on the sign-in screen.
+  ///
+  /// In he, this message translates to:
+  /// **'כניסה עם Google'**
+  String get signInWithGoogleButton;
+
+  /// Snackbar message shown when Google sign-in fails for a reason other than user cancellation.
+  ///
+  /// In he, this message translates to:
+  /// **'אירעה שגיאה בכניסה. נסה שוב.'**
+  String get signInErrorMessage;
+
+  /// Label for the sign-out overflow menu item, and the confirm button in the sign-out confirmation dialog.
+  ///
+  /// In he, this message translates to:
+  /// **'התנתקות'**
+  String get signOutAction;
+
+  /// Title of the confirmation dialog shown before signing out.
+  ///
+  /// In he, this message translates to:
+  /// **'התנתקות'**
+  String get signOutConfirmTitle;
+
+  /// Body text of the confirmation dialog shown before signing out.
+  ///
+  /// In he, this message translates to:
+  /// **'האם להתנתק מהחשבון?'**
+  String get signOutConfirmMessage;
 }
 
 class _AppLocalizationsDelegate

@@ -1,0 +1,91 @@
+rules_version = '2';
+
+// Security rules for HebrewCalendar (ARCHITECTURE.md §4/§8, RULES.md §5).
+//
+// Everything is deny-by-default: only `users/{uid}` and `events/{eventId}`
+// have explicit rules, and a catch-all at the bottom denies every other
+// path (RULES.md §5.2 — no open rule, not even "temporarily").
+//
+// Length limits mirror `lib/domain/event/event_validation.dart`
+// (kEventTitleMaxLength=200, kEventDescriptionMaxLength=2000,
+// kEventLocationMaxLength=500) — client-side validation is never trusted
+// alone (RULES.md §5.5).
+//
+// Participant-based sharing (`participantUids`) is M6 scope — until then,
+// only the event's own `ownerUid` may read/write it.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // users/{uid} — profile document created/merged by the app on sign-in
+    // (see lib/features/auth/data/auth_repository.dart). Only the owning
+    // uid may read or write it, and only a fixed field whitelist is
+    // accepted.
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidUserDoc(request.resource.data);
+      allow update: if isOwner(uid) && isValidUserDoc(request.resource.data);
+      allow delete: if false;
+
+      function isValidUserDoc(data) {
+        return data.keys().hasOnly(['displayName', 'email', 'photoUrl', 'createdAt'])
+          && data.createdAt is timestamp
+          && (!('displayName' in data) || data.displayName == null || data.displayName is string)
+          && (!('email' in data) || data.email == null || data.email is string)
+          && (!('photoUrl' in data) || data.photoUrl == null || data.photoUrl is string);
+      }
+    }
+
+    // events/{eventId} — root collection (not nested under users/{uid}) so
+    // a future shared event can be read by its participants too (M6);
+    // until then only `ownerUid` may touch it.
+    match /events/{eventId} {
+      allow read: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && isValidEvent(request.resource.data);
+
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && isValidEvent(request.resource.data);
+
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+
+      function isValidEvent(data) {
+        return data.ownerUid is string
+          && data.calendarId is string
+          && data.title is string
+          && data.title.size() > 0
+          && data.title.size() <= 200
+          && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+          && (!('location' in data) || (data.location is string && data.location.size() <= 500))
+          && data.hebrewDate is map
+          && data.hebrewDate.year is int
+          && data.hebrewDate.month is string
+          && data.hebrewDate.day is int
+          && data.hebrewDate.day >= 1
+          && data.hebrewDate.day <= 30
+          && data.gregorianStart is timestamp
+          && data.gregorianEnd is timestamp
+          && data.allDay is bool
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp;
+      }
+    }
+
+    // Deny everything else explicitly (Firestore already denies unmatched
+    // paths by default, but this documents the intent for reviewers).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

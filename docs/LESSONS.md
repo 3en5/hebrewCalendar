@@ -47,6 +47,49 @@
   מוסק; הבעיה עולה רק כשרוצים להצהיר את הטיפוס של המשתנה/שדה במפורש
   (כפי שדורש RULES.md `always_declare_return_types`/קונבנציית הפרויקט).
 
+- **2026-07-06 · M2b, `google_sign_in` 7.x הוא API שנכתב מחדש:** גרסה 7
+  (הראשונה שהותקנה כברירת מחדל ע"י `flutter pub add`) שונה מהותית ממדריכי
+  Firebase+Google-Sign-In הנפוצים שמניחים גרסה 6: אין `GoogleSignIn()` +
+  `signIn()`. במקום זה: `GoogleSignIn.instance` (סינגלטון) חייב
+  `await initialize(...)` פעם אחת לפני כל שימוש אחר, ואז
+  `authenticate()` (זורק `GoogleSignInException` עם `code: canceled`
+  בביטול משתמש — לא מחזיר null כמו ב-v6). ל-`accessToken` יש עכשיו API
+  נפרד (`account.authorizationClient.authorizeScopes(...)`); `idToken`
+  בלבד (מ-`account.authentication.idToken`) מספיק ל-
+  `GoogleAuthProvider.credential` של `firebase_auth`
+  (`firebase_auth_platform_interface`: "At least one of ID token and
+  access token is required"). ב-Android, כל עוד ל-`google-services.json`
+  יש `oauth_client` עם `client_type: 3` (web client), `initialize()` לא
+  צריך `clientId`/`serverClientId` מפורשים — הפלאגין הנטיבי קורא את
+  `default_web_client_id` שנוצר אוטומטית.
+
+- **2026-07-06 · M2b, `Timestamp.toDate()` תמיד מחזיר `DateTime` מקומי
+  (local), לא UTC:** ב-`cloud_firestore` (v6.6.0), `Timestamp.fromDate`/
+  `.toDate()` משמרים את הרגע בזמן (`microsecondsSinceEpoch`) אבל **לא**
+  את הדגל `isUtc` — `toDate()` תמיד מחזיר `DateTime` מקומי. שוויון
+  `DateTime ==` בדארט **כן** מתחשב בדגל הזה (בניגוד ל-`isAtSameMomentAs`,
+  שמתעלם ממנו) — כך ש-`DateTime.utc(...) != DateTime` מקומי המייצג בדיוק
+  אותו רגע. בקוד האמיתי זה לא בעיה כי `DateTime.now()` (המקור היחיד
+  ל-`createdAt`/`updatedAt` באפליקציה) הוא כבר מקומי, כך שה-round-trip
+  דרך Firestore נשאר עקבי; אבל טסט round-trip ל-`event_firestore_mapper`
+  שהשתמש ב-fixture עם `DateTime.utc(...)` נכשל בשקט עם "נראה זהה" ב-
+  `toString()` (ש-`Event` לא כולל בו createdAt/updatedAt) — התיקון: לבנות
+  את ה-fixture עם `DateTime(...)` מקומי, לא `.utc(...)`, כדי לשקף איך
+  התאריכים נוצרים בפועל.
+
+- **2026-07-06 · M2b, `dl.google.com`/`maven.google.com` חסומים בסביבת
+  הסוכן:** ה-proxy של סביבת הפיתוח (`$HTTPS_PROXY`) חוסם את
+  `dl.google.com` (403, "policy denial") — וה-`google()` repository של
+  Gradle (`maven.google.com`) עושה redirect לשם, כך שגם הוא חסום בפועל.
+  המשמעות: אי אפשר להתקין Android SDK דרך `sdkmanager` בסביבה הזו (אין גם
+  SDK מותקן מראש), וגם Gradle לא מצליח למשוך את Android Gradle Plugin/
+  פלאגין `google-services`/AAR-ים של Firebase אפילו אם ה-SDK היה קיים.
+  `flutter build apk --debug` (ודומיו) לא ניתנים להרצה במלואם בסביבת
+  סוכן-המשנה — יש להסתמך על ה-job `build-apk` ב-CI (רץ על GitHub-hosted
+  runner עם Android SDK מותקן מראש ורשת פתוחה) לאימות בפועל של שינויי
+  Gradle/Firebase. אימות מקומי חלופי: `flutter analyze`+`flutter test`
+  (שני אלה לא תלויים ב-Android SDK) בלבד.
+
 - **2026-07-06 · M2a, מלכודת timing ב-broadcast `Stream` בזיכרון:** מימוש
   `InMemoryEventRepository.watchEventsForHebrewMonth` הראשוני היה `async*`
   ש-`yield`ת snapshot נוכחי ואז `yield*`ת `_changes.stream` ממופה. זה נשבר:

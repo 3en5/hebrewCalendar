@@ -7,10 +7,13 @@ import '../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/application/auth_providers.dart';
 import '../../event_editor/presentation/event_editor_screen.dart';
 import '../application/displayed_month_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
 import 'widgets/month_grid.dart';
+
+enum _OverflowAction { signOut }
 
 /// The Hebrew month view: a Google-Calendar-like grid the user swipes
 /// through (or steps through with chevron buttons) to move between Hebrew
@@ -101,6 +104,21 @@ class _MonthViewScreenState extends ConsumerState<MonthViewScreen> {
             tooltip: l10n.calendarNextMonth,
             onPressed: () => _stepPage(1),
           ),
+          PopupMenuButton<_OverflowAction>(
+            onSelected: (_OverflowAction action) {
+              switch (action) {
+                case _OverflowAction.signOut:
+                  unawaited(_confirmSignOut(context, l10n));
+              }
+            },
+            itemBuilder: (BuildContext context) =>
+                <PopupMenuEntry<_OverflowAction>>[
+                  PopupMenuItem<_OverflowAction>(
+                    value: _OverflowAction.signOut,
+                    child: Text(l10n.signOutAction),
+                  ),
+                ],
+          ),
         ],
       ),
       body: PageView.builder(
@@ -118,6 +136,32 @@ class _MonthViewScreenState extends ConsumerState<MonthViewScreen> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Future<void> _confirmSignOut(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(l10n.signOutConfirmTitle),
+        content: Text(l10n.signOutConfirmMessage),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.signOutAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed ?? false) {
+      await ref.read(authRepositoryProvider).signOut();
+    }
   }
 
   /// The initial Hebrew date pre-filled for a new event created from the

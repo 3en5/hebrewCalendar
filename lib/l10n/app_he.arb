@@ -132,5 +132,25 @@
   "hebrewDatePickerConfirm": "אישור",
   "@hebrewDatePickerConfirm": {
     "description": "Confirm button label in the Hebrew date picker sheet."
+  },
+  "signInWithGoogleButton": "כניסה עם Google",
+  "@signInWithGoogleButton": {
+    "description": "Label for the Google sign-in button on the sign-in screen."
+  },
+  "signInErrorMessage": "אירעה שגיאה בכניסה. נסה שוב.",
+  "@signInErrorMessage": {
+    "description": "Snackbar message shown when Google sign-in fails for a reason other than user cancellation."
+  },
+  "signOutAction": "התנתקות",
+  "@signOutAction": {
+    "description": "Label for the sign-out overflow menu item, and the confirm button in the sign-out confirmation dialog."
+  },
+  "signOutConfirmTitle": "התנתקות",
+  "@signOutConfirmTitle": {
+    "description": "Title of the confirmation dialog shown before signing out."
+  },
+  "signOutConfirmMessage": "האם להתנתק מהחשבון?",
+  "@signOutConfirmMessage": {
+    "description": "Body text of the confirmation dialog shown before signing out."
   }
 }

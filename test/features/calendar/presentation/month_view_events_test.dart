@@ -8,9 +8,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
 import 'package:hebrew_calendar/domain/event/event.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
+import 'package:hebrew_calendar/features/auth/application/auth_providers.dart';
 import 'package:hebrew_calendar/features/calendar/application/displayed_month_provider.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
 import 'package:hebrew_calendar/main.dart';
+
+import '../../../test_support/fake_auth_repository.dart';
 
 const HebrewDate _fixedMonth = HebrewDate(
   year: 5786,
@@ -44,13 +47,16 @@ Event _buildEvent() {
 
 Future<InMemoryEventRepository> _pumpFixedMonth(WidgetTester tester) async {
   final InMemoryEventRepository repository = InMemoryEventRepository();
+  final FakeAuthRepository auth = FakeAuthRepository(initialUser: testUser);
   addTearDown(repository.dispose);
+  addTearDown(auth.dispose);
 
   await tester.pumpWidget(
     ProviderScope(
       overrides: <Override>[
         displayedMonthProvider.overrideWith(_FixedMonthNotifier.new),
         eventRepositoryProvider.overrideWithValue(repository),
+        authRepositoryProvider.overrideWithValue(auth),
       ],
       child: const HebrewCalendarApp(),
     ),

@@ -1,8 +1,60 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: M2 מפוצל לשני חצאים — M2a (מודל אירועים + CRUD בזיכרון) הושלם ✅;
-M2b (חיווט Firebase: Auth, Firestore, Rules) ממתין לקונפיגורציית Firebase
-מהמשתמש.** (ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: M2 הושלם במלואו — M2a (מודל אירועים + CRUD בזיכרון) ✅ ו-M2b
+(חיווט Firebase: Auth, Firestore, Security Rules) ✅.** (ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — M2b הושלם (חצי שני של M2, חיווט Firebase)
+
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues), 132
+  טסטים עוברים (105 קיימים + 27 חדשים), `dart format --set-exit-if-changed`
+  נקי, בדיקת 500 שורות עוברת.
+- תלויות חדשות (נבחרו ע"י `flutter pub add` — גרסאות עדכניות עקביות זו עם
+  זו): `firebase_core: ^4.11.0`, `firebase_auth: ^6.5.4`,
+  `cloud_firestore: ^6.6.0`, `google_sign_in: ^7.2.0`. **`google_sign_in`
+  7.x הוא API שנכתב מחדש** (ראה LESSONS.md) לעומת המדריכים המוכרים מגרסה 6.
+- Gradle: `com.google.gms.google-services` (4.4.2) נוסף ב-
+  `android/settings.gradle.kts` (apply false) ומוחל ב-
+  `android/app/build.gradle.kts`; `minSdk` הועלה ל-23 (`firebase_auth`
+  מצהיר על כך במפורש). אין `firebase_options.dart` — Android קורא
+  `google-services.json` באופן טבעי דרך הפלאגין.
+- נוצר `lib/domain/auth/` (`AppUser`, `AuthRepository` מופשט — טהורים,
+  ללא Firebase/Flutter) ו-`lib/features/auth/` (`FirebaseAuthRepository`,
+  `authProviders`, `SignInScreen`, `AuthGate`). שער האימות ב-`main.dart`
+  מחליף בין `SignInScreen`/`MonthViewScreen`; פעולת התנתקות עם דיאלוג אישור
+  נוספה לתפריט ה-overflow של `MonthViewScreen`. מסמך `users/{uid}`
+  נוצר/ממוזג מתוך ה-repository (לא מ-widget) בכניסה ראשונה.
+- נוצר `lib/data/firestore_event_repository.dart` (+`event_firestore_mapper.dart`
+  הטהור, הנבדק ביחידה בלי Firestore אמיתי): שאילתה לפי `ownerUid`+טווח
+  `gregorianStart` הנגזר מ-`HebrewDateEngine`; `createdAt`/`updatedAt`
+  נכתבים כ-`FieldValue.serverTimestamp()` בשרת, והאובייקט המוחזר משתמש
+  בקירוב מקומי (`DateTime.now()`) עד שהערך האמיתי מסונכרן חזרה — ראה
+  LESSONS.md לגבי ה-gotcha של השוואת `DateTime` אחרי round-trip דרך
+  `Timestamp`. persistence לא-מקוון הופעל במפורש ב-`main.dart`.
+- `eventRepositoryProvider` עבר ל-`FirestoreEventRepository` כשמחוברים
+  (לפי `currentUserProvider`), אחרת `InMemoryEventRepository` (הנשאר קבוע
+  לטסטים). כל 105 הטסטים הקיימים תוקנו עם `FakeAuthRepository`/override
+  ל-`eventRepositoryProvider` כדי לעבור את שער האימות החדש בלי לגעת ב-
+  Firebase אמיתי; נוספו טסטים לשער האימות עצמו ולממפה ה-Firestore.
+- נוצר `firebase/firestore.rules`+`firebase/firestore.indexes.json`+
+  `firebase.json`+`.firebaserc` (פרויקט `hebrewcalendar-68363`) +
+  `firebase/README.md` (עברית, הוראות פריסה). **הרולז טרם פורסמו בפועל** —
+  ראה "נותר" למטה.
+
+### נותר / דורש פעולת משתמש
+- [ ] פריסת ה-Security Rules בפועל (`firebase deploy --only
+      firestore:rules,firestore:indexes` או הדבקה ידנית בקונסולה —
+      ראה `firebase/README.md`). עד אז Firestore חוסם הכול כברירת מחדל.
+- [ ] **לא ניתן היה להריץ `flutter build apk --debug` בסביבת הפיתוח
+      הנוכחית**: אין Android SDK מותקן, ולא ניתן להתקינו/למשוך ממנו
+      תלויות Gradle (AGP, פלאגין `google-services`, ה-AAR-ים של Firebase)
+      כי `dl.google.com`/`maven.google.com` חסומים ע"י ה-proxy של הסביבה
+      (אושר: `CONNECT` מוחזר 403 policy denial). אומת כל השאר (format,
+      analyze, 132 טסטים, אורך קבצים); ה-job `build-apk` הקיים ב-CI
+      (`.github/workflows/ci.yml`, שרץ על ubuntu-latest עם Android SDK
+      מותקן מראש) אמור לתפוס כל בעיית Gradle אמיתית בפעם הראשונה שהוא ירוץ
+      עם השינויים האלה — יש לעקוב אחריו.
+- [ ] אימות Rules מול Firebase Emulator Suite (TESTING_AND_DEPLOY.md §"פירמידה")
+      לא בוצע כאן מאותה סיבת רשת; מומלץ להריץ לפני production.
 
 ## 2026-07-06 — M2a הושלם (חצי ראשון של M2, ללא תלות ב-Firebase)
 - מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues),

@@ -107,4 +107,19 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get hebrewDatePickerConfirm => 'אישור';
+
+  @override
+  String get signInWithGoogleButton => 'כניסה עם Google';
+
+  @override
+  String get signInErrorMessage => 'אירעה שגיאה בכניסה. נסה שוב.';
+
+  @override
+  String get signOutAction => 'התנתקות';
+
+  @override
+  String get signOutConfirmTitle => 'התנתקות';
+
+  @override
+  String get signOutConfirmMessage => 'האם להתנתק מהחשבון?';
 }

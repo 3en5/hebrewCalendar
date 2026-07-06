@@ -3,6 +3,9 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Processes google-services.json (M2b — Firebase wiring); version
+    // declared in android/settings.gradle.kts.
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -24,7 +27,9 @@ android {
         applicationId = "com.hebrewcalendar.hebrew_calendar"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Raised from flutter.minSdkVersion (21): firebase_auth's Android
+        // implementation declares minSdkVersion 23 (M2b — Firebase wiring).
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
