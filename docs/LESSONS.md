@@ -345,3 +345,12 @@
   `pumpWidget` בטסט מונעת לגמרי `MissingPluginException` בלי צורך ב-provider
   override כלל. שימושי כשמשתמשים בפאקג' ישירות (לא דרך שכבת domain/interface
   משלנו) ורוצים את דרך הטסט הכי קרובה למה שהמתחזק/הפאקג' עצמו תומך בו.
+
+- **2026-07-06 · פיקוח על CI — לבדוק את ג'וב ה-build אחרי כל שלב, לא רק
+  את הטסטים:** ג'וב `build-apk` נכשל בשקט מאז M4 (`flutter_local_notifications`
+  דורשת core library desugaring — `isCoreLibraryDesugaringEnabled = true` +
+  תלות `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")`)
+  והכשל התגלה רק ב-M7, כי אחרי M3b נבדק רק ג'וב הטסטים. מכיוון שבסביבת
+  הפיתוח אי אפשר להריץ `flutter build` (ראה לקח dl.google.com), ג'וב
+  ה-build ב-CI הוא **האימות היחיד** לשינויי Gradle/פלאגינים — חובה לוודא
+  שהוא ירוק אחרי כל milestone שמוסיף פלאגין עם קוד נטיבי.
