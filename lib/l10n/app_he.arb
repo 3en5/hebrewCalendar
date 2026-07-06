@@ -1,0 +1,15 @@
+{
+  "@@locale": "he",
+  "appTitle": "יומן עברי",
+  "@appTitle": {
+    "description": "The application title, shown in the app bar and OS task switcher."
+  },
+  "placeholderMilestoneStatus": "M0 — תשתית מוכנה",
+  "@placeholderMilestoneStatus": {
+    "description": "Status text on the M0 placeholder home screen, confirming infrastructure is ready."
+  },
+  "placeholderScreenSubtitle": "מסך זמני לבדיקת תשתית האפליקציה",
+  "@placeholderScreenSubtitle": {
+    "description": "Subtitle explaining the placeholder screen is temporary, shown under the status text."
+  }
+}
