@@ -216,6 +216,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.2"
+  kosher_dart:
+    dependency: "direct main"
+    description:
+      name: kosher_dart
+      sha256: e32225eab8439fce90af7ceee4929bf2b8dea3dac57c7638df69f9451ef78ef5
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.18"
   leak_tracker:
     dependency: transitive
     description:
