@@ -1,8 +1,70 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: M5 הושלם במלואו — מנוע סנכרון Google Calendar דו-כיווני
-(טריגרים בפורגראונד, M5a) + סנכרון תקופתי ברקע דרך WorkManager (M5b).**
-M6 (שיתוף והעשרה) הבא בתור. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: M7 הושלם — גיבוי/שחזור מקומי, הכנת שחרור (חתימה אמיתית +
+ProGuard/R8 + workflow ידני), וליטוש. v1.0 feature-complete בהמתנה לבדיקה
+ידנית על מכשיר אמיתי + הגשה ל-Store.** M6 (שיתוף והעשרה) נדחה בהחלטת משתמש —
+ראה WISHLIST.md. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — M7 הושלם (גיבוי/שחזור, הכנת שחרור, ליטוש) — v1.0 feature-complete
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 334 טסטים עוברים (303 קיימים
+  + 31 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות עוברת.
+- תלויות חדשות: `share_plus: ^12.0.2`, `file_picker: ^11.0.2`,
+  `package_info_plus: ^9.0.1`.
+- **גיבוי/שחזור מקומי (ARCHITECTURE.md §7 מפורט):**
+  `lib/domain/backup/backup_codec.dart` (קידוד/פענוח JSON טהור, `DateTime`
+  כ-ISO 8601 במקום `Timestamp`, `BackupFormatVersionError` לגרסה עתידית),
+  `lib/data/backup/backup_service.dart` (`abstract class BackupService` +
+  `FileBackupService` — `exportToFile`/`shareBackup` דרך `file_picker`/
+  `share_plus`, `importFromFile` -> `restoreEvents` עם סמנטיקת merge-by-id:
+  אירוע עם `id` תואם נדרס, כל השאר נוצרים עם `id` חדש, שום דבר לא נמחק),
+  `lib/features/settings/presentation/widgets/backup_section.dart` (סעיף
+  "גיבוי ושחזור" בהגדרות: ייצוא/שיתוף/שחזור עם דיאלוג אישור, התקדמות,
+  סנאקברים עבריים). **סטייה קטנה:** אין הצפנת קובץ הגיבוי (הניסוח המקורי
+  ב-ARCHITECTURE.md §7 הזכיר "JSON מוצפן") — תקציר המשימה בפועל לא דרש
+  הצפנה; נרשם ל-WISHLIST.md כהרחבה עתידית, ו-ARCHITECTURE.md §7 עודכן
+  לשקף את המימוש בפועל.
+- **הכנת שחרור:** `android/app/build.gradle.kts` — `signingConfigs.release`
+  אמיתי הנקרא מ-`android/key.properties` (גיטיגנור) כשהוא קיים, עם נפילה
+  חזרה ל-debug signing כשאינו (כך ש-`flutter run --release`/CI הרגיל ממשיכים
+  לעבוד ללא שינוי); `isMinifyEnabled`/`isShrinkResources` מופעלים לשחרור עם
+  `android/app/proguard-rules.pro` (keep rules ל-`flutter_local_notifications`/
+  `workmanager`/Firebase/`google_sign_in`). `.github/workflows/release.yml`
+  (`workflow_dispatch` ידני בלבד — לא רץ על push/PR): מוודא שחמשת ה-secrets
+  קיימים (`KEYSTORE_BASE64`/`KEYSTORE_PASSWORD`/`KEY_ALIAS`/`KEY_PASSWORD`/
+  `GOOGLE_SERVICES_JSON`), מפענח את ה-keystore, כותב `key.properties`,
+  מחשב `versionName`/`versionCode` מ-`pubspec.yaml` (`versionCode` = מספר
+  ה-build ב-pubspec + `GITHUB_RUN_NUMBER`, כדי שיעלה בכל הרצה בלי לערוך
+  ידנית), מריץ `flutter build appbundle --release`, ומעלה את ה-`.aab`
+  כ-artifact. `docs/RELEASE.md` (עברית) — הליך מלא: יצירת keystore
+  (`keytool`), רישום SHA-1 ב-Firebase, הוספת ה-secrets, הרצת ה-workflow,
+  העלאה ל-Play Console, ואזהרת OAuth scope verification (`calendar.events`
+  הוא sensitive scope — חובה verification של Google לפני הפצה ציבורית).
+- **ליטוש:** גרסת אפליקציה בהגדרות (`package_info_plus`,
+  `app_version_provider.dart`, "גרסה X.Y.Z" בתחתית מסך ההגדרות); error
+  boundary גלובלי ב-`main.dart` (`FlutterError.onError` +
+  `runZonedGuarded`, לוג ל-`debugPrint` — Crashlytics נדחה ל-WISHLIST
+  במפורש, ראה שם); ביקורת דיאלוגי אישור לפעולות הרסניות — מחיקת אירוע/סדרה
+  והתנתקות כבר היו קיימים (M2b/M3a), נוסף דיאלוג אישור לשחזור מגיבוי שמסביר
+  את סמנטיקת ה-merge (החדש היחיד שהיה חסר). אייקון אפליקציה מותאם אישית לא
+  מומש (אין כלי יצירת תמונות בסביבת הסוכן) — נרשם ל-WISHLIST.md.
+- **טסטים:** `test/domain/backup/backup_codec_test.dart` (round-trip לכל
+  צורת שדה — זמנים, תזכורות מרובות, כל סוגי החזרתיות, מצבי סנכרון גוגל
+  לא-ברירת-מחדל, וגרסת פורמט עתידית/ישנה), `test/data/backup/backup_service_test.dart`
+  (`buildBackupJson`/`restoreEvents` מול `InMemoryEventRepository` — יצירה/
+  עדכון לפי merge-by-id, סימון dirty, אי-מחיקה, round-trip מלא דרך הקודק),
+  `test/features/settings/presentation/widgets/backup_section_test.dart`
+  (טסטי widget עם `FakeBackupService` — ייצוא/שיתוף/שחזור, דיאלוג אישור,
+  הודעות הצלחה/כישלון/גרסה-לא-נתמכת). `settings_screen_test.dart` הקיים
+  קיבל override ל-`backupServiceProvider` ו-`PackageInfo.setMockInitialValues`
+  (סעיף הגרסה החדש קורא ל-`PackageInfo.fromPlatform()`).
+- **דורש פעולת משתמש:** יצירת keystore שחרור אמיתי + הרצת
+  `.github/workflows/release.yml` בפועל (לא ניתן להריץ `flutter build
+  appbundle` בסביבת הסוכן — אין Android SDK, ראה LESSONS.md); בדיקה ידנית
+  על מכשיר אמיתי של יצוא/שיתוף/שחזור גיבוי (הפלאגינים `file_picker`/
+  `share_plus` לא ניתנים להרצה בסביבת הסוכן); OAuth scope verification
+  (`calendar.events`) לפני הפצה ציבורית (`docs/RELEASE.md` §7) — יכול לקחת
+  ימים-שבועות, לתכנן מראש.
 
 ## 2026-07-06 — M5b הושלם (סנכרון תקופתי ברקע דרך WorkManager) — M5 הושלם במלואו
 

@@ -11,13 +11,16 @@ import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
 import 'package:hebrew_calendar/data/sync/in_memory_sync_settings_store.dart';
 import 'package:hebrew_calendar/features/auth/application/auth_providers.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
+import 'package:hebrew_calendar/features/settings/application/backup_providers.dart';
 import 'package:hebrew_calendar/features/settings/application/google_sync_providers.dart';
 import 'package:hebrew_calendar/features/settings/presentation/settings_screen.dart';
 import 'package:hebrew_calendar/l10n/app_localizations.dart';
 import 'package:hebrew_calendar/l10n/app_localizations_he.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../test_support/fake_auth_repository.dart';
 import '../../../test_support/fake_background_sync_scheduler.dart';
+import '../../../test_support/fake_backup_service.dart';
 import '../../../test_support/fake_google_calendar_api.dart';
 
 Widget _wrap(List<Override> overrides) {
@@ -38,6 +41,18 @@ Widget _wrap(List<Override> overrides) {
 }
 
 void main() {
+  // M7: the settings screen's version footer reads `PackageInfo.fromPlatform()`
+  // — this is the package's own supported test seam, avoiding the real
+  // platform channel (which would throw `MissingPluginException` under
+  // plain `flutter test`, per docs/LESSONS.md's note on plugin channels).
+  PackageInfo.setMockInitialValues(
+    appName: 'hebrew_calendar',
+    packageName: 'com.hebrewcalendar.hebrew_calendar',
+    version: '1.0.0',
+    buildNumber: '1',
+    buildSignature: '',
+  );
+
   testWidgets(
     'enabling sync requests Google Calendar access and turns the switch on',
     (WidgetTester tester) async {
@@ -58,6 +73,7 @@ void main() {
             InMemorySyncSettingsStore(),
           ),
           backgroundSyncSchedulerProvider.overrideWithValue(scheduler),
+          backupServiceProvider.overrideWithValue(FakeBackupService()),
         ]),
       );
       await tester.pumpAndSettle();
@@ -114,6 +130,7 @@ void main() {
           backgroundSyncSchedulerProvider.overrideWithValue(
             FakeBackgroundSyncScheduler(),
           ),
+          backupServiceProvider.overrideWithValue(FakeBackupService()),
         ]),
       );
       await tester.pumpAndSettle();
@@ -148,6 +165,7 @@ void main() {
         backgroundSyncSchedulerProvider.overrideWithValue(
           FakeBackgroundSyncScheduler(),
         ),
+        backupServiceProvider.overrideWithValue(FakeBackupService()),
       ]),
     );
     await tester.pumpAndSettle();

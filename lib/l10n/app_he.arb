@@ -303,5 +303,74 @@
   "settingsBackgroundSyncStatusOff": "כבוי",
   "@settingsBackgroundSyncStatusOff": {
     "description": "Background sync status value (M5b) when Google Calendar sync is disabled, so no periodic background task is registered."
+  },
+  "settingsBackupSectionTitle": "גיבוי ושחזור",
+  "@settingsBackupSectionTitle": {
+    "description": "Section heading for the local-file backup/restore settings (M7)."
+  },
+  "settingsBackupDescription": "ייצוא כל האירועים לקובץ, ושחזור מקובץ קיים. הנתונים חיים גם ב-Google, אך זהו גיבוי ידני נוסף שנשמר אצלך.",
+  "@settingsBackupDescription": {
+    "description": "Explanatory text under the backup section heading (M7)."
+  },
+  "settingsBackupExportButton": "ייצוא גיבוי",
+  "@settingsBackupExportButton": {
+    "description": "Button label that exports every event to a JSON file the user saves directly (M7)."
+  },
+  "settingsBackupShareTooltip": "שיתוף קובץ הגיבוי",
+  "@settingsBackupShareTooltip": {
+    "description": "Tooltip for the icon button that shares the backup file via the OS share sheet instead of saving it directly (M7)."
+  },
+  "settingsBackupImportButton": "שחזור מגיבוי",
+  "@settingsBackupImportButton": {
+    "description": "Button label that starts the restore-from-backup-file flow (M7)."
+  },
+  "settingsBackupImportConfirmTitle": "שחזור מגיבוי",
+  "@settingsBackupImportConfirmTitle": {
+    "description": "Title of the confirmation dialog shown before restoring from a backup file (M7)."
+  },
+  "settingsBackupImportConfirmMessage": "אירועים מהקובץ ישולבו עם האירועים הקיימים: אירוע עם מזהה זהה יוחלף, ואירועים חדשים יתווספו. שום אירוע קיים לא יימחק. להמשיך?",
+  "@settingsBackupImportConfirmMessage": {
+    "description": "Body text of the confirmation dialog before restoring from a backup file, explaining the merge-by-id semantics (M7)."
+  },
+  "settingsBackupImportConfirmButton": "שחזור",
+  "@settingsBackupImportConfirmButton": {
+    "description": "Confirm button label in the restore-from-backup confirmation dialog (M7)."
+  },
+  "settingsBackupExportSuccessMessage": "הגיבוי נשמר בהצלחה",
+  "@settingsBackupExportSuccessMessage": {
+    "description": "Snackbar shown after a backup file was saved/shared successfully (M7)."
+  },
+  "settingsBackupExportErrorMessage": "אירעה שגיאה בייצוא הגיבוי",
+  "@settingsBackupExportErrorMessage": {
+    "description": "Snackbar shown when exporting/sharing the backup file fails (M7)."
+  },
+  "settingsBackupImportSuccessMessage": "השחזור הושלם: {created} אירועים חדשים, {updated} עודכנו",
+  "@settingsBackupImportSuccessMessage": {
+    "description": "Snackbar shown after a successful restore, summarizing how many events were created vs. overwritten (M7).",
+    "placeholders": {
+      "created": {
+        "type": "int"
+      },
+      "updated": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsBackupImportErrorMessage": "אירעה שגיאה בשחזור הגיבוי",
+  "@settingsBackupImportErrorMessage": {
+    "description": "Snackbar shown when restoring from a backup file fails (M7)."
+  },
+  "settingsBackupImportUnsupportedVersionMessage": "קובץ הגיבוי נוצר בגרסה חדשה יותר של האפליקציה ואינו נתמך כאן",
+  "@settingsBackupImportUnsupportedVersionMessage": {
+    "description": "Snackbar shown when the backup file's format version is newer than this build of the app understands (M7)."
+  },
+  "settingsVersionLabel": "גרסה {version}",
+  "@settingsVersionLabel": {
+    "description": "Footer text on the settings screen showing the installed app version (M7).",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
   }
 }

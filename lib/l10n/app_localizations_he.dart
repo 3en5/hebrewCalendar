@@ -233,4 +233,53 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get settingsBackgroundSyncStatusOff => 'כבוי';
+
+  @override
+  String get settingsBackupSectionTitle => 'גיבוי ושחזור';
+
+  @override
+  String get settingsBackupDescription =>
+      'ייצוא כל האירועים לקובץ, ושחזור מקובץ קיים. הנתונים חיים גם ב-Google, אך זהו גיבוי ידני נוסף שנשמר אצלך.';
+
+  @override
+  String get settingsBackupExportButton => 'ייצוא גיבוי';
+
+  @override
+  String get settingsBackupShareTooltip => 'שיתוף קובץ הגיבוי';
+
+  @override
+  String get settingsBackupImportButton => 'שחזור מגיבוי';
+
+  @override
+  String get settingsBackupImportConfirmTitle => 'שחזור מגיבוי';
+
+  @override
+  String get settingsBackupImportConfirmMessage =>
+      'אירועים מהקובץ ישולבו עם האירועים הקיימים: אירוע עם מזהה זהה יוחלף, ואירועים חדשים יתווספו. שום אירוע קיים לא יימחק. להמשיך?';
+
+  @override
+  String get settingsBackupImportConfirmButton => 'שחזור';
+
+  @override
+  String get settingsBackupExportSuccessMessage => 'הגיבוי נשמר בהצלחה';
+
+  @override
+  String get settingsBackupExportErrorMessage => 'אירעה שגיאה בייצוא הגיבוי';
+
+  @override
+  String settingsBackupImportSuccessMessage(int created, int updated) {
+    return 'השחזור הושלם: $created אירועים חדשים, $updated עודכנו';
+  }
+
+  @override
+  String get settingsBackupImportErrorMessage => 'אירעה שגיאה בשחזור הגיבוי';
+
+  @override
+  String get settingsBackupImportUnsupportedVersionMessage =>
+      'קובץ הגיבוי נוצר בגרסה חדשה יותר של האפליקציה ואינו נתמך כאן';
+
+  @override
+  String settingsVersionLabel(String version) {
+    return 'גרסה $version';
+  }
 }

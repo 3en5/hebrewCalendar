@@ -304,3 +304,44 @@
   try/catch בתוך מימוש הפלאגין. לקח כללי: כשמוסיפים שירות רקע (subscription
   ממושך + timer) שמופעל אוטומטית ממסך קיים, כל טסט widget שמרנדר את המסך
   הזה צריך override מפורש לתלות שלו (לא להסתמך על חוסן פנימי בלבד).
+
+- **2026-07-06 · M7, `file_picker` 11.0.2: `FilePicker` הוא `abstract final
+  class` עם שיטות static — אין `FilePicker.platform`:** מדריכים/דוגמאות
+  ישנות (גרסאות קודמות של הפאקג') קוראות ל-`FilePicker.platform.saveFile(...)`/
+  `.pickFiles(...)`, אבל ב-11.0.2 `FilePicker` עצמו מכריז את `saveFile`/
+  `pickFiles`/`getDirectoryPath` כ-`static` ישירות (עוטפות פנימית את
+  `FilePickerPlatform.instance` בעצמן) — קריאה ל-`FilePicker.platform` נכשלת
+  בקומפילציה (`undefined_getter`). הקריאה הנכונה: `FilePicker.saveFile(...)`/
+  `FilePicker.pickFiles(...)` ישירות על המחלקה. בנוסף: `saveFile`'s `bytes`
+  הוא **חובה** באנדרואיד/iOS (זורק `ArgumentError` אם `null`) — הפלאגין כותב
+  את הבייטים בעצמו ומחזיר את הנתיב שנשמר אליו, שלא כמו בדסקטופ שבו צריך
+  לכתוב את הקובץ ידנית לנתיב המוחזר.
+
+- **2026-07-06 · M7, `share_plus` 12.0.2: `XFile.fromData`'s `name` מתעלם
+  באנדרואיד/iOS — יש להשתמש ב-`ShareParams.fileNameOverrides`:** בבניית
+  `XFile` מ-bytes דרך `XFile.fromData(bytes, name: '...')` (ה-implementation
+  המבוסס `dart:io`, לא web), הפרמטר `name` פשוט לא נשמר/נקרא בחזרה — הערה
+  בקוד המקור של `cross_file` מתעדת זאת במפורש. כדי לתת לקובץ המשותף שם קובץ
+  משמעותי (`hebrew-calendar-backup-YYYY-MM-DD.json` ולא שם זמני חסר משמעות),
+  יש להעביר את השם דרך `ShareParams.fileNameOverrides` (רשימה במקביל ל-
+  `files`) במקום — זה נצרך בפועל בכל הפלטפורמות, כולל אלה שבהן `XFile.name`
+  מתעלם.
+
+- **2026-07-06 · M7, `flutter_riverpod`/`riverpod` 3.3.2: אין `AsyncValue.valueOrNull`
+  — הגטר הנכון הוא `.value`:** גרסאות/תיעוד מאוחרים יותר של Riverpod מציגים
+  `valueOrNull` כדרך ה"בטוחה" לקרוא ערך מ-`AsyncValue` בלי לזרוק (בניגוד
+  ל-`requireValue`), אבל ב-3.3.2 המותקנת בפועל השם של אותו גטר הוא פשוט
+  `value` (`ValueT? get value => _value?.$1;`) — `valueOrNull` לא קיים כלל
+  ומדליק `undefined_getter`. לקח כללי: כמו עם `google_sign_in`/`workmanager`
+  קודם (ראה למעלה) — לבדוק את ה-API בפועל של הגרסה המותקנת (`grep` בתוך
+  `.pub-cache`) לפני שמניחים ששם/API מתועד/נפוץ ברשת תואם את הגרסה שנעולה
+  ב-`pubspec.yaml`.
+
+- **2026-07-06 · M7, `package_info_plus` חושף `setMockInitialValues` כ-seam
+  רשמי לטסטים:** בניגוד לפלאגינים אחרים בפרויקט (`flutter_local_notifications`,
+  `workmanager`) שנעטפים תמיד ב-fake/interface כדי שטסטים לא ייגעו בערוץ
+  האמיתי, `PackageInfo.fromPlatform()` שומר תוצאה ב-cache סטטי (`_fromPlatform`)
+  ש-`PackageInfo.setMockInitialValues(...)` ממלא מראש — קריאה לזה לפני
+  `pumpWidget` בטסט מונעת לגמרי `MissingPluginException` בלי צורך ב-provider
+  override כלל. שימושי כשמשתמשים בפאקג' ישירות (לא דרך שכבת domain/interface
+  משלנו) ורוצים את דרך הטסט הכי קרובה למה שהמתחזק/הפאקג' עצמו תומך בו.

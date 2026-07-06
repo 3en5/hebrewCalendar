@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -6,6 +9,20 @@ plugins {
     // Processes google-services.json (M2b — Firebase wiring); version
     // declared in android/settings.gradle.kts.
     id("com.google.gms.google-services")
+}
+
+// M7 (docs/RELEASE.md): the real release keystore/credentials live outside
+// the repo in android/key.properties (gitignored — RULES.md §5.4), written
+// by a developer locally or by .github/workflows/release.yml from GitHub
+// Secrets. When that file is absent (every other build: local `flutter run
+// --release`, CI's debug-only jobs, a contributor who hasn't generated a
+// release key), the release build type falls back to the committed debug
+// signing config below so those builds keep working unchanged.
+val keystorePropertiesFile = rootProject.file("key.properties")
+val hasReleaseSigning = keystorePropertiesFile.exists()
+val keystoreProperties = Properties()
+if (hasReleaseSigning) {
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
 }
 
 android {
@@ -41,21 +58,48 @@ android {
         // Deterministic debug keystore committed to the repo so every build
         // (local or CI) carries the same SHA-1 — the one registered in the
         // Firebase console. Without this, Google Sign-In fails on APKs built
-        // on other machines/runners. Debug-only key; the release key will be
-        // separate and secret (M7).
+        // on other machines/runners. Debug-only key; the release key is
+        // separate and secret (M7, below).
         getByName("debug") {
             storeFile = rootProject.file("debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+        // M7: only registered when android/key.properties actually exists,
+        // so a checkout without a release keystore doesn't fail Gradle sync
+        // just from referencing a missing file.
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
     }
 
     buildTypes {
         release {
-            // TODO(M7): dedicated release signing config from secrets.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // M7: real release signing when android/key.properties is
+            // present (a developer's local `flutter build appbundle
+            // --release`, or .github/workflows/release.yml); falls back to
+            // the committed debug key otherwise, so `flutter run --release`
+            // and every other build keep working unchanged (docs/RELEASE.md).
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+            // M7: shrink/obfuscate the release build. Keep rules for the
+            // plugins that need them (flutter_local_notifications,
+            // workmanager, Firebase) live in proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

@@ -519,6 +519,90 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'כבוי'**
   String get settingsBackgroundSyncStatusOff;
+
+  /// Section heading for the local-file backup/restore settings (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'גיבוי ושחזור'**
+  String get settingsBackupSectionTitle;
+
+  /// Explanatory text under the backup section heading (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'ייצוא כל האירועים לקובץ, ושחזור מקובץ קיים. הנתונים חיים גם ב-Google, אך זהו גיבוי ידני נוסף שנשמר אצלך.'**
+  String get settingsBackupDescription;
+
+  /// Button label that exports every event to a JSON file the user saves directly (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'ייצוא גיבוי'**
+  String get settingsBackupExportButton;
+
+  /// Tooltip for the icon button that shares the backup file via the OS share sheet instead of saving it directly (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'שיתוף קובץ הגיבוי'**
+  String get settingsBackupShareTooltip;
+
+  /// Button label that starts the restore-from-backup-file flow (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'שחזור מגיבוי'**
+  String get settingsBackupImportButton;
+
+  /// Title of the confirmation dialog shown before restoring from a backup file (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'שחזור מגיבוי'**
+  String get settingsBackupImportConfirmTitle;
+
+  /// Body text of the confirmation dialog before restoring from a backup file, explaining the merge-by-id semantics (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'אירועים מהקובץ ישולבו עם האירועים הקיימים: אירוע עם מזהה זהה יוחלף, ואירועים חדשים יתווספו. שום אירוע קיים לא יימחק. להמשיך?'**
+  String get settingsBackupImportConfirmMessage;
+
+  /// Confirm button label in the restore-from-backup confirmation dialog (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'שחזור'**
+  String get settingsBackupImportConfirmButton;
+
+  /// Snackbar shown after a backup file was saved/shared successfully (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'הגיבוי נשמר בהצלחה'**
+  String get settingsBackupExportSuccessMessage;
+
+  /// Snackbar shown when exporting/sharing the backup file fails (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'אירעה שגיאה בייצוא הגיבוי'**
+  String get settingsBackupExportErrorMessage;
+
+  /// Snackbar shown after a successful restore, summarizing how many events were created vs. overwritten (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'השחזור הושלם: {created} אירועים חדשים, {updated} עודכנו'**
+  String settingsBackupImportSuccessMessage(int created, int updated);
+
+  /// Snackbar shown when restoring from a backup file fails (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'אירעה שגיאה בשחזור הגיבוי'**
+  String get settingsBackupImportErrorMessage;
+
+  /// Snackbar shown when the backup file's format version is newer than this build of the app understands (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'קובץ הגיבוי נוצר בגרסה חדשה יותר של האפליקציה ואינו נתמך כאן'**
+  String get settingsBackupImportUnsupportedVersionMessage;
+
+  /// Footer text on the settings screen showing the installed app version (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'גרסה {version}'**
+  String settingsVersionLabel(String version);
 }
 
 class _AppLocalizationsDelegate

@@ -46,3 +46,11 @@ app.*.map.json
 
 # Firebase config - never commit (RULES.md §5.4)
 **/google-services.json
+
+# Release signing (M7, docs/RELEASE.md) - never commit (RULES.md §5.4).
+# android/debug.keystore is intentionally committed (deterministic debug
+# signing, see android/app/build.gradle.kts); the *release* keystore and its
+# credentials must never be.
+android/key.properties
+android/release.keystore
+*.jks

@@ -221,8 +221,51 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
     שתזכורות ישרדו אתחול מכשיר.
 
 ## 7. גיבוי ושחזור
-- הנתונים חיים ב-Firestore (גיבוי מובנה). בנוסף: יצוא ידני לקובץ JSON מוצפן ל-Storage/מכשיר,
-  ושחזור ממנו במסך ההגדרות.
+- הנתונים חיים ב-Firestore (גיבוי מובנה). בנוסף: יצוא ידני לקובץ JSON, ושחזור
+  ממנו במסך ההגדרות.
+- **מימוש M7 (variant מקומי-לקובץ — הגרסה המבוססת-Storage נדחתה יחד עם M6/Blaze,
+  ראה WISHLIST.md):**
+  1. **`lib/domain/backup/backup_codec.dart`** — קידוד/פענוח טהור, ללא Flutter/
+     Firebase: `encodeBackup`/`decodeBackup` ממירים `List<Event>` <-> מחרוזת JSON
+     הכוללת `formatVersion` (`kBackupFormatVersion`, כרגע 1), `appVersion`
+     ו-`createdAt`. מראה את אותו מבנה מפה כמו `lib/data/event_firestore_mapper.dart`
+     (`hebrewDate`/`startTime`/`endTime`/`recurrence`/`googleSync`/
+     `googleInstanceSync`), אך מנותק מטיפוסי `cloud_firestore`: כל `DateTime`
+     מקודד כמחרוזת ISO 8601 (`toIso8601String`/`DateTime.parse`) במקום
+     `Timestamp` — כך שלקובץ הזה יש אפס תלות Firebase/Flutter (כלל ה-domain,
+     §3) והוא נבדק ביחידה במלואו בבידוד גמור. גרסת פורמט עתידית וגבוהה יותר
+     מ-`kBackupFormatVersion` -> `BackupFormatVersionError` טיפוסי (לא סתם
+     `FormatException`).
+  2. **`lib/data/backup/backup_service.dart`** — `abstract class BackupService`
+     (`exportToFile`/`shareBackup`/`importFromFile`, מה שמסך ההגדרות תלוי בו —
+     נדרס ב-fake בטסט widget, אותו דפוס בדיוק כמו `NotificationScheduler`/
+     `GoogleCalendarApi`, ראה LESSONS.md) ומימוש אמיתי `FileBackupService`:
+     `exportToFile` שומר קובץ ישירות למיקום שהמשתמש בוחר (`file_picker`'s
+     `saveFile`, שכותב את הבייטים בעצמו באנדרואיד/iOS), `shareBackup` פותח את
+     ה-share sheet של המערכת (`share_plus`) עם אותו תוכן, ו-`importFromFile`
+     מאפשר בחירת קובץ (`file_picker`'s `pickFiles(withData: true)`, קורא בייטים
+     ישירות — תואם ל-scoped storage של אנדרואיד, ללא צורך בנתיב `dart:io`
+     ישיר) ואז מפענח ומשחזר. `buildBackupJson`/`restoreEvents` (מעבר לממשק
+     המופשט) הם החצי הטהור-יחסית שנבדק ביחידה בלי לגעת בפלאגין כלל (אותו
+     עיקרון פיצול "ליבה נבדקת מול מתאם פלאגין דק" כמו M4/M5a — ראה §5/§6).
+  3. **מדיניות שחזור: merge-by-id, לא "מחק והחלף":** אירוע שמזהה ה-`id` שלו
+     בגיבוי תואם אירוע מקומי קיים נדרס במקום (`EventRepository.update`);
+     כל אירוע אחר נוצר כחדש עם מזהה חדש לגמרי (`EventRepository.create`,
+     שמתעלם תמיד מה-`id` שהתקבל — התנהגות מתועדת של הריפוזיטורי ממילא).
+     שום אירוע קיים במכשיר **לא** נמחק, גם אם חסר בקובץ הגיבוי — זו האסטרטגיה
+     הבטוחה ביותר: מחיקה אוטומטית לפי "חסר בגיבוי" הייתה עלולה למחוק בטעות
+     אירועים שנוצרו אחרי שהגיבוי נלקח (לדוגמה שחזור גיבוי ישן בטעות). `create`/
+     `update` כבר מסמנים `googleSync.dirty=true` בכל מקרה (repository hook,
+     RULES.md §6) כך שסנכרון גוגל הבא דוחף מחדש כל אירוע ששוחזר בלי טיפול
+     מיוחד.
+  4. **הגדרות UI** (`lib/features/settings/presentation/widgets/backup_section.dart`):
+     סעיף "גיבוי ושחזור" — כפתור ייצוא (+ אייקון שיתוף נפרד), כפתור שחזור עם
+     דיאלוג אישור שמסביר את סמנטיקת ה-merge לפני שממשיכים, אינדיקציית התקדמות
+     בזמן פעולה, וסנאקבר עברי בהצלחה/כישלון (כולל הודעה ייעודית לגרסת פורמט
+     לא-נתמכת).
+  5. **סטייה מהניסוח המקורי בסעיף זה:** אין הצפנת קובץ הגיבוי (הניסוח המקורי
+     הזכיר "JSON מוצפן") — נרשם ל-WISHLIST.md כהרחבה עתידית; תקציר המשימה
+     שהזמין את M7 בפועל ביקש רק וריאנט קובץ מקומי בלי דרישת הצפנה מפורשת.
 
 ## 8. אבטחה
 ראה RULES.md §5. בנוסף: App Check מופעל; Rules נבדקות עם Firebase Emulator בטסטים.
@@ -237,6 +280,6 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
 | M4 | תזכורות | התראות מקומיות מדויקות, ניהול הרשאות | ✅ |
 | M5 | סנכרון גוגל | **M5a** ✅: מנוע סנכרון דו-כיווני מלא (`sync_planner.dart` טהור + `sync_engine.dart`/`GoogleCalendarApi`), טריגרים בפורגראונד בלבד (פתיחת אפליקציה + debounce אחרי עריכה מקומית), מסך הגדרות ראשון. **M5b** ✅: סנכרון תקופתי ברקע דרך WorkManager (`BackgroundSyncRunner`/`BackgroundSyncScheduler`/`callbackDispatcher`), מנעול in-flight + סיווג כשל קבוע/זמני ב-`SyncEngine`, שורת מצב סנכרון-ברקע במסך ההגדרות | ✅ |
 | M6 | שיתוף והעשרה | **נדחה** (החלטת משתמש 2026-07-06, ראה WISHLIST — תלוי Blaze): משתתפים+הזמנות (FCM), קבצים מצורפים | נדחה |
-| M7 | גיבוי, ליטוש, שחרור | יצוא/שחזור, בדיקות קצה, חתימה, Play Store | ◻ |
+| M7 | גיבוי, ליטוש, שחרור | ✅: יצוא/שחזור מקומי לקובץ (§7), חתימת שחרור אמיתית + ProGuard/R8 + workflow ידני, ליטוש (גרסה בהגדרות, error boundary גלובלי) | ✅ |
 
 כל שלב נסגר רק כשהטסטים שלו עוברים והתיעוד (INDEX/PROGRESS) מעודכן.

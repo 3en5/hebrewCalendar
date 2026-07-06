@@ -42,3 +42,30 @@
   כפרמטר — WorkManager תומך בכך (`registerPeriodicTask`'s `frequency`), אך שינוי תדירות של task
   קיים דורש `update: true`/רישום מחדש עם `existingWorkPolicy` שונה (ראה אזהרת ה-package לגבי
   `ExistingPeriodicWorkPolicy.keep` שלא מעדכן תדירות של עבודה קיימת) — כדאי לבדוק את זה כשמממשים.
+
+## M7 — פריטים שנדחו מפורשות מתוך תקציר המשימה (2026-07-06)
+- [ ] **אייקון אפליקציה מותאם אישית:** נדרשת יצירת נכסי תמונה בינאריים (PNG/adaptive
+  icon בכמה רזולוציות) — אין כלי ליצירת/עיבוד תמונות בסביבת הסוכן הזו. האפליקציה
+  ממשיכה עם אייקון ברירת המחדל של Flutter (`@mipmap/ic_launcher`) עד שמישהו יספק
+  נכסים בפועל (או שיורץ `flutter_launcher_icons` עם קובץ מקור).
+- [ ] **Crashlytics** (`firebase_crashlytics`): המשימה ביקשה במפורש להשאיר את זה
+  ב-WISHLIST ולא להוסיף את ה-SDK כרגע כדי לצמצם היקף — למרות ש-Crashlytics עצמו
+  **לא** דורש Blaze (בניגוד ל-Storage/Cloud Functions של M6). `main.dart`'s
+  `FlutterError.onError`/`runZonedGuarded` (M7) כבר מתעדים שגיאות ל-`debugPrint`
+  בלבד; בהפעלת הפריט הזה — לחווט את שני ה-handlers האלה גם ל-
+  `FirebaseCrashlytics.instance.recordFlutterFatalError`/`recordError` בנוסף
+  ל-`debugPrint`, לא במקומו (שימושי גם בסביבות בלי Crashlytics מחובר, כגון טסטים).
+- [ ] **גיבוי בענן (Storage-backed)** — ARCHITECTURE.md §7 מתאר יצוא ידני לקובץ
+  JSON **מקומי** (מומש ב-M7: `lib/domain/backup/backup_codec.dart` +
+  `lib/data/backup/backup_service.dart`, שיתוף/שמירה דרך `share_plus`/`file_picker`).
+  גיבוי אוטומטי/מגובה-לענן ל-Firebase Storage תלוי באותה החלטת Blaze הפתוחה
+  שנרשמה ב-M6 למטה — כשתופעל Blaze, אפשר להוסיף העלאה אוטומטית תקופתית של
+  אותו JSON (מקודד ע"י `backup_codec.dart` הקיים ללא שינוי) ל-Storage תחת נתיב
+  המשתמש, בנוסף לייצוא הידני הקיים (לא במקומו — יצוא ידני נשאר שימושי גם עם
+  גיבוי ענן, למשל להעברה בין מכשירים).
+- [ ] **הצפנת קובץ הגיבוי:** ARCHITECTURE.md §7 המקורי הזכיר "יצוא ידני לקובץ JSON
+  **מוצפן**" — M7 מימש יצוא כ-JSON גלוי (לא מוצפן): הקובץ עצמו לא מכיל credentials
+  (רק תוכן אירועים + מזהי סנכרון גוגל שממילא לא שימושיים בלי הרשאת OAuth של
+  המשתמש), אך תוכן האירועים עצמו עלול להיות רגיש (למשל כותרות/מיקומים אישיים).
+  הצפנה סימטרית מבוססת-סיסמה (למשל עם `cryptography`/`encrypt` package) שהמשתמש
+  קובע בזמן היצוא/שחזור היא הרחבה עתידית סבירה אם יידרש רף פרטיות גבוה יותר.

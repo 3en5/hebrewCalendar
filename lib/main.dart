@@ -1,3 +1,4 @@
+import 'dart:async' show runZonedGuarded, unawaited;
 import 'dart:io' show Platform;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,11 +14,38 @@ import 'features/auth/presentation/auth_gate.dart';
 import 'features/settings/application/background_sync_bootstrap.dart';
 import 'l10n/app_localizations.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await _initializeFirebase();
-  await _initializeBackgroundSync();
-  runApp(const ProviderScope(child: HebrewCalendarApp()));
+/// M7 error boundary: a crash anywhere in the widget tree, or an uncaught
+/// error in any unhandled `Future`/async gap outside one, is logged instead
+/// of silently killing the app/isolate — Crashlytics reporting is deferred
+/// (docs/WISHLIST.md, needs Blaze — same billing gate as M6's attachments/
+/// Storage) so [debugPrint] is the whole story for now. [runZonedGuarded]
+/// and [FlutterError.onError] are complementary, not redundant: the former
+/// catches errors thrown outside Flutter's own error-handling machinery
+/// (e.g. inside a bare `Future` nobody awaited), the latter catches errors
+/// Flutter itself catches while building/laying out/painting a widget
+/// (which never reach the zone's error handler at all).
+// Not `Future<void> main() async` — nothing awaits `main` itself (it's the
+// process entry point), so the guarded body below is deliberately
+// fire-and-forget; `unawaited` says so explicitly rather than tripping the
+// `unawaited_futures` lint (RULES.md-enforced `analysis_options.yaml`).
+void main() {
+  unawaited(
+    runZonedGuarded(
+      () async {
+        WidgetsFlutterBinding.ensureInitialized();
+        FlutterError.onError = (FlutterErrorDetails details) {
+          FlutterError.presentError(details);
+          debugPrint('FlutterError: ${details.exceptionAsString()}');
+        };
+        await _initializeFirebase();
+        await _initializeBackgroundSync();
+        runApp(const ProviderScope(child: HebrewCalendarApp()));
+      },
+      (Object error, StackTrace stackTrace) {
+        debugPrint('Uncaught zone error: $error\n$stackTrace');
+      },
+    ),
+  );
 }
 
 /// Initializes Firebase and Firestore offline persistence.
