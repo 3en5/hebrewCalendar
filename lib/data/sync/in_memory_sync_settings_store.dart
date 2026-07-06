@@ -28,4 +28,11 @@ class InMemorySyncSettingsStore implements SyncSettingsStore {
   Future<void> saveLastSyncedAt(DateTime at) async {
     _settings = _settings.copyWith(lastSyncedAt: at);
   }
+
+  @override
+  Future<void> saveLastError(String? message) async {
+    _settings = message == null
+        ? _settings.copyWith(clearLastErrorMessage: true)
+        : _settings.copyWith(lastErrorMessage: message);
+  }
 }

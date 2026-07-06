@@ -29,6 +29,12 @@ class FakeGoogleCalendarApi implements GoogleCalendarApi {
   /// returning a page (consumed once) — used to simulate a 410 GONE.
   Object? nextListError;
 
+  /// If set, [listChangedEvents] awaits this future before proceeding
+  /// (consumed once) — lets tests hold a sync pass "in flight" to exercise
+  /// `SyncEngine`'s concurrency guard and `BackgroundSyncRunner`'s timeout
+  /// (M5b).
+  Future<void>? holdNextListUntil;
+
   /// If set, the next [patchEvent] call throws this instead of succeeding
   /// (consumed once) — used to simulate a 412 conflict.
   Object? nextPatchError;
@@ -45,6 +51,11 @@ class FakeGoogleCalendarApi implements GoogleCalendarApi {
 
   @override
   Future<GoogleEventsPage> listChangedEvents({String? syncToken}) async {
+    final Future<void>? hold = holdNextListUntil;
+    if (hold != null) {
+      holdNextListUntil = null;
+      await hold;
+    }
     final Object? error = nextListError;
     if (error != null) {
       nextListError = null;

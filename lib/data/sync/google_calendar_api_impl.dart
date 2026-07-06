@@ -35,12 +35,27 @@ const String _kEventsUrl =
     'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 
 class GoogleCalendarApiImpl implements GoogleCalendarApi {
-  GoogleCalendarApiImpl({GoogleSignIn? googleSignIn, http.Client? httpClient})
-    : _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
-      _httpClient = httpClient ?? http.Client();
+  GoogleCalendarApiImpl({
+    GoogleSignIn? googleSignIn,
+    http.Client? httpClient,
+    this.allowInteractiveAuth = true,
+  }) : _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
+       _httpClient = httpClient ?? http.Client();
 
   final GoogleSignIn _googleSignIn;
   final http.Client _httpClient;
+
+  /// Whether [_authHeaders] may prompt the user for the `calendar.events`
+  /// scope (`promptIfNecessary: true`) if it isn't already silently
+  /// available. Must be `false` for any instance used from a WorkManager
+  /// background isolate (M5b task brief — "NEVER prompts UI from
+  /// background"): there is no foreground Activity there to host a consent
+  /// screen, and Android would either drop the prompt silently or crash the
+  /// headless engine. Defaults to `true`, unchanged from M5a foreground
+  /// behavior — [requestAccess] (the explicit "enable sync" action) always
+  /// prompts regardless of this flag, since it is only ever called from the
+  /// foreground settings screen.
+  final bool allowInteractiveAuth;
 
   @override
   Future<bool> requestAccess() async {
@@ -175,7 +190,10 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       );
     }
     final Map<String, String>? headers = await account.authorizationClient
-        .authorizationHeaders(_kCalendarScopes, promptIfNecessary: true);
+        .authorizationHeaders(
+          _kCalendarScopes,
+          promptIfNecessary: allowInteractiveAuth,
+        );
     if (headers == null) {
       throw StateError('Calendar access was not granted.');
     }

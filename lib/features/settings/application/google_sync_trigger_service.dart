@@ -9,6 +9,7 @@ import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../domain/sync/sync_run_result.dart';
 import '../../../domain/sync/sync_settings_store.dart';
 import '../../../domain/sync/sync_state.dart';
+import 'background_sync_scheduler.dart';
 import 'google_sync_settings_state.dart';
 
 /// The M5a settings orchestrator (task brief §3), following the same
@@ -37,6 +38,8 @@ class GoogleSyncTriggerService {
     DateTime Function() now = DateTime.now,
     Duration editDebounce = const Duration(seconds: 30),
     Duration openThrottle = const Duration(minutes: 5),
+    BackgroundSyncScheduler backgroundScheduler =
+        const NoopBackgroundSyncScheduler(),
   }) : _engine = engine,
        _settingsStore = settingsStore,
        _api = api,
@@ -44,7 +47,8 @@ class GoogleSyncTriggerService {
        _hebrewEngine = hebrewEngine,
        _now = now,
        _editDebounce = editDebounce,
-       _openThrottle = openThrottle;
+       _openThrottle = openThrottle,
+       _backgroundScheduler = backgroundScheduler;
 
   final SyncEngine _engine;
   final SyncSettingsStore _settingsStore;
@@ -54,6 +58,12 @@ class GoogleSyncTriggerService {
   final DateTime Function() _now;
   final Duration _editDebounce;
   final Duration _openThrottle;
+
+  /// M5b: registers/cancels the periodic background sync task alongside
+  /// enable/disable/sign-out — defaults to a no-op so pre-M5b callers
+  /// (and any construction site that genuinely doesn't care) are
+  /// unaffected.
+  final BackgroundSyncScheduler _backgroundScheduler;
 
   final StreamController<GoogleSyncSettingsState> _controller =
       StreamController<GoogleSyncSettingsState>.broadcast();
@@ -70,18 +80,31 @@ class GoogleSyncTriggerService {
   GoogleSyncSettingsState get state => _state;
 
   /// Loads the persisted enabled/last-synced state and, if already enabled,
-  /// starts watching for local edits. Call once when the settings feature
-  /// is first wired up (mirrors `ReminderSyncService.start`).
+  /// starts watching for local edits and (re-)registers the M5b periodic
+  /// background sync task (idempotent — `existingWorkPolicy: keep`).
+  /// Call once when the settings feature is first wired up (mirrors
+  /// `ReminderSyncService.start`).
+  ///
+  /// M5b: also surfaces any [SyncSettings.lastErrorMessage] left behind by
+  /// a previous pass — in particular a *background* pass, which runs in a
+  /// separate isolate with no live listener of its own, so this is the only
+  /// place its failure ever reaches the UI (task brief M5b §5: "surface
+  /// error state in settings store").
   Future<void> start() async {
     final SyncSettings settings = await _settingsStore.load();
     _lastRunAt = settings.lastSyncedAt;
     _state = GoogleSyncSettingsState(
       enabled: settings.enabled,
       lastSyncedAt: settings.lastSyncedAt,
+      status: settings.lastErrorMessage == null
+          ? SyncStatus.idle
+          : SyncStatus.error,
+      errorMessage: settings.lastErrorMessage,
     );
     _emit();
     if (settings.enabled) {
       _subscribeToLocalChanges();
+      await _backgroundScheduler.registerPeriodic();
     }
   }
 
@@ -98,13 +121,15 @@ class GoogleSyncTriggerService {
     _state = _state.copyWith(enabled: true);
     _emit();
     _subscribeToLocalChanges();
+    await _backgroundScheduler.registerPeriodic();
     unawaited(syncNow());
     return true;
   }
 
-  /// Disables sync and stops watching for local edits (the sync token and
-  /// per-event Google sync state are left as-is, so re-enabling later
-  /// resumes incrementally instead of a full resync).
+  /// Disables sync, stops watching for local edits, and cancels the M5b
+  /// periodic background sync task (the sync token and per-event Google
+  /// sync state are left as-is, so re-enabling later resumes incrementally
+  /// instead of a full resync).
   Future<void> disable() async {
     await _settingsStore.setEnabled(false);
     _state = _state.copyWith(enabled: false, status: SyncStatus.idle);
@@ -113,6 +138,7 @@ class GoogleSyncTriggerService {
     _localChangesSubscription = null;
     _debounceTimer?.cancel();
     _debounceTimer = null;
+    await _backgroundScheduler.cancel();
   }
 
   /// The app-open trigger: a no-op if disabled or if a sync already ran
@@ -186,6 +212,12 @@ class GoogleSyncTriggerService {
   }
 
   /// Cancels every subscription/timer (RULES.md §6.1) — call on sign-out.
+  ///
+  /// M5b: if sync was enabled, also cancels the periodic background task
+  /// (task brief §2: "when disabled or signed out: cancel by unique
+  /// name") — there is no signed-in user left for it to run against, and
+  /// [start] re-registers it (idempotently) the next time this service is
+  /// built for a (possibly different) signed-in user.
   Future<void> stop() async {
     _disposed = true;
     _debounceTimer?.cancel();
@@ -194,6 +226,9 @@ class GoogleSyncTriggerService {
         _localChangesSubscription;
     _localChangesSubscription = null;
     await subscription?.cancel();
+    if (_state.enabled) {
+      await _backgroundScheduler.cancel();
+    }
     await _controller.close();
   }
 }

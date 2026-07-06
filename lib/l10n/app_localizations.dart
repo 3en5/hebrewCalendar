@@ -501,6 +501,24 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.'**
   String get settingsGoogleSyncAccessDeniedMessage;
+
+  /// Read-only line on the settings screen showing whether periodic background sync (M5b, via WorkManager) is currently active — the status itself comes from settingsBackgroundSyncStatusActive/settingsBackgroundSyncStatusOff. There is no separate toggle: background sync follows the main Google Calendar sync switch automatically.
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון ברקע: {status}'**
+  String settingsBackgroundSyncStatus(String status);
+
+  /// Background sync status value (M5b) when Google Calendar sync is enabled: the periodic WorkManager task runs roughly every 6 hours.
+  ///
+  /// In he, this message translates to:
+  /// **'פעיל (כל 6 שעות)'**
+  String get settingsBackgroundSyncStatusActive;
+
+  /// Background sync status value (M5b) when Google Calendar sync is disabled, so no periodic background task is registered.
+  ///
+  /// In he, this message translates to:
+  /// **'כבוי'**
+  String get settingsBackgroundSyncStatusOff;
 }
 
 class _AppLocalizationsDelegate

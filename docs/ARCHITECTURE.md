@@ -91,7 +91,7 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
   לולאות נמנעות ע"י extendedProperties + השוואת חתימת תוכן.
 - מנוע הסנכרון רץ כ-service באפליקציה (WorkManager תקופתי + טריגר בפתיחה) —
   לא ב-Cloud Functions, כדי שהטוקנים יישארו במכשיר.
-- **מימוש M5a (טריגרים בפורגראונד בלבד; M5b = WorkManager תקופתי, עדיין ◻):**
+- **מימוש M5a+M5b (טריגרים בפורגראונד + סנכרון תקופתי ברקע דרך WorkManager):**
   פיצול לפי אחריות (RULES.md §2 — מנוע סנכרון מונוליתי היה חורג מ-500 שורות):
   1. **`lib/domain/sync/`** — טהור לגמרי (ללא Flutter/Firebase/googleapis): `sync_state.dart`
      (`GoogleSyncState`, `SyncStatus`), `remote_event_snapshot.dart` (`RemoteEventSnapshot` — DTO
@@ -142,6 +142,40 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
      את זה ל-Riverpod (בדומה ל-`reminder_providers.dart`), ו-`CalendarShellScreen` צופה
      ב-`googleSyncTriggerServiceProvider` (autoDispose, מבוטל בהתנתקות) כדי שהטריגרים יעבדו כל
      עוד המסך מוצג — לא רק כשמסך ההגדרות עצמו פתוח.
+  7. **סנכרון תקופתי ברקע (M5b, `package:workmanager`)**: פוצל לשלוש אחריות נפרדות (RULES.md §2):
+     - **`background_sync_runner.dart`** (`BackgroundSyncRunner`) — שכבת ההחלטה הטהורה (Riverpod/
+       workmanager/Firebase-free, כל תלות מוזרקת כפונקציה/ממשק): בודק חתימה שקטה (`isSignedIn`,
+       ללא הצגת UI), מצב מופעל/מנוטרל (`SyncSettingsStore`), מריץ מעבר סנכרון יחיד דרך
+       `engineFactory` עם timeout קשיח (4 דקות ברירת מחדל), וממפה את התוצאה ל-`BackgroundSyncOutcome`
+       (`success`/`permanentSkip`/`retry`) — הקונטרקט ש-WorkManager צריך (`true`=הצלחה/דילוג קבוע,
+       `false`=דילוג זמני שכדאי לנסות שוב). נבדק ביחידה במלואו עם fakes.
+     - **`background_sync_scheduler.dart`** (`BackgroundSyncScheduler` מופשט +
+       `WorkmanagerBackgroundSyncScheduler`/`NoopBackgroundSyncScheduler`) — עטיפה דקה סביב
+       `package:workmanager`'s `registerPeriodicTask`/`cancelByUniqueName` (אילוצי
+       `NetworkType.connected`+`requiresBatteryNotLow`, `existingWorkPolicy: keep`, תדירות 6 שעות,
+       ללא wakelocks כלל — ההסתמכות היחידה היא על אילוצי WorkManager עצמו). `google_sync_trigger_service.dart`
+       מזריק אותו: `enable()`/`start()` (כשמופעל) רושמים; `disable()`/`stop()` (כשהיה מופעל) מבטלים.
+     - **`background_sync_bootstrap.dart`** (`callbackDispatcher`, `@pragma('vm:entry-point')`) —
+       נקודת הכניסה בפועל שנרשמת פעם אחת ב-`main.dart` (`Workmanager().initialize`, אנדרואיד
+       בלבד — `kIsWeb`/`Platform.isAndroid`). רץ ב-isolate/מנוע Flutter נפרד וללא זיכרון משותף עם
+       האפליקציה הראשית — בכל טיק: מאתחל Firebase (guard כפול-init), בודק `FirebaseAuth.instance.currentUser`
+       (השהייה ניצולת חוצת-isolate של Firebase Auth), מאמת גוגל בשקט (`attemptLightweightAuthentication`
+       + `authorizationHeaders(..., promptIfNecessary: false)` — **לעולם לא** מציג UI), ובונה
+       `SyncEngine`/`FirestoreEventRepository`/`FirestoreSyncSettingsStore` חדשים לאותו `uid`. קובץ
+       דק בכוונה (task brief M5b §2) — כל ההחלטה האמיתית ב-`BackgroundSyncRunner` הנבדק ביחידה; קובץ
+       זה עצמו לא ניתן להרצה בפועל בסביבת הפיתוח הזו (אין Android SDK/emulator, ראה LESSONS.md).
+     - **תיקוני אמינות נלווים** (RULES.md §2 — "reliability polish"): `sync_engine.dart` קיבל מנעול
+       in-flight (`_inFlight`, מונע שתי ריצות בו-זמנית *באותו isolate/מופע* — לא הגנה חוצת-isolate,
+       ראה תיעוד בקוד והלקח ב-LESSONS.md) וסיווג כשל-קבוע-מול-זמני (`SyncRunResult.permanent`: 401/403
+       או `StateError` של היעדר חשבון/הרשאה -> קבוע; כל השאר -> זמני). `SyncSettingsStore` קיבל שדה
+       `lastErrorMessage`/`saveLastError` (מתנקה בהצלחה, נשמר בכישלון) כדי שכישלון ריצת-רקע — הרצה
+       ב-isolate נפרד בלי מאזין חי — עדיין יופיע במסך ההגדרות בפעם הבאה שהוא נטען
+       (`google_sync_trigger_service.dart`'s `start()`). **כישלון קבוע לא מכבה את הסנכרון** — ההחלטה
+       המכוונת: משאירים מופעל ומציגים שגיאה, כדי שהמשתמש ירגיש ויוכל להעניק הרשאה מחדש, במקום לאבד
+       סנכרון רקע בשקט. `GoogleCalendarApiImpl` קיבל `allowInteractiveAuth` (ברירת מחדל `true`,
+       `false` ב-instance של הרקע) כדי ש-`promptIfNecessary` יהיה נשלט ולא תמיד `true`.
+     - **הגדרות UI**: שורת קריאה-בלבד תחת סעיף הסנכרון ("סנכרון ברקע: פעיל (כל 6 שעות)" / "כבוי"),
+       נגזרת מאותו דגל מופעל/מנוטרל — אין מתג נפרד; תדירות ניתנת-להגדרה נרשמה ב-WISHLIST.md.
 - **סטייה קטנה מהתוכנית המקורית:** לא נוספה תלות ב-`googleapis`/`googleapis_auth`/
   `extension_google_sign_in_as_googleapis_auth` — ראה `docs/LESSONS.md` להסבר המלא; זו בחירת
   מימוש (data layer), לא שינוי בתוכן/היקף ה-M5a עצמו.
@@ -201,7 +235,7 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
 | M2 | אימות + CRUD (מפוצל) | **M2a** ✅: מודל דומיין `Event`/`RecurrenceRule`, ולידציה, `EventRepository` מופשט + מימוש בזיכרון, מסך עורך אירועים, שילוב עם תצוגת החודש — הכול ללא תלות ב-Firebase. **M2b** ✅: Google Sign-In (`firebase_auth`+`google_sign_in`), Firestore (`FirestoreEventRepository`), Security Rules כקוד (`firebase/`), שער אימות באפליקציה | ✅ |
 | M3 | תצוגות + חזרתיות | **M3a** ✅: מנוע הרחבת חזרתיות (`recurrence_expander.dart`), שילוב ב-repositories (`EventOccurrence`), עורך אירועים (בורר חזרתיות + "עד תאריך"), מחיקת מופע יחיד/כל הסדרה. **M3b** ✅: `EventRepository.watchOccurrencesInRange` (טווח תאריכים שרירותי, לא רק חודש), תצוגות שבוע/יום/אג'נדה, `CalendarShellScreen` עם בורר תצוגה + כפתור "היום" | ✅ |
 | M4 | תזכורות | התראות מקומיות מדויקות, ניהול הרשאות | ✅ |
-| M5 | סנכרון גוגל | **M5a** ✅: מנוע סנכרון דו-כיווני מלא (`sync_planner.dart` טהור + `sync_engine.dart`/`GoogleCalendarApi`), טריגרים בפורגראונד בלבד (פתיחת אפליקציה + debounce אחרי עריכה מקומית), מסך הגדרות ראשון. **M5b** ◻: סנכרון תקופתי ברקע דרך WorkManager | ✅ M5a / ◻ M5b |
+| M5 | סנכרון גוגל | **M5a** ✅: מנוע סנכרון דו-כיווני מלא (`sync_planner.dart` טהור + `sync_engine.dart`/`GoogleCalendarApi`), טריגרים בפורגראונד בלבד (פתיחת אפליקציה + debounce אחרי עריכה מקומית), מסך הגדרות ראשון. **M5b** ✅: סנכרון תקופתי ברקע דרך WorkManager (`BackgroundSyncRunner`/`BackgroundSyncScheduler`/`callbackDispatcher`), מנעול in-flight + סיווג כשל קבוע/זמני ב-`SyncEngine`, שורת מצב סנכרון-ברקע במסך ההגדרות | ✅ |
 | M6 | שיתוף והעשרה | משתתפים+הזמנות (FCM), קבצים מצורפים, מיקום | ◻ |
 | M7 | גיבוי, ליטוש, שחרור | יצוא/שחזור, בדיקות קצה, חתימה, Play Store | ◻ |
 

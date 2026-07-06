@@ -17,6 +17,7 @@ import 'package:hebrew_calendar/l10n/app_localizations.dart';
 import 'package:hebrew_calendar/l10n/app_localizations_he.dart';
 
 import '../../../test_support/fake_auth_repository.dart';
+import '../../../test_support/fake_background_sync_scheduler.dart';
 import '../../../test_support/fake_google_calendar_api.dart';
 
 Widget _wrap(List<Override> overrides) {
@@ -43,6 +44,8 @@ void main() {
       final FakeAuthRepository auth = FakeAuthRepository(initialUser: testUser);
       final InMemoryEventRepository repository = InMemoryEventRepository();
       final FakeGoogleCalendarApi api = FakeGoogleCalendarApi();
+      final FakeBackgroundSyncScheduler scheduler =
+          FakeBackgroundSyncScheduler();
       addTearDown(auth.dispose);
       addTearDown(repository.dispose);
 
@@ -54,6 +57,7 @@ void main() {
           syncSettingsStoreProvider.overrideWithValue(
             InMemorySyncSettingsStore(),
           ),
+          backgroundSyncSchedulerProvider.overrideWithValue(scheduler),
         ]),
       );
       await tester.pumpAndSettle();
@@ -61,11 +65,29 @@ void main() {
       expect(find.byType(SwitchListTile), findsOneWidget);
       SwitchListTile switchTile = tester.widget(find.byType(SwitchListTile));
       expect(switchTile.value, isFalse);
+      final AppLocalizationsHe l10n = AppLocalizationsHe();
+      expect(
+        find.text(
+          l10n.settingsBackgroundSyncStatus(
+            l10n.settingsBackgroundSyncStatusOff,
+          ),
+        ),
+        findsOneWidget,
+      );
 
       await tester.tap(find.byType(SwitchListTile));
       await tester.pumpAndSettle();
 
       expect(api.requestAccessCallCount, 1);
+      expect(scheduler.registerPeriodicCallCount, 1);
+      expect(
+        find.text(
+          l10n.settingsBackgroundSyncStatus(
+            l10n.settingsBackgroundSyncStatusActive,
+          ),
+        ),
+        findsOneWidget,
+      );
       switchTile = tester.widget(find.byType(SwitchListTile));
       expect(switchTile.value, isTrue);
     },
@@ -88,6 +110,9 @@ void main() {
           googleCalendarApiProvider.overrideWithValue(api),
           syncSettingsStoreProvider.overrideWithValue(
             InMemorySyncSettingsStore(),
+          ),
+          backgroundSyncSchedulerProvider.overrideWithValue(
+            FakeBackgroundSyncScheduler(),
           ),
         ]),
       );
@@ -120,6 +145,9 @@ void main() {
         eventRepositoryProvider.overrideWithValue(repository),
         googleCalendarApiProvider.overrideWithValue(api),
         syncSettingsStoreProvider.overrideWithValue(store),
+        backgroundSyncSchedulerProvider.overrideWithValue(
+          FakeBackgroundSyncScheduler(),
+        ),
       ]),
     );
     await tester.pumpAndSettle();

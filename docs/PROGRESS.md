@@ -1,8 +1,81 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: M5a הושלם — מנוע סנכרון Google Calendar דו-כיווני (טריגרים
-בפורגראונד).** M5b (סנכרון תקופתי ברקע דרך WorkManager) הבא בתור.
-(ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: M5 הושלם במלואו — מנוע סנכרון Google Calendar דו-כיווני
+(טריגרים בפורגראונד, M5a) + סנכרון תקופתי ברקע דרך WorkManager (M5b).**
+M6 (שיתוף והעשרה) הבא בתור. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — M5b הושלם (סנכרון תקופתי ברקע דרך WorkManager) — M5 הושלם במלואו
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 303 טסטים עוברים (288 קיימים
+  + 15 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות עוברת.
+- תלות חדשה: `workmanager: ^0.9.0+3`.
+- **שכבת החלטה טהורה (RULES.md §7 — "כל החלטה מתועדת ונבדקת ביחידה")**:
+  `lib/features/settings/application/background_sync_runner.dart`
+  (`BackgroundSyncRunner`/`BackgroundSyncOutcome`) — Riverpod/workmanager/
+  Firebase-free, כל תלות מוזרקת (בדיקת חתימה שקטה, `SyncSettingsStore`,
+  `engineFactory`, שעון). מריץ מעבר סנכרון יחיד עם timeout קשיח (4 דקות
+  ברירת מחדל) וממפה את התוצאה ל-`success`/`permanentSkip`/`retry` — הקונטרקט
+  ש-WorkManager צריך (`Future<bool>`: `true`=הצלחה/דילוג קבוע,
+  `false`=דילוג זמני שכדאי לנסות שוב). נבדק ביחידה במלואו
+  (`test/features/settings/application/background_sync_runner_test.dart`,
+  7 טסטים): לא מחובר/מנוטרל -> דילוג קבוע בלי לבנות engine כלל; מסלול
+  מוצלח; כשל בלתי-מזוהה -> retry; כשל 403 (הרשאה בוטלה) -> דילוג קבוע
+  (**הסנכרון נשאר מופעל** — החלטה מתועדת: שגיאה מוצגת במקום כיבוי שקט);
+  timeout -> retry; ריצה מקבילית -> דילוג קבוע.
+- **גבול פלאגין דק** (task brief §2): `background_sync_scheduler.dart`
+  (`BackgroundSyncScheduler` מופשט + `WorkmanagerBackgroundSyncScheduler` —
+  `registerPeriodicTask`/`cancelByUniqueName`, אילוצי `NetworkType.connected`+
+  `requiresBatteryNotLow`, `existingWorkPolicy: keep`, תדירות 6 שעות, ללא
+  wakelocks) ו-`background_sync_bootstrap.dart` (`callbackDispatcher`,
+  `@pragma('vm:entry-point')`, נרשם ב-`main.dart` דרך `Workmanager().initialize`
+  — אנדרואיד בלבד, `kIsWeb`/`Platform.isAndroid`) הם שני הקבצים היחידים
+  שנוגעים ב-`package:workmanager`. `callbackDispatcher` רץ ב-isolate/מנוע
+  Flutter נפרד: מאתחל Firebase (guard כפול-init), בודק
+  `FirebaseAuth.instance.currentUser` (עמיד חוצה-isolate), מאמת גוגל בשקט
+  (`GoogleSignIn.instance.attemptLightweightAuthentication`+
+  `authorizationHeaders(..., promptIfNecessary: false)` — **לעולם לא**
+  מציג UI), ובונה `SyncEngine`/`FirestoreEventRepository`/
+  `FirestoreSyncSettingsStore` חדשים לאותו `uid`. לא ניתן להרצה בפועל
+  בסביבת הפיתוח הזו (אין Android SDK/emulator) — כל לוגיקת ההחלטה נבדקת
+  ביחידה דרך `BackgroundSyncRunner` בלבד, כנדרש במשימה.
+- **רישום/ביטול**: `google_sync_trigger_service.dart` קיבל תלות
+  `BackgroundSyncScheduler` (ברירת מחדל `NoopBackgroundSyncScheduler` —
+  בלי לשבור טסטים קיימים): `enable()`/`start()` (כשמופעל) רושמים,
+  `disable()`/`stop()` (כשהיה מופעל) מבטלים. `google_sync_providers.dart`
+  קיבל `backgroundSyncSchedulerProvider` (`WorkmanagerBackgroundSyncScheduler`
+  כברירת מחדל, נדרס ב-`FakeBackgroundSyncScheduler` בטסט שמרנדר את מסך
+  ההגדרות דרך ה-provider tree האמיתי — אותו דפוס כמו
+  `notificationSchedulerProvider`/`googleCalendarApiProvider`, ראה
+  LESSONS.md).
+- **תיקוני אמינות (task brief §4, "small, in scope")**: `sync_engine.dart`
+  קיבל מנעול in-flight (`_inFlight` — מונע שתי ריצות בו-זמנית *באותו
+  isolate/מופע*, לא הגנה חוצת-isolate — תועד במפורש בקוד וב-LESSONS.md
+  למה זה מספיק) וסיווג כשל-קבוע-מול-זמני (`SyncRunResult.permanent`:
+  HTTP 401/403 או `StateError` של היעדר חשבון/הרשאה -> קבוע; כל השאר,
+  כולל שגיאות רשת -> זמני, ברירת מחדל בטוחה). `SyncSettingsStore` קיבל
+  `lastErrorMessage`/`saveLastError` (Firestore: `googleLastSyncError`) —
+  נמחק בהצלחה, נשמר בכישלון — כך שכישלון ריצת-רקע (בלי מאזין חי) עדיין
+  מופיע במסך ההגדרות בפעם הבאה שהוא נטען (`google_sync_trigger_service.dart`'s
+  `start()`). `GoogleCalendarApiImpl` קיבל `allowInteractiveAuth` (ברירת
+  מחדל `true`, `false` ברקע) כדי ש-`promptIfNecessary` לא יהיה קבוע `true`.
+- **הגדרות UI**: שורת קריאה-בלבד תחת סעיף הסנכרון — "סנכרון ברקע: פעיל
+  (כל 6 שעות)" / "כבוי", נגזרת מאותו דגל מופעל/מנוטרל, בלי מתג נפרד
+  (task brief §3). תדירות ניתנת-להגדרה נרשמה ב-WISHLIST.md.
+- **Firestore**: `firestore.rules` עודכן לוולידציית `googleLastSyncError`
+  ב-`users/{uid}`. **טרם פורסם** — ראה `firebase/README.md`.
+- **טסטים**: מעבר ל-7 הטסטים החדשים ל-`BackgroundSyncRunner`, נוספו
+  4 טסטים ל-`test/data/sync/sync_engine_test.dart` (מנעול in-flight,
+  סיווג 403 כקבוע, כשל בלתי-מזוהה כזמני, ניקוי שגיאה בהצלחה) ו-4 טסטים
+  ל-`google_sync_trigger_service_test.dart` (רישום/ביטול, רישום-מחדש
+  ב-`start`, ביטול-על-תנאי ב-`stop`, וחשיפת שגיאה שמורה). מסך ההגדרות
+  (`settings_screen_test.dart`) קיבל override ל-`backgroundSyncSchedulerProvider`
+  בשלושת הטסטים הקיימים, ואסרציה נוספת על שורת "סנכרון ברקע".
+- **דורש פעולת משתמש:** פריסת ה-Security Rules המעודכנות (`googleLastSyncError`);
+  בדיקה ידנית אמיתית של ריצת רקע על מכשיר/emulator אנדרואיד אמיתי לא בוצעה
+  כאן (אין Android SDK/emulator בסביבת הסוכן — ראה LESSONS.md) — מומלץ
+  לבדוק ידנית: הפעלת סנכרון והמתנה ~6 שעות (או שינוי זמני לתדירות קצרה
+  לבדיקה) לוודא שה-task אכן רץ, סנכרון בזמן שהאפליקציה סגורה, ושחזור אחרי
+  שינוי הרשאת גוגל (403) לא מכבה את הסנכרון אלא מציג שגיאה בהגדרות.
 
 ## 2026-07-06 — M5a הושלם (מנוע סנכרון Google Calendar, טריגרים בפורגראונד)
 

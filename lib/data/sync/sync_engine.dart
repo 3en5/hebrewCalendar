@@ -46,26 +46,72 @@ class SyncEngine {
   final SyncExportPass _exportPass;
   final DateTime Function() _now;
 
+  /// M5b reliability polish: guards against two passes actually doing work
+  /// concurrently *within this one engine instance/isolate* — e.g. the
+  /// settings screen's manual "סנכרן עכשיו" button firing while the
+  /// app-open trigger's pass is still in flight. This is an ordinary
+  /// instance flag, not a cross-isolate lock: WorkManager runs
+  /// `background_sync_bootstrap.dart`'s periodic task in a *separate*
+  /// headless engine/isolate with its own fresh `SyncEngine` instance, so
+  /// this flag cannot by itself prevent that background pass from
+  /// overlapping a foreground one. Two other things make that acceptable:
+  /// `runSync()` was already documented as safe to call
+  /// repeatedly/concurrently (each call reloads settings/token fresh, so
+  /// overlap just means redundant work, not corruption), and
+  /// `existingWorkPolicy: keep` (`background_sync_scheduler.dart`) means
+  /// WorkManager itself never runs two *background* passes concurrently.
+  bool _inFlight = false;
+
   /// Runs one full sync pass. Safe to call repeatedly/concurrently-triggered
   /// (the settings screen's manual button, the app-open/post-edit
   /// triggers) — each call independently loads the latest persisted
   /// settings/token, so overlapping calls just do redundant work rather
-  /// than corrupting state.
+  /// than corrupting state. A second call while one is already in flight
+  /// (see [_inFlight]) is a no-op that returns immediately instead.
   Future<SyncRunResult> runSync() async {
-    final SyncSettings settings = await _settingsStore.load();
-    if (!settings.enabled) {
-      return const SyncRunResult.disabled();
+    if (_inFlight) {
+      return const SyncRunResult.concurrentSkip();
     }
+    _inFlight = true;
     try {
-      final SyncImportPassResult importResult = await _importPass.run(
-        syncToken: settings.syncToken,
-      );
-      await _settingsStore.saveSyncToken(importResult.nextSyncToken);
-      await _exportPass.run(ownExportsLookup: importResult.ownExportsLookup);
-      await _settingsStore.saveLastSyncedAt(_now());
-      return const SyncRunResult.success();
-    } catch (error) {
-      return SyncRunResult.failure(error.toString());
+      final SyncSettings settings = await _settingsStore.load();
+      if (!settings.enabled) {
+        return const SyncRunResult.disabled();
+      }
+      try {
+        final SyncImportPassResult importResult = await _importPass.run(
+          syncToken: settings.syncToken,
+        );
+        await _settingsStore.saveSyncToken(importResult.nextSyncToken);
+        await _exportPass.run(ownExportsLookup: importResult.ownExportsLookup);
+        await _settingsStore.saveLastSyncedAt(_now());
+        await _settingsStore.saveLastError(null);
+        return const SyncRunResult.success();
+      } catch (error) {
+        final bool permanent = _isPermanentFailure(error);
+        await _settingsStore.saveLastError(error.toString());
+        return SyncRunResult.failure(error.toString(), permanent: permanent);
+      }
+    } finally {
+      _inFlight = false;
     }
+  }
+
+  /// M5b: classifies a caught sync failure as "permanent" — retrying
+  /// immediately would fail identically, so `BackgroundSyncRunner` should
+  /// not ask WorkManager to retry — vs transient (network hiccups, or
+  /// anything unrecognized, which defaults to "not permanent": asking
+  /// WorkManager to retry a genuinely permanent failure wastes a little
+  /// battery, but treating a genuinely transient failure as permanent would
+  /// silently stop background sync until the next foreground trigger).
+  /// Permanent: an HTTP 401/403 from the Calendar API (grant revoked), or
+  /// the `StateError`s `GoogleCalendarApiImpl._authHeaders` throws when
+  /// there is no signed-in account or the `calendar.events` scope was never
+  /// granted.
+  bool _isPermanentFailure(Object error) {
+    if (error is GoogleCalendarApiException) {
+      return error.statusCode == 401 || error.statusCode == 403;
+    }
+    return error is StateError;
   }
 }

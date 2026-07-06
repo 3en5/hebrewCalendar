@@ -74,6 +74,22 @@ class GoogleSyncSection extends StatelessWidget {
                   ),
                 ),
               ),
+            // M5b: read-only — periodic background sync always follows the
+            // switch above (no separate toggle, task brief M5b §3).
+            Padding(
+              padding: EdgeInsetsDirectional.only(bottom: spacingSm),
+              child: Text(
+                l10n.settingsBackgroundSyncStatus(
+                  state.enabled
+                      ? l10n.settingsBackgroundSyncStatusActive
+                      : l10n.settingsBackgroundSyncStatusOff,
+                ),
+                style: TextStyle(
+                  fontSize: bodySmallRem,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
             FilledButton.icon(
               onPressed: state.enabled && !_isSyncing ? onSyncNow : null,
               icon: _isSyncing

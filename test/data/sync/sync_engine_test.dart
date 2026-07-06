@@ -1,5 +1,9 @@
 // Tests for sync_engine.dart (M5a) against FakeGoogleCalendarApi +
-// InMemoryEventRepository — no network, no Firebase (task brief §5).
+// InMemoryEventRepository — no network, no Firebase (task brief §5). M5b
+// adds the concurrency guard and permanent-vs-transient failure
+// classification (read by `BackgroundSyncRunner`).
+
+import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
@@ -326,5 +330,55 @@ void main() {
         expect(afterSync?.googleInstanceSync.length, api.insertedEvents.length);
       },
     );
+
+    test('a second runSync() call while one is in flight is a no-op', () async {
+      final Completer<void> hold = Completer<void>();
+      api.holdNextListUntil = hold.future;
+
+      final Future<SyncRunResult> firstCall = engine.runSync();
+      final SyncRunResult second = await engine.runSync();
+
+      expect(second.wasConcurrentSkip, isTrue);
+      expect(second.isError, isFalse);
+
+      hold.complete();
+      final SyncRunResult first = await firstCall;
+      expect(first.wasConcurrentSkip, isFalse);
+      expect(first.status, SyncStatus.idle);
+    });
+
+    test('a 403 (grant revoked) failure is classified permanent', () async {
+      api.nextListError = const GoogleCalendarApiException(
+        403,
+        'insufficient permission',
+      );
+
+      final SyncRunResult result = await engine.runSync();
+
+      expect(result.isError, isTrue);
+      expect(result.permanent, isTrue);
+      expect((await settingsStore.load()).lastErrorMessage, isNotNull);
+    });
+
+    test(
+      'an unrecognized (e.g. network) failure is classified transient',
+      () async {
+        api.nextListError = Exception('socket closed');
+
+        final SyncRunResult result = await engine.runSync();
+
+        expect(result.isError, isTrue);
+        expect(result.permanent, isFalse);
+      },
+    );
+
+    test('a successful pass clears any previously stored error', () async {
+      await settingsStore.saveLastError('stale error from a previous pass');
+
+      final SyncRunResult result = await engine.runSync();
+
+      expect(result.status, SyncStatus.idle);
+      expect((await settingsStore.load()).lastErrorMessage, isNull);
+    });
   });
 }

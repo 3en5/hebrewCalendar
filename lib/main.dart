@@ -1,16 +1,22 @@
+import 'dart:io' show Platform;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/auth_gate.dart';
+import 'features/settings/application/background_sync_bootstrap.dart';
 import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initializeFirebase();
+  await _initializeBackgroundSync();
   runApp(const ProviderScope(child: HebrewCalendarApp()));
 }
 
@@ -27,6 +33,25 @@ Future<void> _initializeFirebase() async {
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
   );
+}
+
+/// Registers the M5b WorkManager [callbackDispatcher] — Android only (task
+/// brief M5b §2: "guard kIsWeb/platform"). Like [_initializeFirebase], only
+/// ever called from [main] — `flutter test` never runs this. The periodic
+/// task itself is registered/cancelled separately, alongside the sync
+/// enable/disable flow (`google_sync_trigger_service.dart`); this call only
+/// makes the dispatcher known to the platform so a scheduled task has
+/// somewhere to run once it fires.
+///
+/// `isInDebugMode` is omitted: the installed `workmanager` (0.9.0+3)
+/// deprecated that parameter (it has no effect — use `WorkmanagerDebug`
+/// handlers instead) and its default is already `false`, matching the task
+/// brief's intent without triggering a `deprecated_member_use` lint.
+Future<void> _initializeBackgroundSync() async {
+  if (kIsWeb || !Platform.isAndroid) {
+    return;
+  }
+  await Workmanager().initialize(callbackDispatcher);
 }
 
 /// Root widget of the HebrewCalendar app.

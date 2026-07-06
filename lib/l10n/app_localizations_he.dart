@@ -222,4 +222,15 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get settingsGoogleSyncAccessDeniedMessage =>
       'לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.';
+
+  @override
+  String settingsBackgroundSyncStatus(String status) {
+    return 'סנכרון ברקע: $status';
+  }
+
+  @override
+  String get settingsBackgroundSyncStatusActive => 'פעיל (כל 6 שעות)';
+
+  @override
+  String get settingsBackgroundSyncStatusOff => 'כבוי';
 }

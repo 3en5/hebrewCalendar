@@ -40,7 +40,9 @@ service cloud.firestore {
     // Google Calendar sync feature's own settings (`lib/domain/sync/
     // sync_settings_store.dart`), merged in by `FirestoreSyncSettingsStore` —
     // not written on sign-in, but on the same document, so the whitelist and
-    // per-field type checks include them too.
+    // per-field type checks include them too. M5b adds `googleLastSyncError`
+    // (the most recent failed pass's message, foreground or background —
+    // cleared to null on the next successful pass).
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid) && isValidUserDoc(request.resource.data);
@@ -50,7 +52,8 @@ service cloud.firestore {
       function isValidUserDoc(data) {
         return data.keys().hasOnly([
             'displayName', 'email', 'photoUrl', 'createdAt',
-            'googleSyncEnabled', 'googleSyncToken', 'googleLastSyncedAt'
+            'googleSyncEnabled', 'googleSyncToken', 'googleLastSyncedAt',
+            'googleLastSyncError'
           ])
           && data.createdAt is timestamp
           && (!('displayName' in data) || data.displayName == null || data.displayName is string)
@@ -58,7 +61,8 @@ service cloud.firestore {
           && (!('photoUrl' in data) || data.photoUrl == null || data.photoUrl is string)
           && (!('googleSyncEnabled' in data) || data.googleSyncEnabled is bool)
           && (!('googleSyncToken' in data) || data.googleSyncToken == null || data.googleSyncToken is string)
-          && (!('googleLastSyncedAt' in data) || data.googleLastSyncedAt == null || data.googleLastSyncedAt is timestamp);
+          && (!('googleLastSyncedAt' in data) || data.googleLastSyncedAt == null || data.googleLastSyncedAt is timestamp)
+          && (!('googleLastSyncError' in data) || data.googleLastSyncError == null || data.googleLastSyncError is string);
       }
     }
 

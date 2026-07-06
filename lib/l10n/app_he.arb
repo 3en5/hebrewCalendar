@@ -286,5 +286,22 @@
   "settingsGoogleSyncAccessDeniedMessage": "לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.",
   "@settingsGoogleSyncAccessDeniedMessage": {
     "description": "Snackbar shown when the user denies the Google Calendar access request while enabling sync (M5a)."
+  },
+  "settingsBackgroundSyncStatus": "סנכרון ברקע: {status}",
+  "@settingsBackgroundSyncStatus": {
+    "description": "Read-only line on the settings screen showing whether periodic background sync (M5b, via WorkManager) is currently active — the status itself comes from settingsBackgroundSyncStatusActive/settingsBackgroundSyncStatusOff. There is no separate toggle: background sync follows the main Google Calendar sync switch automatically.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsBackgroundSyncStatusActive": "פעיל (כל 6 שעות)",
+  "@settingsBackgroundSyncStatusActive": {
+    "description": "Background sync status value (M5b) when Google Calendar sync is enabled: the periodic WorkManager task runs roughly every 6 hours."
+  },
+  "settingsBackgroundSyncStatusOff": "כבוי",
+  "@settingsBackgroundSyncStatusOff": {
+    "description": "Background sync status value (M5b) when Google Calendar sync is disabled, so no periodic background task is registered."
   }
 }

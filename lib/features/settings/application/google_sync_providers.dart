@@ -21,6 +21,7 @@ import '../../../domain/sync/sync_settings_store.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../calendar/application/hebrew_date_engine_provider.dart';
 import '../../event_editor/application/event_repository_provider.dart';
+import 'background_sync_scheduler.dart';
 import 'google_sync_settings_state.dart';
 import 'google_sync_trigger_service.dart';
 
@@ -42,6 +43,17 @@ final Provider<SyncSettingsStore> syncSettingsStoreProvider =
       }
       return FirestoreSyncSettingsStore(uid: user.uid);
     });
+
+/// M5b: registers/cancels the periodic WorkManager background sync task.
+/// Overridden with a fake in every test that exercises `enable`/`disable`
+/// through the real provider tree (`settings_screen_test.dart`) so those
+/// tests never touch the real plugin (which has no channel handler under
+/// `flutter test` — mirrors `notificationSchedulerProvider`'s role for M4,
+/// see docs/LESSONS.md).
+final Provider<BackgroundSyncScheduler> backgroundSyncSchedulerProvider =
+    Provider<BackgroundSyncScheduler>(
+      (Ref ref) => const WorkmanagerBackgroundSyncScheduler(),
+    );
 
 /// Not `autoDispose`: a sync engine, like the repository it wraps, is a
 /// data-layer service rather than screen-scoped UI state.
@@ -69,6 +81,7 @@ final Provider<GoogleSyncTriggerService> googleSyncTriggerServiceProvider =
         api: ref.watch(googleCalendarApiProvider),
         repository: ref.watch(eventRepositoryProvider),
         hebrewEngine: ref.watch(hebrewDateEngineProvider),
+        backgroundScheduler: ref.watch(backgroundSyncSchedulerProvider),
       );
       // `start()` must finish loading the persisted enabled flag before
       // `triggerAppOpen()` can meaningfully check it.

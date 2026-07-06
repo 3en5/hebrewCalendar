@@ -244,6 +244,47 @@
   אחסון עמיד ברגע שאין עדיין מנגנון רקע אמין שמנקה אותו במהרה — "בזיכרון
   זמנית, נשלים עמידות ב-M הבא" הוא סיכון איבוד שקט, לא רק חוסר-אופטימיזציה.
 
+- **2026-07-06 · M5b, `workmanager` (0.9.0+3) — כמה פערים בין הציפייה
+  הנאיבית לממשק בפועל:**
+  1. `Workmanager().registerPeriodicTask(...)`'s `existingWorkPolicy` הוא
+     `ExistingPeriodicWorkPolicy?`, **לא** `ExistingWorkPolicy` — זה האחרון
+     של `registerOneOffTask` בלבד; שני ה-enum-ים דומים בשם (`keep` קיים
+     בשניהם) אבל טיפוסיים שונים, אז אי אפשר להעביר בטעות את הלא-נכון בלי
+     שגיאת קומפילציה — אבל קל לנחש שם שגוי מהתיעוד/מדריכים ישנים של
+     גרסאות קודמות של הפאקג'.
+  2. `Workmanager().initialize(callbackDispatcher, {isInDebugMode})`'s
+     `isInDebugMode` **מיושן ולא עושה כלום** בגרסה הזו (יש להשתמש ב-
+     `WorkmanagerDebug` handlers במקום) — מעביר אותו בכל זאת (כמו שהמשימה
+     המקורית ביקשה `isInDebugMode: false`) מדליק אזהרת
+     `deprecated_member_use` תחת ה-`analysis_options.yaml` המחמיר של
+     הפרויקט (0 issues נדרש). הפתרון: פשוט משמיטים את הפרמטר — ברירת
+     המחדל שלו כבר `false`, אז ההתנהגות בפועל זהה למה שהמשימה ביקשה, בלי
+     להדליק את ה-lint.
+  3. `package:workmanager`'s `executeTask` callback רץ ב-**isolate/מנוע
+     Flutter נפרד**, לא זה של האפליקציה בפורגראונד — אין זיכרון משותף,
+     `Provider`/`Riverpod` state, או singleton שכבר אותחל. כל תלות (Firebase,
+     `GoogleSignIn.instance`) חייבת אתחול/שחזור-session מאפס בכל טיק. חשוב
+     במיוחד: `FirebaseAuth.instance.currentUser` **כן** שורד (Firebase Auth
+     שומר session ב-storage מקומי שהוא app-wide, לא isolate-wide) אחרי
+     `Firebase.initializeApp()` טרי ב-isolate החדש — זו הדרך הזולה ביותר
+     לבדוק "האם המשתמש בכלל מחובר" לפני שטורחים בכלל להתחיל שחזור session
+     של Google Sign-In (`attemptLightweightAuthentication`, שדורש
+     `GoogleSignIn.instance.initialize()` תחילה כי זה isolate טרי — בניגוד
+     ל-`FirebaseAuthRepository`'s `_ensureGoogleSignInInitialized` הממוזג,
+     `initialize()` נקרא כאן פעם אחת בלי memoization כי כל הפונקציה רצה
+     לכל היותר פעם אחת per isolate ממילא).
+  4. מנעול "in-flight" מבוסס-instance-flag (כמו זה שנוסף ל-`SyncEngine`
+     כדי למנוע שתי ריצות בו-זמנית) **לא** מגן חוצה-isolate: ריצת רקע
+     תקופתית של WorkManager מקבלת isolate/מופע `SyncEngine` חדש משלה, אז
+     דגל `bool` רגיל על המחלקה לא "רואה" ריצה שרצה במופע/isolate אחר. זה
+     בסדר כאן כי (א) `runSync()` כבר תועד כבטוח-לקריאה-חוזרת/מקבילית (כל
+     קריאה טוענת settings/token טריים, אז חפיפה גוררת עבודה כפולה ולא
+     שחיתות מצב), ו-(ב) `existingWorkPolicy: keep` כבר מונע חפיפה בין שתי
+     ריצות *רקע* זו את זו ברמת WorkManager עצמו. לקח כללי: לפני שמוסיפים
+     "מנעול concurrency" לקוד שעלול לרוץ גם ב-isolate נפרד (background
+     task, isolate.spawn, וכו') — לתעד במפורש את גבול ההגנה בפועל
+     (per-instance/per-isolate) ולא להניח שדגל `bool` הוא הגנה גלובלית.
+
 - **2026-07-06 · M4, טסטי widget שמרנדרים מסך שמפעיל שירות רקע (subscription+
   Timer) חייבים fake לתלות החיצונית, לא רק try/catch בתוכה:** חיווט
   `reminderSyncServiceProvider` (autoDispose) מ-`CalendarShellScreen` גרם

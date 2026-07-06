@@ -3,7 +3,12 @@
 /// successfully. Stored on the `users/{uid}` document
 /// (ARCHITECTURE.md §4 "users/{uid} ... מצב סנכרון").
 class SyncSettings {
-  const SyncSettings({this.enabled = false, this.syncToken, this.lastSyncedAt});
+  const SyncSettings({
+    this.enabled = false,
+    this.syncToken,
+    this.lastSyncedAt,
+    this.lastErrorMessage,
+  });
 
   final bool enabled;
 
@@ -14,15 +19,30 @@ class SyncSettings {
 
   final DateTime? lastSyncedAt;
 
+  /// M5b: the error message from the most recently *failed* sync pass
+  /// (foreground or background), or null if the last pass succeeded (or
+  /// none has run yet). Persisted — not just kept in
+  /// `google_sync_trigger_service.dart`'s in-memory state — because a
+  /// background pass runs in a separate WorkManager isolate with no live
+  /// settings-screen listener; without this, a background failure would be
+  /// invisible until the next foreground sync happened to succeed or fail
+  /// again. `sync_engine.dart` clears it on every successful pass.
+  final String? lastErrorMessage;
+
   SyncSettings copyWith({
     bool? enabled,
     String? syncToken,
     bool clearSyncToken = false,
     DateTime? lastSyncedAt,
+    String? lastErrorMessage,
+    bool clearLastErrorMessage = false,
   }) => SyncSettings(
     enabled: enabled ?? this.enabled,
     syncToken: clearSyncToken ? null : (syncToken ?? this.syncToken),
     lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+    lastErrorMessage: clearLastErrorMessage
+        ? null
+        : (lastErrorMessage ?? this.lastErrorMessage),
   );
 }
 
@@ -39,4 +59,8 @@ abstract class SyncSettingsStore {
   Future<void> saveSyncToken(String? token);
 
   Future<void> saveLastSyncedAt(DateTime at);
+
+  /// M5b: persists (or clears, when [message] is null) the most recent
+  /// sync pass's error message alongside the other sync bookkeeping.
+  Future<void> saveLastError(String? message);
 }

@@ -30,3 +30,9 @@
   (לולאה על הרשימה) — אין צורך בשינוי סכימה. מה שנדרש בפועל: UI בעורך האירועים לבחירה
   מרובה (`ReminderSelector` הנוכחי הוא single-select) — צ'קבוקסים/צ'יפים מרובי-בחירה
   במקום `ChoiceChip` יחיד.
+- [ ] **M5b+ — תדירות סנכרון-רקע ניתנת להגדרה** (2026-07-06): `background_sync_scheduler.dart`'s
+  `kGoogleCalendarSyncFrequency` קבוע (6 שעות) כרגע. הרחבה עתידית: בורר תדירות במסך ההגדרות
+  (למשל 1/3/6/12 שעות) שנשמר ב-`SyncSettingsStore` (שדה חדש) ומועבר ל-`BackgroundSyncScheduler.registerPeriodic`
+  כפרמטר — WorkManager תומך בכך (`registerPeriodicTask`'s `frequency`), אך שינוי תדירות של task
+  קיים דורש `update: true`/רישום מחדש עם `existingWorkPolicy` שונה (ראה אזהרת ה-package לגבי
+  `ExistingPeriodicWorkPolicy.keep` שלא מעדכן תדירות של עבודה קיימת) — כדאי לבדוק את זה כשמממשים.

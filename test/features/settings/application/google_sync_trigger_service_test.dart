@@ -14,6 +14,7 @@ import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date_engine.dart';
 import 'package:hebrew_calendar/domain/sync/sync_state.dart';
 import 'package:hebrew_calendar/features/settings/application/google_sync_trigger_service.dart';
 
+import '../../../test_support/fake_background_sync_scheduler.dart';
 import '../../../test_support/fake_google_calendar_api.dart';
 
 const HebrewDateEngine _engine = HebrewDateEngine();
@@ -210,4 +211,102 @@ void main() {
       expect(api.insertedEvents.length, syncsBeforeStop);
     },
   );
+
+  group('M5b background sync registration', () {
+    test(
+      'enable() registers the periodic task; disable() cancels it',
+      () async {
+        final FakeBackgroundSyncScheduler scheduler =
+            FakeBackgroundSyncScheduler();
+        final GoogleSyncTriggerService svc = GoogleSyncTriggerService(
+          engine: SyncEngine(
+            repository: repository,
+            api: api,
+            settingsStore: settingsStore,
+            engine: _engine,
+            now: () => _now,
+          ),
+          settingsStore: settingsStore,
+          api: api,
+          repository: repository,
+          hebrewEngine: _engine,
+          now: () => _now,
+          backgroundScheduler: scheduler,
+        );
+
+        await svc.start();
+        expect(scheduler.registerPeriodicCallCount, 0);
+
+        await svc.enable();
+        expect(scheduler.registerPeriodicCallCount, 1);
+
+        await svc.disable();
+        expect(scheduler.cancelCallCount, 1);
+      },
+    );
+
+    test(
+      'start() re-registers the periodic task when sync was already enabled',
+      () async {
+        await settingsStore.setEnabled(true);
+        final FakeBackgroundSyncScheduler scheduler =
+            FakeBackgroundSyncScheduler();
+        final GoogleSyncTriggerService svc = GoogleSyncTriggerService(
+          engine: SyncEngine(
+            repository: repository,
+            api: api,
+            settingsStore: settingsStore,
+            engine: _engine,
+            now: () => _now,
+          ),
+          settingsStore: settingsStore,
+          api: api,
+          repository: repository,
+          hebrewEngine: _engine,
+          now: () => _now,
+          backgroundScheduler: scheduler,
+        );
+
+        await svc.start();
+
+        expect(scheduler.registerPeriodicCallCount, 1);
+      },
+    );
+
+    test('stop() cancels the periodic task only if sync was enabled', () async {
+      final FakeBackgroundSyncScheduler scheduler =
+          FakeBackgroundSyncScheduler();
+      final GoogleSyncTriggerService svc = GoogleSyncTriggerService(
+        engine: SyncEngine(
+          repository: repository,
+          api: api,
+          settingsStore: settingsStore,
+          engine: _engine,
+          now: () => _now,
+        ),
+        settingsStore: settingsStore,
+        api: api,
+        repository: repository,
+        hebrewEngine: _engine,
+        now: () => _now,
+        backgroundScheduler: scheduler,
+      );
+
+      // Never enabled: stop() should not bother cancelling.
+      await svc.start();
+      await svc.stop();
+      expect(scheduler.cancelCallCount, 0);
+    });
+  });
+
+  test('start() surfaces a persisted background sync error (M5b)', () async {
+    await settingsStore.setEnabled(true);
+    await settingsStore.saveLastError('הרשאה בוטלה');
+
+    await service.start();
+
+    expect(service.state.status, SyncStatus.error);
+    expect(service.state.errorMessage, 'הרשאה בוטלה');
+    await service.stop();
+  });
 }

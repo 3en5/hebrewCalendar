@@ -27,6 +27,7 @@ class FirestoreSyncSettingsStore implements SyncSettingsStore {
       enabled: data['googleSyncEnabled'] as bool? ?? false,
       syncToken: data['googleSyncToken'] as String?,
       lastSyncedAt: (data['googleLastSyncedAt'] as Timestamp?)?.toDate(),
+      lastErrorMessage: data['googleLastSyncError'] as String?,
     );
   }
 
@@ -48,6 +49,13 @@ class FirestoreSyncSettingsStore implements SyncSettingsStore {
   Future<void> saveLastSyncedAt(DateTime at) async {
     await _doc.set(<String, dynamic>{
       'googleLastSyncedAt': Timestamp.fromDate(at),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> saveLastError(String? message) async {
+    await _doc.set(<String, dynamic>{
+      'googleLastSyncError': message,
     }, SetOptions(merge: true));
   }
 }
