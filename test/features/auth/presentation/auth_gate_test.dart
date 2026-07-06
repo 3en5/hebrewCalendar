@@ -16,9 +16,11 @@ import 'package:hebrew_calendar/features/auth/presentation/auth_gate.dart';
 import 'package:hebrew_calendar/features/auth/presentation/sign_in_screen.dart';
 import 'package:hebrew_calendar/features/calendar/presentation/calendar_shell_screen.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
+import 'package:hebrew_calendar/features/notifications/application/reminder_providers.dart';
 import 'package:hebrew_calendar/l10n/app_localizations.dart';
 
 import '../../../test_support/fake_auth_repository.dart';
+import '../../../test_support/fake_notification_scheduler.dart';
 
 Widget _wrap(List<Override> overrides) {
   return ProviderScope(
@@ -65,6 +67,9 @@ void main() {
       _wrap(<Override>[
         authRepositoryProvider.overrideWithValue(auth),
         eventRepositoryProvider.overrideWithValue(repository),
+        notificationSchedulerProvider.overrideWithValue(
+          FakeNotificationScheduler(),
+        ),
       ]),
     );
     await tester.pumpAndSettle();
@@ -85,6 +90,9 @@ void main() {
       _wrap(<Override>[
         authRepositoryProvider.overrideWithValue(auth),
         eventRepositoryProvider.overrideWithValue(repository),
+        notificationSchedulerProvider.overrideWithValue(
+          FakeNotificationScheduler(),
+        ),
       ]),
     );
     await tester.pumpAndSettle();

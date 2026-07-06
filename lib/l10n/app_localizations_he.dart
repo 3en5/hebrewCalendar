@@ -57,9 +57,15 @@ class AppLocalizationsHe extends AppLocalizations {
   String get eventReminderNone => 'ללא תזכורת';
 
   @override
+  String get eventReminderAtEventTime => 'בזמן האירוע';
+
+  @override
   String eventReminderMinutesBefore(int minutes) {
     return '$minutes דקות לפני';
   }
+
+  @override
+  String get eventReminderOneDayBefore => 'יום לפני';
 
   @override
   String get eventValidationTitleRequired => 'יש להזין כותרת';
@@ -174,4 +180,11 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get agendaEmptyState => 'אין אירועים קרובים';
+
+  @override
+  String get notificationsChannelName => 'תזכורות';
+
+  @override
+  String get notificationsPermissionDeniedMessage =>
+      'בלי הרשאת התראות, תזכורות לאירועים לא יוצגו. ניתן להפעיל בהגדרות המכשיר.';
 }

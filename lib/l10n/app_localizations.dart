@@ -190,11 +190,23 @@ abstract class AppLocalizations {
   /// **'ללא תזכורת'**
   String get eventReminderNone;
 
+  /// Reminder chip label meaning the reminder fires exactly at the event's start time (0 minutes before, M4).
+  ///
+  /// In he, this message translates to:
+  /// **'בזמן האירוע'**
+  String get eventReminderAtEventTime;
+
   /// Reminder chip label for a fixed number of minutes before the event, e.g. '10 דקות לפני'.
   ///
   /// In he, this message translates to:
   /// **'{minutes} דקות לפני'**
   String eventReminderMinutesBefore(int minutes);
+
+  /// Reminder chip label meaning the reminder fires one day before the event (M4).
+  ///
+  /// In he, this message translates to:
+  /// **'יום לפני'**
+  String get eventReminderOneDayBefore;
 
   /// Inline validation error when the event title is empty.
   ///
@@ -417,6 +429,18 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'אין אירועים קרובים'**
   String get agendaEmptyState;
+
+  /// Android notification channel name (M4) for event reminders, shown to the user in the system notification settings.
+  ///
+  /// In he, this message translates to:
+  /// **'תזכורות'**
+  String get notificationsChannelName;
+
+  /// Snackbar rationale shown once (M4) when the user denies the OS notification permission, explaining reminders won't show without it.
+  ///
+  /// In he, this message translates to:
+  /// **'בלי הרשאת התראות, תזכורות לאירועים לא יוצגו. ניתן להפעיל בהגדרות המכשיר.'**
+  String get notificationsPermissionDeniedMessage;
 }
 
 class _AppLocalizationsDelegate

@@ -13,9 +13,11 @@ import 'package:hebrew_calendar/domain/hebrew_date/hebrew_numerals.dart';
 import 'package:hebrew_calendar/features/auth/application/auth_providers.dart';
 import 'package:hebrew_calendar/features/calendar/application/calendar_view_provider.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
+import 'package:hebrew_calendar/features/notifications/application/reminder_providers.dart';
 import 'package:hebrew_calendar/main.dart';
 
 import '../../../test_support/fake_auth_repository.dart';
+import '../../../test_support/fake_notification_scheduler.dart';
 
 const HebrewDateEngine _engine = HebrewDateEngine();
 
@@ -30,6 +32,9 @@ List<Override> _signedInOverrides() {
   return <Override>[
     authRepositoryProvider.overrideWithValue(auth),
     eventRepositoryProvider.overrideWithValue(repository),
+    notificationSchedulerProvider.overrideWithValue(
+      FakeNotificationScheduler(),
+    ),
   ];
 }
 

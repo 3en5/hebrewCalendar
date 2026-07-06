@@ -1,8 +1,56 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: M3 הושלם במלואו (M3a + M3b) — מנוע חזרתיות עבריים, שילוב
-repositories, ותצוגות שבוע/יום/אג'נדה עם מסך בית משותף.** M4 (תזכורות) הבא
+**שלב נוכחי: M4 הושלם — תזכורות/התראות מקומיות (מתכנן טהור + מתאם
+`flutter_local_notifications` + אורקסטרטור Riverpod).** M5 (סנכרון גוגל) הבא
 בתור. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — M4 הושלם (תזכורות/התראות מקומיות)
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 221 טסטים עוברים (192 קיימים
+  + 29 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות
+  עוברת, כיסוי `lib/domain` בפועל 96.7% (מעל סף ה-90%).
+- תלויות חדשות: `flutter_local_notifications: ^20.1.0`, `timezone: ^0.10.1`,
+  `flutter_timezone: ^5.1.0`, `shared_preferences: ^2.5.3`.
+- הפרדה תלת-שכבתית (ARCHITECTURE.md §6 מפורט): **מתכנן טהור**
+  (`lib/domain/notifications/reminder_planner.dart`, `planReminders`) — נבדק
+  ביחידה במלואו (דילוג עבר/אופק, כלל 09:00 ליום שלם, תקרת 60 הקרובים,
+  יציבות/ייחודיות `stableId`, פירמוט גוף בעברית); **מתאם פלאגין דק**
+  (`lib/data/notifications/local_notification_scheduler.dart`,
+  `LocalNotificationScheduler`) — לא נבדק ביחידה ישירות (רק מיפוי לפלאגין),
+  כל קריאה עטופה כדי שלעולם לא תקריס; **אורקסטרטור**
+  (`lib/features/notifications/application/reminder_sync_service.dart`,
+  `ReminderSyncService`) — Riverpod-free, נבדק עם fakes
+  (`InMemoryEventRepository`+`FakeNotificationScheduler`).
+- `stableId` נגזר מ-hash FNV-1a דטרמיניסטי על event id + תאריך מופע +
+  minutesBefore — במפורש **לא** מ-`Object.hash`/`hashCode` (לא מובטחים יציבים
+  בין הרצות אפליקציה; ראה LESSONS.md).
+- תזמון מבוסס-diff (`lib/domain/notifications/scheduled_notification_diff.dart`,
+  טהור ונבדק בנפרד): מבטל רק מזהים שכבר לא בתוכנית, מתזמן רק חדשים/שהשתנו.
+  מפת "מה מתוזמן" נשמרת ב-`shared_preferences`.
+  `zonedSchedule` עם `exactAllowWhileIdle` ונפילה חזרה ל-`inexactAllowWhileIdle`
+  כשאין הרשאת exact alarm; אזור זמן דרך `flutter_timezone`.
+- `CalendarShellScreen` מפעיל את `reminderSyncServiceProvider` (autoDispose —
+  מבוטל בהתנתקות: subscription+כל תזכורת מתוזמנת) ומבקש הרשאת התראות פעם
+  אחת בלבד (דגל ב-`shared_preferences`), עם snackbar עברי אם נדחתה.
+- עורך האירועים: `ReminderSelector` הורחב מ-ללא/10/30/60 דקות (M2a) ל-ללא/
+  בזמן האירוע/10/30/60 דקות/יום לפני. עדיין single-select — ריבוי תזכורות
+  לאירוע אחד נרשם ל-WISHLIST.md (הסכימה כבר תומכת, רק ה-UI לא).
+- אנדרואיד: `AndroidManifest.xml` קיבל `POST_NOTIFICATIONS`+
+  `RECEIVE_BOOT_COMPLETED`+`SCHEDULE_EXACT_ALARM` (לא `USE_EXACT_ALARM`) +
+  `ScheduledNotificationReceiver`/`ScheduledNotificationBootReceiver`.
+- **החלטת סטייה קטנה:** כל 8 טסטי ה-widget הקיימים שמרנדרים את
+  `CalendarShellScreen` (auth_gate/agenda/calendar_shell/day_view/
+  month_view_body/month_view_events/month_view_recurring/week_view) קיבלו
+  override נוסף ל-`notificationSchedulerProvider` עם `FakeNotificationScheduler`
+  חדש (`test/test_support/fake_notification_scheduler.dart`) — כדי שלא ייגעו
+  בפלאגין אמיתי (שהיה זורק `MissingPluginException` בסביבת טסטים) ולמנוע
+  Timer/subscription תלויים שלא ינוקו בזמן. `event_editor_screen_test.dart`
+  לא נגע (לא מרנדר את `CalendarShellScreen`).
+- **דורש פעולת משתמש:** לא ניתן לאמת בפועל תזמון/הצגת התראות על מכשיר/emulator
+  אמיתי בסביבת הפיתוח הזו (אין Android SDK/emulator — ראה LESSONS.md, M2b);
+  כל הלוגיקה אומתה ביחידה עם fakes/plugin עטוף. מומלץ לבדוק ידנית על מכשיר:
+  יצירת אירוע עם תזכורת, קבלת הודעה בזמן הנכון, שרידות אחרי אתחול מכשיר,
+  ונפילה חזרה ל-inexact כשההרשאה נדחית.
 
 ## 2026-07-06 — M3b הושלם (תצוגות שבוע/יום/אג'נדה + בורר תצוגה) — M3 הושלם במלואו
 

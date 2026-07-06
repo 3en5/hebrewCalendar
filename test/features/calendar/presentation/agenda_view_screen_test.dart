@@ -13,9 +13,11 @@ import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/features/auth/application/auth_providers.dart';
 import 'package:hebrew_calendar/features/calendar/application/calendar_view_provider.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
+import 'package:hebrew_calendar/features/notifications/application/reminder_providers.dart';
 import 'package:hebrew_calendar/main.dart';
 
 import '../../../test_support/fake_auth_repository.dart';
+import '../../../test_support/fake_notification_scheduler.dart';
 
 const HebrewDate _anchor = HebrewDate(
   year: 5786,
@@ -56,6 +58,9 @@ Future<void> _pumpAgenda(
       overrides: <Override>[
         authRepositoryProvider.overrideWithValue(auth),
         eventRepositoryProvider.overrideWithValue(repository),
+        notificationSchedulerProvider.overrideWithValue(
+          FakeNotificationScheduler(),
+        ),
         calendarViewProvider.overrideWith(_FixedAgendaNotifier.new),
       ],
       child: const HebrewCalendarApp(),

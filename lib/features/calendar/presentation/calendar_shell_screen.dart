@@ -9,6 +9,7 @@ import '../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../event_editor/presentation/event_editor_screen.dart';
+import '../../notifications/application/reminder_providers.dart';
 import '../application/calendar_view_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
 import 'agenda_view_screen.dart';
@@ -37,6 +38,26 @@ class CalendarShellScreen extends ConsumerWidget {
     final CalendarViewState state = ref.watch(calendarViewProvider);
     final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
     final AppLocalizations l10n = AppLocalizations.of(context);
+
+    // M4: keeps `ReminderSyncService` alive (subscribed + scheduling) for as
+    // long as this screen — the only one shown while signed in — is on
+    // screen; `autoDispose` tears it down (subscription + every scheduled
+    // notification cancelled) once it isn't, i.e. on sign-out.
+    ref.watch(reminderSyncServiceProvider);
+    // Requests notification permission once ever (persisted flag); shows a
+    // Hebrew rationale snackbar only if it was denied.
+    ref.listen<AsyncValue<bool>>(reminderPermissionProvider, (
+      AsyncValue<bool>? previous,
+      AsyncValue<bool> next,
+    ) {
+      next.whenData((bool granted) {
+        if (!granted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.notificationsPermissionDeniedMessage)),
+          );
+        }
+      });
+    });
 
     return Scaffold(
       appBar: AppBar(

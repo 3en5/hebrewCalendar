@@ -84,6 +84,42 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
 ## 6. תזכורות והתראות
 - תזכורות מקומיות: `flutter_local_notifications` + תזמון מדויק (exact alarms עם הרשאה).
 - הזמנות למשתתפים ועדכוני אירוע משותף: FCM דרך Cloud Function שמאזינה לשינויים ב-events.
+- **מימוש (M4, `lib/domain/notifications/`+`lib/data/notifications/`+`lib/features/notifications/`):**
+  הפרדה תלת-שכבתית קפדנית לנבדקות מלאה:
+  1. **מתכנן טהור** (`reminder_planner.dart`, `planReminders`) — Dart טהור, ללא Flutter/פלאגין:
+     מקבל רשימת `EventOccurrence` (כבר מורחבים ע"י `recurrence_expander.dart`), `now` ואופק
+     תכנון (ברירת מחדל 60 יום), ומחזיר `List<PlannedNotification>` ממוין לפי `fireAt`.
+     חוקים: כל `minutesBefore` ב-`Event.reminderMinutesBefore` מייצר תזכורת אחת; תזכורת
+     שזמנה כבר עבר מדולגת; תזכורת מעבר לאופק מדולגת; אירוע יום שלם (`allDay`/`startTime==null`)
+     "יורה" ב-09:00 שעון מקומי ביום המופע פחות `minutesBefore`; התוצאה מוגבלת ל-60 התזכורות
+     הקרובות ביותר (תקציב exact-alarm מעשי באנדרואיד). `stableId` נגזר מ-hash דטרמיניסטי
+     (FNV-1a על event id + תאריך מופע + minutesBefore) — לא מ-`Object.hash`/`hashCode`, שאינם
+     מובטחים יציבים בין הרצות אפליקציה (ראה LESSONS.md).
+  2. **מתאם פלאגין דק** (`local_notification_scheduler.dart`, `LocalNotificationScheduler`
+     מממש `NotificationScheduler` המופשט שב-`lib/domain/notifications/`) — עוטף
+     `flutter_local_notifications`: ערוץ עברי יחיד (`reminders`/"תזכורות", שם מגיע מ-ARB
+     בקונסטרוקציה), `zonedSchedule` עם `exactAllowWhileIdle` ונפילה חזרה ל-`inexactAllowWhileIdle`
+     כשאין הרשאת exact alarm (לעולם לא קורס), אתחול אזור זמן דרך `flutter_timezone`. תזמון
+     מבוסס-diff (`scheduled_notification_diff.dart`, טהור ונבדק בנפרד): מבטל רק מזהים שכבר
+     לא בתוכנית, מתזמן רק חדשים/שהשתנו — לא cancelAll+reschedule מלא בכל ריענון. מפת
+     "מה מתוזמן כרגע" (id -> חתימה) נשמרת ב-`shared_preferences`. הקובץ הזה עצמו **אינו**
+     נבדק ביחידה ישירות (רק מיפוי לפלאגין) — כל קריאה לפלאגין עטופה כדי שלעולם לא תקריס,
+     כולל בטסטי widget שאין בהם ערוץ פלאגין אמיתי.
+  3. **אורקסטרטור** (`reminder_sync_service.dart`, `ReminderSyncService`) — מחבר
+     `EventRepository.watchOccurrencesInRange(now, now+horizon)` (של המשתמש המחובר) ->
+     debounce 500ms -> `planReminders` -> `NotificationScheduler.showScheduled`. ללא Riverpod/
+     Flutter — נבדק ביחידה עם fakes (`InMemoryEventRepository`+`FakeNotificationScheduler`)
+     בלבד. חיווט ה-Riverpod האמיתי (`reminder_providers.dart`): `reminderSyncServiceProvider`
+     (autoDispose) מופעל מ-`CalendarShellScreen` כשמחוברים ומבוטל (subscription+כל תזכורת
+     מתוזמנת) בהתנתקות (RULES.md §6). הרשאת התראות מתבקשת פעם אחת בלבד (דגל ב-
+     `shared_preferences`, `ReminderPermissionController`), עם snackbar עברי אם נדחתה.
+  - עורך האירועים: בורר תזכורת יחיד (`reminder_selector.dart`) הורחב מ-M2a
+    (ללא/10/30/60 דקות) ל-ללא/בזמן האירוע (0)/10/30/60 דקות/יום לפני (1440 דקות).
+    ריבוי תזכורות לאירוע נשאר מחוץ להיקף — ראה WISHLIST.md.
+  - הרשאות אנדרואיד (`AndroidManifest.xml`): `POST_NOTIFICATIONS`+`RECEIVE_BOOT_COMPLETED`+
+    `SCHEDULE_EXACT_ALARM` (לא `USE_EXACT_ALARM`, שדורש אישור/ביקורת Play Store) +
+    `ScheduledNotificationReceiver`/`ScheduledNotificationBootReceiver` של הפלאגין כדי
+    שתזכורות ישרדו אתחול מכשיר.
 
 ## 7. גיבוי ושחזור
 - הנתונים חיים ב-Firestore (גיבוי מובנה). בנוסף: יצוא ידני לקובץ JSON מוצפן ל-Storage/מכשיר,
@@ -99,7 +135,7 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
 | M1 | מנוע עברי + תצוגת חודש | HebrewDateEngine עטוף ונבדק, גריד חודש עברי RTL, ניווט חודשים | ◻ |
 | M2 | אימות + CRUD (מפוצל) | **M2a** ✅: מודל דומיין `Event`/`RecurrenceRule`, ולידציה, `EventRepository` מופשט + מימוש בזיכרון, מסך עורך אירועים, שילוב עם תצוגת החודש — הכול ללא תלות ב-Firebase. **M2b** ✅: Google Sign-In (`firebase_auth`+`google_sign_in`), Firestore (`FirestoreEventRepository`), Security Rules כקוד (`firebase/`), שער אימות באפליקציה | ✅ |
 | M3 | תצוגות + חזרתיות | **M3a** ✅: מנוע הרחבת חזרתיות (`recurrence_expander.dart`), שילוב ב-repositories (`EventOccurrence`), עורך אירועים (בורר חזרתיות + "עד תאריך"), מחיקת מופע יחיד/כל הסדרה. **M3b** ✅: `EventRepository.watchOccurrencesInRange` (טווח תאריכים שרירותי, לא רק חודש), תצוגות שבוע/יום/אג'נדה, `CalendarShellScreen` עם בורר תצוגה + כפתור "היום" | ✅ |
-| M4 | תזכורות | התראות מקומיות מדויקות, ניהול הרשאות | ◻ |
+| M4 | תזכורות | התראות מקומיות מדויקות, ניהול הרשאות | ✅ |
 | M5 | סנכרון גוגל | דו-כיווני מלא כמתואר ב-§5 | ◻ |
 | M6 | שיתוף והעשרה | משתתפים+הזמנות (FCM), קבצים מצורפים, מיקום | ◻ |
 | M7 | גיבוי, ליטוש, שחרור | יצוא/שחזור, בדיקות קצה, חתימה, Play Store | ◻ |

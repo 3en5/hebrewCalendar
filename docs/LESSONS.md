@@ -164,3 +164,48 @@
   חייב להיות אמיתי) — מספיק לבניית debug, והקונפיג האמיתי לא נחשף. בנוסף,
   פלאגיני Firebase דורשים NDK 27 — נקבע `ndkVersion = "27.0.12077973"` מפורש
   ב-`android/app/build.gradle.kts`.
+
+- **2026-07-06 · M4, מזהי התראה יציבים חייבים hash דטרמיניסטי משלנו, לא
+  `Object.hash`/`hashCode`:** `flutter_local_notifications` דורש `id: int`
+  קבוע לכל תזכורת כדי לדעת "זו אותה תזכורת, לעדכן" מול "זו חדשה" בין
+  replan אחד למשנהו (`reminder_planner.dart`'s `computeStableNotificationId`).
+  `Object.hash`/ברירת המחדל של `hashCode` **אינם** מובטחים לתת אותו ערך בין
+  שתי הרצות שונות של האפליקציה (יכולים להשתנות עם hash-seed randomization
+  של ה-VM) — שימוש בהם היה גורם לכל replan אחרי restart של האפליקציה
+  לבטל ולתזמן מחדש כל תזכורת קיימת בטעות (במקום לזהות שהיא לא השתנתה).
+  הפתרון: hash טקסטואלי דטרמיניסטי משלנו (FNV-1a 32-bit) על מחרוזת מפתח
+  שנבנית רק מהשדות היציבים (event id + תאריך מופע + minutesBefore) — אותו
+  מפתח נותן תמיד את אותו digest, בהרצה הזו ובכל הרצה עתידית.
+
+- **2026-07-06 · M4, `AppLocalizationsHe()` ניתן לבנייה ישירה בלי `BuildContext`:**
+  קוד data/application (למשל `LocalNotificationScheduler`, שצריך שם ערוץ
+  עברי מ-ARB "בקונסטרוקציה" לפי המשימה) לא תמיד רץ בתוך widget tree עם
+  גישה ל-`BuildContext` (וב-Riverpod `Provider` regular אין אחד בכלל).
+  הפתרון בפרויקט הזה (שתומך אך ורק בעברית — `main.dart` קובע
+  `Locale('he')` קשיח): מחלקת השפה המחוללת (`AppLocalizationsHe`, ב-
+  `lib/l10n/app_localizations_he.dart`) היא מחלקת Dart רגילה עם קונסטרוקטור
+  ציבורי (`AppLocalizationsHe([String locale = 'he'])`) — ניתן לבנות אותה
+  ישירות (`AppLocalizationsHe().notificationsChannelName`) בלי
+  `AppLocalizations.of(context)` בכלל. שימושי לכל טקסט עברי הדרוש מחוץ
+  לעץ ה-widgets, אך **רק** כשהאפליקציה תומכת בשפה יחידה קבועה כפי שקורה
+  כאן — לא פתרון כללי לריבוי שפות.
+
+- **2026-07-06 · M4, טסטי widget שמרנדרים מסך שמפעיל שירות רקע (subscription+
+  Timer) חייבים fake לתלות החיצונית, לא רק try/catch בתוכה:** חיווט
+  `reminderSyncServiceProvider` (autoDispose) מ-`CalendarShellScreen` גרם
+  לכל טסט widget קיים שמרנדר את המסך הזה (auth_gate/month/week/day/agenda/
+  calendar_shell — 8 קבצים) לבנות בפועל `LocalNotificationScheduler` אמיתי
+  כברירת מחדל, שמנסה לקרוא לפלאגין `flutter_local_notifications` דרך
+  `MethodChannel` — שאין לו handler רשום תחת `flutter test`
+  (`debugDefaultTargetPlatformOverride` הוא `android` כברירת מחדל בטסטים,
+  אז הקוד *כן* מנסה לפנות לערוץ אנדרואיד). עטיפת כל קריאת פלאגין ב-
+  try/catch ב-`LocalNotificationScheduler` (כבר נדרש ממילא בשביל "graceful
+  degradation" באנדרואיד עצמו) מטפלת בחריגה, אבל **לא** בסיכון הנפרד של
+  Timer/`StreamSubscription` שנשארים תלויים בסוף הטסט (debounce Timer של
+  `ReminderSyncService`) — `flutter_test` נכשל אם Timer עדיין ממתין כשה-
+  widget tree נהרס. הפתרון הנקי: override מפורש של `notificationSchedulerProvider`
+  עם `FakeNotificationScheduler` (test double פשוט, `test/test_support/
+  fake_notification_scheduler.dart`) בכל טסט כזה — לא רק להישען על עטיפת
+  try/catch בתוך מימוש הפלאגין. לקח כללי: כשמוסיפים שירות רקע (subscription
+  ממושך + timer) שמופעל אוטומטית ממסך קיים, כל טסט widget שמרנדר את המסך
+  הזה צריך override מפורש לתלות שלו (לא להסתמך על חוסן פנימי בלבד).

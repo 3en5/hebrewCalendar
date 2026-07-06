@@ -64,6 +64,10 @@
   "@eventReminderNone": {
     "description": "Reminder chip label meaning no reminder is set."
   },
+  "eventReminderAtEventTime": "בזמן האירוע",
+  "@eventReminderAtEventTime": {
+    "description": "Reminder chip label meaning the reminder fires exactly at the event's start time (0 minutes before, M4)."
+  },
   "eventReminderMinutesBefore": "{minutes} דקות לפני",
   "@eventReminderMinutesBefore": {
     "description": "Reminder chip label for a fixed number of minutes before the event, e.g. '10 דקות לפני'.",
@@ -72,6 +76,10 @@
         "type": "int"
       }
     }
+  },
+  "eventReminderOneDayBefore": "יום לפני",
+  "@eventReminderOneDayBefore": {
+    "description": "Reminder chip label meaning the reminder fires one day before the event (M4)."
   },
   "eventValidationTitleRequired": "יש להזין כותרת",
   "@eventValidationTitleRequired": {
@@ -220,5 +228,13 @@
   "agendaEmptyState": "אין אירועים קרובים",
   "@agendaEmptyState": {
     "description": "Empty-state message shown in the agenda view when there are no upcoming occurrences in the loaded window."
+  },
+  "notificationsChannelName": "תזכורות",
+  "@notificationsChannelName": {
+    "description": "Android notification channel name (M4) for event reminders, shown to the user in the system notification settings."
+  },
+  "notificationsPermissionDeniedMessage": "בלי הרשאת התראות, תזכורות לאירועים לא יוצגו. ניתן להפעיל בהגדרות המכשיר.",
+  "@notificationsPermissionDeniedMessage": {
+    "description": "Snackbar rationale shown once (M4) when the user denies the OS notification permission, explaining reminders won't show without it."
   }
 }
