@@ -48,6 +48,7 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
   gregorianStart, gregorianEnd  # נגזר, לשאילתות וסנכרון
   allDay, startTime, endTime
   recurrence {type: none|hebrewYearly|hebrewMonthly|weekly|daily, until, exceptions[]}
+  isRecurring                   # נגזר מ-recurrence.type (M3a) — לשאילתת "כל האירועים החוזרים"
   reminders [{minutesBefore, method}]
   participantUids[], participantEmails[], invitesStatus{}
   attachments [{storagePath, name, size, mime}]
@@ -55,7 +56,18 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
 ```
 - **עיקרון חזרתיות עברית:** לא משכפלים מסמכים; מופעים (instances) מחושבים בזמן ריצה
   מ-`RecurrenceRule` דרך `HebrewDateEngine`, וממומשים (materialized) רק לחריגים ולסנכרון גוגל.
-- אינדקסים: `events` על (`ownerUid`,`gregorianStart`) ועל (`participantUids` array-contains, `gregorianStart`).
+- אינדקסים: `events` על (`ownerUid`,`gregorianStart`), על (`ownerUid`,`isRecurring`,`gregorianStart`)
+  ועל (`ownerUid`,`isRecurring`) — ראה M3a למטה — וכן על (`participantUids` array-contains, `gregorianStart`).
+- **מדיניות חזרתיות (M3a, `lib/domain/event/recurrence_expander.dart`):**
+  - **מיפוי אדר** (`hebrewYearly` בלבד): בסיס באדר (שנה לא מעוברת) או אדר א׳ — חוזר באדר א׳
+    בשנה מעוברת ובאדר רגיל בשנה לא מעוברת; בסיס באדר ב׳ — חוזר באדר ב׳ בשנה מעוברת
+    ובאדר רגיל בשנה לא מעוברת.
+  - **מדיניות יום 30** (`hebrewYearly` ו-`hebrewMonthly`): אירוע שעוגן ביום 30 (חשוון/כסלו)
+    נופל על היום האחרון של החודש (29) בשנה/בחודש שבו החודש קצר — לא מדלג, לא "גולש"
+    לחודש הבא, ולא יורה פעמיים; תמיד מופע אחד בדיוק לכל חודש/שנה עברית.
+  - `weekly`/`daily` מתקדמים במספר קבוע של ימים לועזיים (חישוב דרך `HebrewDateEngine`).
+  - בכל הסוגים: אין מופע לפני תאריך הבסיס, `until` הוא גבול עליון כולל, ותאריכים
+    ב-`exceptions` מדולגים.
 
 ## 5. סנכרון Google Calendar (דו-כיווני)
 - OAuth scope: `calendar.events` דרך אותו Google Sign-In.
@@ -86,7 +98,7 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
 | M0 | תשתית | פרויקט Flutter, מבנה תיקיות, theme+dimens, CI, טסט ראשון | ⏳ |
 | M1 | מנוע עברי + תצוגת חודש | HebrewDateEngine עטוף ונבדק, גריד חודש עברי RTL, ניווט חודשים | ◻ |
 | M2 | אימות + CRUD (מפוצל) | **M2a** ✅: מודל דומיין `Event`/`RecurrenceRule`, ולידציה, `EventRepository` מופשט + מימוש בזיכרון, מסך עורך אירועים, שילוב עם תצוגת החודש — הכול ללא תלות ב-Firebase. **M2b** ✅: Google Sign-In (`firebase_auth`+`google_sign_in`), Firestore (`FirestoreEventRepository`), Security Rules כקוד (`firebase/`), שער אימות באפליקציה | ✅ |
-| M3 | תצוגות + חזרתיות | שבוע/יום/אג'נדה, אירועים חוזרים עבריים כולל חריגים | ◻ |
+| M3 | תצוגות + חזרתיות | **M3a** ✅: מנוע הרחבת חזרתיות (`recurrence_expander.dart`), שילוב ב-repositories (`EventOccurrence`), עורך אירועים (בורר חזרתיות + "עד תאריך"), מחיקת מופע יחיד/כל הסדרה. **M3b** ◻: תצוגות שבוע/יום/אג'נדה | ◻ |
 | M4 | תזכורות | התראות מקומיות מדויקות, ניהול הרשאות | ◻ |
 | M5 | סנכרון גוגל | דו-כיווני מלא כמתואר ב-§5 | ◻ |
 | M6 | שיתוף והעשרה | משתתפים+הזמנות (FCM), קבצים מצורפים, מיקום | ◻ |

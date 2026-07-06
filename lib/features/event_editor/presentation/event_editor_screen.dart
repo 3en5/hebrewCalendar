@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/dimens.dart';
 import '../../../domain/event/event_validation.dart';
+import '../../../domain/event/recurrence_rule.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/event_editor_controller.dart';
 import '../application/event_editor_state.dart';
 import 'widgets/event_time_section.dart';
 import 'widgets/hebrew_date_picker_field.dart';
+import 'widgets/recurrence_type_selector.dart';
+import 'widgets/recurrence_until_field.dart';
 import 'widgets/reminder_selector.dart';
 
 /// Create/edit screen for a single event (Google-Calendar-like, RTL).
@@ -155,6 +158,22 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                 : state.reminderMinutesBefore.first,
             onChanged: _controller.setReminderMinutesBefore,
           ),
+          SizedBox(height: spacingMd),
+          Text(
+            l10n.eventRecurrenceLabel,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          SizedBox(height: spacingXs),
+          RecurrenceTypeSelector(
+            selected: state.recurrenceType,
+            onChanged: _controller.setRecurrenceType,
+          ),
+          if (state.recurrenceType != RecurrenceType.none)
+            RecurrenceUntilField(
+              until: state.recurrenceUntil,
+              fallbackDate: state.hebrewDate,
+              onChanged: _controller.setRecurrenceUntil,
+            ),
         ],
       ),
     );

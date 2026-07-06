@@ -115,10 +115,46 @@ void main() {
         event: original,
         engine: _engine,
       );
+      expect(data['isRecurring'], isTrue);
+      expect(data['recurrence'], <String, dynamic>{
+        'type': 'hebrewYearly',
+        'until': <String, dynamic>{'year': 5790, 'month': 'tishrei', 'day': 10},
+        'exceptions': <Map<String, dynamic>>[
+          <String, dynamic>{'year': 5787, 'month': 'tishrei', 'day': 10},
+          <String, dynamic>{'year': 5788, 'month': 'tishrei', 'day': 10},
+        ],
+      });
       final Event restored = eventFromFirestoreData(original.id, data);
       expect(restored, original);
       expect(restored.recurrence.exceptions, hasLength(2));
     });
+
+    test('isRecurring is false for a non-recurring (none) event', () {
+      final Event original = _baseEvent();
+      final Map<String, dynamic> data = eventToFirestoreData(
+        event: original,
+        engine: _engine,
+      );
+      expect(data['isRecurring'], isFalse);
+    });
+
+    for (final RecurrenceType type in RecurrenceType.values) {
+      test('isRecurring reflects RecurrenceType.${type.name}', () {
+        final Event original = _baseEvent(
+          recurrence: RecurrenceRule(type: type),
+        );
+        final Map<String, dynamic> data = eventToFirestoreData(
+          event: original,
+          engine: _engine,
+        );
+        expect(data['isRecurring'], type != RecurrenceType.none);
+        // isRecurring is derived/write-only: reading it back never affects
+        // the reconstructed Event, whose recurrence.type is the single
+        // source of truth.
+        final Event restored = eventFromFirestoreData(original.id, data);
+        expect(restored.recurrence.type, type);
+      });
+    }
 
     test('handles null startTime/endTime and an empty recurrence', () {
       final Event original = _baseEvent();

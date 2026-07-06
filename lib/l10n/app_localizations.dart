@@ -262,6 +262,78 @@ abstract class AppLocalizations {
   /// **'האם למחוק אירוע זה? לא ניתן לבטל פעולה זו.'**
   String get eventDeleteConfirmMessage;
 
+  /// Body text of the choice dialog shown before deleting an occurrence of a recurring event, offering 'this occurrence only' or 'the whole series'.
+  ///
+  /// In he, this message translates to:
+  /// **'אירוע זה הוא חלק מסדרה חוזרת. איך למחוק?'**
+  String get eventDeleteRecurringChoiceMessage;
+
+  /// Button label to delete only the single occurrence being viewed from a recurring event's series (adds it to the recurrence exceptions).
+  ///
+  /// In he, this message translates to:
+  /// **'מופע זה בלבד'**
+  String get eventDeleteThisOccurrenceOnly;
+
+  /// Button label to delete an entire recurring event series.
+  ///
+  /// In he, this message translates to:
+  /// **'כל הסדרה'**
+  String get eventDeleteWholeSeries;
+
+  /// Section heading above the recurrence type selector in the event editor.
+  ///
+  /// In he, this message translates to:
+  /// **'חזרתיות'**
+  String get eventRecurrenceLabel;
+
+  /// Recurrence type chip label: the event does not repeat.
+  ///
+  /// In he, this message translates to:
+  /// **'ללא חזרה'**
+  String get recurrenceTypeNone;
+
+  /// Recurrence type chip label: repeats every Hebrew year on the same Hebrew month/day.
+  ///
+  /// In he, this message translates to:
+  /// **'כל שנה (עברי)'**
+  String get recurrenceTypeYearly;
+
+  /// Recurrence type chip label: repeats every Hebrew month on the same day.
+  ///
+  /// In he, this message translates to:
+  /// **'כל חודש (עברי)'**
+  String get recurrenceTypeMonthly;
+
+  /// Recurrence type chip label: repeats every week.
+  ///
+  /// In he, this message translates to:
+  /// **'כל שבוע'**
+  String get recurrenceTypeWeekly;
+
+  /// Recurrence type chip label: repeats every day.
+  ///
+  /// In he, this message translates to:
+  /// **'כל יום'**
+  String get recurrenceTypeDaily;
+
+  /// Label for the optional 'repeat until' Hebrew date field shown for a recurring event.
+  ///
+  /// In he, this message translates to:
+  /// **'עד תאריך'**
+  String get recurrenceUntilLabel;
+
+  /// Placeholder shown for the 'repeat until' field when no end date is set (the series repeats indefinitely).
+  ///
+  /// In he, this message translates to:
+  /// **'ללא תאריך סיום'**
+  String get recurrenceUntilNone;
+
+  /// Tooltip for the button that clears the 'repeat until' date, making the series repeat indefinitely again.
+  ///
+  /// In he, this message translates to:
+  /// **'הסרת תאריך סיום'**
+  String get recurrenceUntilClearTooltip;
+
   /// Label for the year dropdown in the Hebrew date picker sheet.
   ///
   /// In he, this message translates to:

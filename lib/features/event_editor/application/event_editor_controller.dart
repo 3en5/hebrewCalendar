@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/misc.dart' show NotifierProviderFamily;
 import '../../../domain/event/event.dart';
 import '../../../domain/event/event_time_of_day.dart';
 import '../../../domain/event/event_validation.dart';
+import '../../../domain/event/recurrence_rule.dart';
 import '../../../domain/hebrew_date/hebrew_date.dart';
 import 'event_editor_state.dart';
 import 'event_repository_provider.dart';
@@ -87,6 +88,22 @@ class EventEditorController extends Notifier<EventEditorState> {
     );
   }
 
+  /// Sets the recurrence type (M3a). Switching to [RecurrenceType.none]
+  /// also clears any "repeat until" date — it would otherwise linger
+  /// invisibly and reappear if the user picks a repeating type again.
+  void setRecurrenceType(RecurrenceType type) {
+    state = type == RecurrenceType.none
+        ? state.copyWith(recurrenceType: type, clearRecurrenceUntil: true)
+        : state.copyWith(recurrenceType: type);
+  }
+
+  /// Sets (or, when [until] is null, clears) the "repeat until" date.
+  void setRecurrenceUntil(HebrewDate? until) {
+    state = until == null
+        ? state.copyWith(clearRecurrenceUntil: true)
+        : state.copyWith(recurrenceUntil: until);
+  }
+
   Future<EventEditorSaveResult> save() async {
     final EventValidationResult result = validateEvent(
       title: state.title,
@@ -129,6 +146,13 @@ class EventEditorController extends Notifier<EventEditorState> {
       endTime: state.allDay ? null : state.endTime,
       clearEndTime: state.allDay || state.endTime == null,
       reminderMinutesBefore: state.reminderMinutesBefore,
+      recurrence: RecurrenceRule(
+        type: state.recurrenceType,
+        until: state.recurrenceType == RecurrenceType.none
+            ? null
+            : state.recurrenceUntil,
+        exceptions: state.recurrenceExceptions,
+      ),
     );
 
     final repository = ref.read(eventRepositoryProvider);

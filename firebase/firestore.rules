@@ -13,6 +13,13 @@ rules_version = '2';
 //
 // Participant-based sharing (`participantUids`) is M6 scope — until then,
 // only the event's own `ownerUid` may read/write it.
+//
+// M3a (Hebrew recurring events): `recurrence` (type/until/exceptions) and
+// the derived `isRecurring` bool (see `lib/data/event_firestore_mapper.dart`
+// doc comment — it's recomputed from `recurrence.type` on every write, used
+// to query "this user's recurring events" without inspecting every event's
+// full recurrence map) are validated the same way as every other field:
+// never trusted from the client alone.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -77,8 +84,27 @@ service cloud.firestore {
           && data.gregorianStart is timestamp
           && data.gregorianEnd is timestamp
           && data.allDay is bool
+          && data.isRecurring is bool
+          && data.recurrence is map
+          && isValidRecurrence(data.recurrence)
           && data.createdAt is timestamp
           && data.updatedAt is timestamp;
+      }
+
+      function isValidRecurrence(rec) {
+        return rec.type is string
+          && rec.type in ['none', 'hebrewYearly', 'hebrewMonthly', 'weekly', 'daily']
+          && (!('until' in rec) || rec.until == null || isValidHebrewDateMap(rec.until))
+          && (!('exceptions' in rec) || rec.exceptions is list);
+      }
+
+      function isValidHebrewDateMap(hd) {
+        return hd is map
+          && hd.year is int
+          && hd.month is string
+          && hd.day is int
+          && hd.day >= 1
+          && hd.day <= 30;
       }
     }
 

@@ -107,6 +107,34 @@
   אחרת יש חלון race — גם אם בשימוש אמיתי מה-UI (בניגוד לטסט סינכרוני) החלון
   נדיר שיתממש בפועל.
 
+- **2026-07-06 · M3a, אריתמטיקת ימים ל-`weekly`/`daily` חייבת להיות ב-UTC:**
+  `RecurrenceType.weekly`/`daily` ב-`recurrence_expander.dart` מחשבים "כמה
+  צעדים של 7/1 ימים מהבסיס" ע"י חיסור בין שני `DateTime` שמוחזרים מ-
+  `HebrewDateEngine.toGregorian` (שהם local, לא UTC — ראה הלקח למעלה על
+  `Timestamp.toDate()`). חיסור/חיבור `Duration` בין `DateTime` מקומיים
+  חשוף לחריגות שעון-קיץ: יום עם 23 או 25 שעות (מעבר DST) יכול להזיז
+  `.difference(...).inDays` בטעות של יום שלם. הפתרון: `_toUtcDate` בונה
+  `DateTime.utc(y, m, d)` מהשדות של ה-`DateTime` המקומי (לא ממיר `.toUtc()`
+  — זה היה משנה את הרגע בפועל; אנחנו רק רוצים "לנעול" את שדות התאריך
+  בלי אזור זמן) ומבצע את כל האריתמטיקה על עותקי UTC, לפני שממירים בחזרה
+  ל-Hebrew דרך `engine.fromGregorian` (שקורא רק year/month/day מה-`DateTime`
+  שהוא מקבל, לא איכפת לו אם הוא UTC או local). לקח כללי: כל חישוב "הפרש
+  בימים" בין שני `DateTime`ים ב-Dart שמקורם מ-API מקומי (לא רק
+  kosher_dart) צריך לנרמל ל-UTC לפני החיסור, אחרת יש סיכון לטעות-יום נדירה
+  סביב מעברי שעון.
+
+- **2026-07-06 · M3a, `ListView` (לא-builder) בטסטי widget לא בונה ילדים
+  הרחק מהאזור הנראה:** בדיקת widget שגוללת רשימת `ListView(children: [...])`
+  ארוכה (מסך עורך האירועים אחרי הוספת בורר החזרתיות) גילתה ש-`find.text`
+  לא מוצא widget שקיים ברשימת ה-children שהועברה בקוד, אם הוא רחוק מספיק
+  מתחת לאזור הנראה (מעבר ל-cache extent של ה-sliver). התיקון: לגלול עם
+  `tester.dragUntilVisible(finder, scrollableFinder, step)` — אבל גם הוא
+  עוצר ברגע שהאלמנט *נבנה* (בתוך cache extent), לא בהכרח ברגע שהוא
+  hit-testable בפועל בתוך viewport; נדרש drag קטן נוסף אחרי
+  `dragUntilVisible` לפני `tester.tap(...)` כדי למנוע "derived an Offset
+  that would not hit test". לקח כללי: אל תניחו של-`find.*` יש גישה לכל
+  widget שקיים בקוד המקור של רשימה גוללת — רק למה שה-sliver בפועל בנה.
+
 - **2026-07-06 · CI עם קונפיג Firebase מוסתר:** `google-services.json` ב-gitignore
   ולכן ג'וב בניית ה-APK ב-CI נכשל על "File google-services.json is missing".
   הפתרון: ה-workflow יוצר קובץ placeholder עם ערכים מזויפים (רק ה-package_name

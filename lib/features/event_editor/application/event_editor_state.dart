@@ -1,6 +1,7 @@
 import '../../../domain/event/event.dart';
 import '../../../domain/event/event_time_of_day.dart';
 import '../../../domain/event/event_validation.dart';
+import '../../../domain/event/recurrence_rule.dart';
 import '../../../domain/hebrew_date/hebrew_date.dart';
 
 /// Immutable UI state for the event editor screen, covering both create
@@ -17,6 +18,9 @@ class EventEditorState {
     this.startTime,
     this.endTime,
     this.reminderMinutesBefore = const <int>[],
+    this.recurrenceType = RecurrenceType.none,
+    this.recurrenceUntil,
+    this.recurrenceExceptions = const <HebrewDate>[],
     this.errors = const <EventValidationErrorType>[],
     this.isSaving = false,
   });
@@ -35,6 +39,9 @@ class EventEditorState {
     startTime: event.startTime,
     endTime: event.endTime,
     reminderMinutesBefore: event.reminderMinutesBefore,
+    recurrenceType: event.recurrence.type,
+    recurrenceUntil: event.recurrence.until,
+    recurrenceExceptions: event.recurrence.exceptions,
   );
 
   final HebrewDate hebrewDate;
@@ -45,6 +52,21 @@ class EventEditorState {
   final EventTimeOfDay? startTime;
   final EventTimeOfDay? endTime;
   final List<int> reminderMinutesBefore;
+
+  /// How the event repeats (M3a). [RecurrenceType.none] means it doesn't.
+  final RecurrenceType recurrenceType;
+
+  /// The inclusive date the series stops at, or null to repeat
+  /// indefinitely. Meaningless (and ignored on save) when [recurrenceType]
+  /// is [RecurrenceType.none].
+  final HebrewDate? recurrenceUntil;
+
+  /// Occurrences excluded from the series (e.g. via the day sheet's "this
+  /// occurrence only" delete). Not directly editable in this screen — just
+  /// carried through unchanged from the [Event] being edited so saving
+  /// never silently drops previously-recorded exceptions.
+  final List<HebrewDate> recurrenceExceptions;
+
   final List<EventValidationErrorType> errors;
   final bool isSaving;
 
@@ -61,6 +83,9 @@ class EventEditorState {
     EventTimeOfDay? endTime,
     bool clearEndTime = false,
     List<int>? reminderMinutesBefore,
+    RecurrenceType? recurrenceType,
+    HebrewDate? recurrenceUntil,
+    bool clearRecurrenceUntil = false,
     List<EventValidationErrorType>? errors,
     bool? isSaving,
   }) => EventEditorState(
@@ -72,6 +97,11 @@ class EventEditorState {
     startTime: clearStartTime ? null : (startTime ?? this.startTime),
     endTime: clearEndTime ? null : (endTime ?? this.endTime),
     reminderMinutesBefore: reminderMinutesBefore ?? this.reminderMinutesBefore,
+    recurrenceType: recurrenceType ?? this.recurrenceType,
+    recurrenceUntil: clearRecurrenceUntil
+        ? null
+        : (recurrenceUntil ?? this.recurrenceUntil),
+    recurrenceExceptions: recurrenceExceptions,
     errors: errors ?? this.errors,
     isSaving: isSaving ?? this.isSaving,
   );

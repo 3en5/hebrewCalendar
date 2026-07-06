@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../domain/event/event.dart';
+import '../domain/event/event_occurrence.dart';
 import '../domain/event/event_repository.dart';
+import '../domain/event/recurrence_expander.dart';
 import '../domain/hebrew_date/hebrew_date.dart';
 import '../domain/hebrew_date/hebrew_date_engine.dart';
 import 'event_firestore_mapper.dart';
@@ -36,12 +40,27 @@ class FirestoreEventRepository implements EventRepository {
   CollectionReference<Map<String, dynamic>> get _events =>
       _firestore.collection('events');
 
+  /// M3a: a recurring event's `gregorianStart` only reflects its anchor
+  /// date, which may fall in a completely different month than an
+  /// occurrence being displayed — so recurring events can't be filtered by
+  /// the displayed month's Gregorian range server-side. Instead this
+  /// combines two queries: non-recurring events within the month's
+  /// Gregorian range (as before, `isRecurring == false` added so recurring
+  /// events aren't double-counted), and *all* of this user's recurring
+  /// events (`isRecurring == true`, unfiltered by date — there are only
+  /// ever as many of these as the user has created series), expanding the
+  /// latter into occurrences for [year]/[month] via `recurrence_expander.dart`
+  /// — the same expansion `InMemoryEventRepository` uses.
   @override
-  Stream<List<Event>> watchEventsForHebrewMonth(int year, HebrewMonth month) {
+  Stream<List<EventOccurrence>> watchEventsForHebrewMonth(
+    int year,
+    HebrewMonth month,
+  ) {
     final ({DateTime start, DateTime endExclusive}) range =
         hebrewMonthGregorianRange(_engine, year, month);
-    return _events
+    final Stream<List<Event>> nonRecurring = _events
         .where('ownerUid', isEqualTo: ownerUid)
+        .where('isRecurring', isEqualTo: false)
         .where(
           'gregorianStart',
           isGreaterThanOrEqualTo: Timestamp.fromDate(range.start),
@@ -52,14 +71,82 @@ class FirestoreEventRepository implements EventRepository {
         )
         .orderBy('gregorianStart')
         .snapshots()
-        .map(
-          (QuerySnapshot<Map<String, dynamic>> snapshot) => snapshot.docs
-              .map(
-                (QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
-                    eventFromFirestoreData(doc.id, doc.data()),
-              )
-              .toList(),
-        );
+        .map(_mapDocs);
+    final Stream<List<Event>> recurring = _events
+        .where('ownerUid', isEqualTo: ownerUid)
+        .where('isRecurring', isEqualTo: true)
+        .snapshots()
+        .map(_mapDocs);
+
+    return _combineAndExpand(nonRecurring, recurring, year, month);
+  }
+
+  static List<Event> _mapDocs(QuerySnapshot<Map<String, dynamic>> snapshot) =>
+      snapshot.docs
+          .map(
+            (QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+                eventFromFirestoreData(doc.id, doc.data()),
+          )
+          .toList();
+
+  /// Combines the latest values of [nonRecurringStream] and
+  /// [recurringStream] (expanding the latter for [year]/[month]) into one
+  /// merged, sorted [EventOccurrence] stream — re-emitting whenever either
+  /// source updates. Both `snapshots()` streams are broadcast streams that
+  /// replay their current server/cache state to a new listener (unlike the
+  /// bare in-memory `StreamController` documented in `docs/LESSONS.md`), so
+  /// no special first-emission handling is needed here beyond waiting for
+  /// both sides to have emitted at least once.
+  Stream<List<EventOccurrence>> _combineAndExpand(
+    Stream<List<Event>> nonRecurringStream,
+    Stream<List<Event>> recurringStream,
+    int year,
+    HebrewMonth month,
+  ) {
+    late final StreamController<List<EventOccurrence>> controller;
+    List<Event>? latestNonRecurring;
+    List<Event>? latestRecurring;
+    StreamSubscription<List<Event>>? nonRecurringSub;
+    StreamSubscription<List<Event>>? recurringSub;
+
+    void emitIfReady() {
+      final List<Event>? nonRecurring = latestNonRecurring;
+      final List<Event>? recurring = latestRecurring;
+      if (nonRecurring == null || recurring == null) {
+        return;
+      }
+      final List<EventOccurrence> merged = <EventOccurrence>[
+        for (final Event event in nonRecurring)
+          EventOccurrence(event: event, occurrenceDate: event.hebrewDate),
+        for (final Event event in recurring)
+          ...occurrencesInHebrewMonth(
+            event: event,
+            year: year,
+            month: month,
+            engine: _engine,
+          ),
+      ]..sort(compareEventOccurrences);
+      controller.add(merged);
+    }
+
+    controller = StreamController<List<EventOccurrence>>.broadcast(
+      onListen: () {
+        nonRecurringSub = nonRecurringStream.listen((List<Event> events) {
+          latestNonRecurring = events;
+          emitIfReady();
+        });
+        recurringSub = recurringStream.listen((List<Event> events) {
+          latestRecurring = events;
+          emitIfReady();
+        });
+      },
+      onCancel: () {
+        unawaited(nonRecurringSub?.cancel());
+        unawaited(recurringSub?.cancel());
+        unawaited(controller.close());
+      },
+    );
+    return controller.stream;
   }
 
   @override

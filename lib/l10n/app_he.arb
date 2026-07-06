@@ -117,6 +117,54 @@
   "@eventDeleteConfirmMessage": {
     "description": "Body text of the confirmation dialog shown before deleting an event."
   },
+  "eventDeleteRecurringChoiceMessage": "אירוע זה הוא חלק מסדרה חוזרת. איך למחוק?",
+  "@eventDeleteRecurringChoiceMessage": {
+    "description": "Body text of the choice dialog shown before deleting an occurrence of a recurring event, offering 'this occurrence only' or 'the whole series'."
+  },
+  "eventDeleteThisOccurrenceOnly": "מופע זה בלבד",
+  "@eventDeleteThisOccurrenceOnly": {
+    "description": "Button label to delete only the single occurrence being viewed from a recurring event's series (adds it to the recurrence exceptions)."
+  },
+  "eventDeleteWholeSeries": "כל הסדרה",
+  "@eventDeleteWholeSeries": {
+    "description": "Button label to delete an entire recurring event series."
+  },
+  "eventRecurrenceLabel": "חזרתיות",
+  "@eventRecurrenceLabel": {
+    "description": "Section heading above the recurrence type selector in the event editor."
+  },
+  "recurrenceTypeNone": "ללא חזרה",
+  "@recurrenceTypeNone": {
+    "description": "Recurrence type chip label: the event does not repeat."
+  },
+  "recurrenceTypeYearly": "כל שנה (עברי)",
+  "@recurrenceTypeYearly": {
+    "description": "Recurrence type chip label: repeats every Hebrew year on the same Hebrew month/day."
+  },
+  "recurrenceTypeMonthly": "כל חודש (עברי)",
+  "@recurrenceTypeMonthly": {
+    "description": "Recurrence type chip label: repeats every Hebrew month on the same day."
+  },
+  "recurrenceTypeWeekly": "כל שבוע",
+  "@recurrenceTypeWeekly": {
+    "description": "Recurrence type chip label: repeats every week."
+  },
+  "recurrenceTypeDaily": "כל יום",
+  "@recurrenceTypeDaily": {
+    "description": "Recurrence type chip label: repeats every day."
+  },
+  "recurrenceUntilLabel": "עד תאריך",
+  "@recurrenceUntilLabel": {
+    "description": "Label for the optional 'repeat until' Hebrew date field shown for a recurring event."
+  },
+  "recurrenceUntilNone": "ללא תאריך סיום",
+  "@recurrenceUntilNone": {
+    "description": "Placeholder shown for the 'repeat until' field when no end date is set (the series repeats indefinitely)."
+  },
+  "recurrenceUntilClearTooltip": "הסרת תאריך סיום",
+  "@recurrenceUntilClearTooltip": {
+    "description": "Tooltip for the button that clears the 'repeat until' date, making the series repeat indefinitely again."
+  },
   "hebrewDatePickerYearLabel": "שנה",
   "@hebrewDatePickerYearLabel": {
     "description": "Label for the year dropdown in the Hebrew date picker sheet."

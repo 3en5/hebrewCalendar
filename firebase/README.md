@@ -40,3 +40,15 @@
 
 עד שהצעד הזה לא בוצע (על ידי המשתמש/מפעיל הפרויקט), Firestore עובד לפי
 ברירת המחדל שלו — חסימת כל גישה ללא Rules מפורסמות. ראה `docs/PROGRESS.md`.
+
+## עדכון M3a (אירועים חוזרים עבריים)
+
+`firestore.rules` ו-`firestore.indexes.json` השתנו כדי לתמוך באירועים
+חוזרים: שדה `isRecurring` (bool, נגזר מ-`recurrence.type`) נוסף לוולידציה
+וטעון אינדקס מורכב חדש (`ownerUid`+`isRecurring`, ו-`ownerUid`+`isRecurring`+
+`gregorianStart`) הנדרש לשאילתת `FirestoreEventRepository.watchEventsForHebrewMonth`
+המפוצלת (אירועים לא-חוזרים לפי טווח תאריכים + כל האירועים החוזרים של
+המשתמש). **יש לפרוס מחדש** (`firebase deploy --only
+firestore:rules,firestore:indexes`, או הדבקה ידנית — ראה "פריסה" למעלה) לפני
+שאירועים חוזרים ייחשפו כראוי מול Firestore אמיתי; עד אז השאילתה החדשה עלולה
+להיכשל או לפספס אירועים חוזרים.

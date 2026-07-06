@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import '../domain/event/event.dart';
+import '../domain/event/event_occurrence.dart';
 import '../domain/event/event_repository.dart';
+import '../domain/event/recurrence_expander.dart';
 import '../domain/hebrew_date/hebrew_date.dart';
+import '../domain/hebrew_date/hebrew_date_engine.dart';
 
 /// In-memory [EventRepository]: the only implementation until Firebase
 /// wiring lands in M2b, and the permanent implementation used by widget
@@ -10,16 +13,22 @@ import '../domain/hebrew_date/hebrew_date.dart';
 ///
 /// [idGenerator] and [now] are injectable so tests get deterministic ids
 /// and timestamps instead of depending on a shared static counter or the
-/// wall clock.
+/// wall clock. Recurring events are expanded into [EventOccurrence]s on
+/// every read via `recurrence_expander.dart` (M3a) — the exact same
+/// expansion logic `FirestoreEventRepository` uses, so behavior doesn't
+/// diverge between the two [EventRepository] implementations.
 class InMemoryEventRepository implements EventRepository {
   InMemoryEventRepository({
     String Function()? idGenerator,
     DateTime Function()? now,
+    HebrewDateEngine engine = const HebrewDateEngine(),
   }) : _idGenerator = idGenerator ?? _defaultIdGenerator,
-       _now = now ?? DateTime.now;
+       _now = now ?? DateTime.now,
+       _engine = engine;
 
   final String Function() _idGenerator;
   final DateTime Function() _now;
+  final HebrewDateEngine _engine;
   final Map<String, Event> _events = <String, Event>{};
 
   /// Broadcasts a signal (no payload) whenever [_events] changes; each
@@ -33,7 +42,10 @@ class InMemoryEventRepository implements EventRepository {
   static String _defaultIdGenerator() => 'event-${_idCounter++}';
 
   @override
-  Stream<List<Event>> watchEventsForHebrewMonth(int year, HebrewMonth month) {
+  Stream<List<EventOccurrence>> watchEventsForHebrewMonth(
+    int year,
+    HebrewMonth month,
+  ) {
     // Built by hand (rather than an `async*` generator that `yield`s the
     // initial snapshot then `yield*`s a mapped `_changes.stream`) because
     // that two-step shape has a subscription-timing race: a broadcast
@@ -44,14 +56,14 @@ class InMemoryEventRepository implements EventRepository {
     // test asserting on emissions) could be silently missed. Subscribing
     // to `_changes` and emitting the initial snapshot together inside
     // `onListen` closes that gap.
-    late final StreamController<List<Event>> controller;
+    late final StreamController<List<EventOccurrence>> controller;
     StreamSubscription<void>? changesSubscription;
-    controller = StreamController<List<Event>>.broadcast(
+    controller = StreamController<List<EventOccurrence>>.broadcast(
       onListen: () {
         changesSubscription = _changes.stream.listen(
-          (_) => controller.add(_eventsForMonth(year, month)),
+          (_) => controller.add(_occurrencesForMonth(year, month)),
         );
-        controller.add(_eventsForMonth(year, month));
+        controller.add(_occurrencesForMonth(year, month));
       },
       onCancel: () {
         unawaited(changesSubscription?.cancel());
@@ -113,32 +125,17 @@ class InMemoryEventRepository implements EventRepository {
     }
   }
 
-  List<Event> _eventsForMonth(int year, HebrewMonth month) {
-    final List<Event> matches = _events.values
-        .where(
-          (Event event) =>
-              event.hebrewDate.year == year && event.hebrewDate.month == month,
-        )
-        .toList();
-    matches.sort(_compareByDayThenTime);
+  List<EventOccurrence> _occurrencesForMonth(int year, HebrewMonth month) {
+    final List<EventOccurrence> matches = <EventOccurrence>[
+      for (final Event event in _events.values)
+        ...occurrencesInHebrewMonth(
+          event: event,
+          year: year,
+          month: month,
+          engine: _engine,
+        ),
+    ];
+    matches.sort(compareEventOccurrences);
     return matches;
-  }
-
-  static int _compareByDayThenTime(Event a, Event b) {
-    final int dayCompare = a.hebrewDate.day.compareTo(b.hebrewDate.day);
-    if (dayCompare != 0) {
-      return dayCompare;
-    }
-    if (a.allDay != b.allDay) {
-      // All-day events sort before timed events on the same day, matching
-      // Google Calendar's day/agenda ordering.
-      return a.allDay ? -1 : 1;
-    }
-    final int aMinutes = a.startTime?.minutesFromMidnight ?? 0;
-    final int bMinutes = b.startTime?.minutesFromMidnight ?? 0;
-    if (aMinutes != bMinutes) {
-      return aMinutes.compareTo(bMinutes);
-    }
-    return a.title.compareTo(b.title);
   }
 }

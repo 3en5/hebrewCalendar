@@ -1,5 +1,6 @@
 import '../hebrew_date/hebrew_date.dart';
 import 'event.dart';
+import 'event_occurrence.dart';
 
 /// Abstract event storage, defined purely in terms of domain types
 /// (ARCHITECTURE.md §3: features/data consume this interface; nothing
@@ -8,9 +9,18 @@ import 'event.dart';
 /// Implemented by `InMemoryEventRepository` (lib/data) for M2a and widget
 /// tests; a Firestore-backed implementation lands in M2b.
 abstract class EventRepository {
-  /// Streams every event whose [Event.hebrewDate] falls in the given
-  /// Hebrew [year]/[month], re-emitting whenever that set changes.
-  Stream<List<Event>> watchEventsForHebrewMonth(int year, HebrewMonth month);
+  /// Streams every occurrence (see [EventOccurrence]) that falls in the
+  /// given Hebrew [year]/[month], re-emitting whenever that set changes.
+  ///
+  /// A non-recurring event contributes at most one [EventOccurrence] (on
+  /// its own [Event.hebrewDate]); a recurring event contributes one
+  /// [EventOccurrence] per date `recurrence_expander.dart` computes for it
+  /// within that month (M3a — ARCHITECTURE.md §4 "materialize nothing,
+  /// expand at runtime").
+  Stream<List<EventOccurrence>> watchEventsForHebrewMonth(
+    int year,
+    HebrewMonth month,
+  );
 
   /// Fetches a single event by id, or null if it doesn't exist.
   Future<Event?> getById(String id);

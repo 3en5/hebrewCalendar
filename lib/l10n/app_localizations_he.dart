@@ -97,6 +97,43 @@ class AppLocalizationsHe extends AppLocalizations {
       'האם למחוק אירוע זה? לא ניתן לבטל פעולה זו.';
 
   @override
+  String get eventDeleteRecurringChoiceMessage =>
+      'אירוע זה הוא חלק מסדרה חוזרת. איך למחוק?';
+
+  @override
+  String get eventDeleteThisOccurrenceOnly => 'מופע זה בלבד';
+
+  @override
+  String get eventDeleteWholeSeries => 'כל הסדרה';
+
+  @override
+  String get eventRecurrenceLabel => 'חזרתיות';
+
+  @override
+  String get recurrenceTypeNone => 'ללא חזרה';
+
+  @override
+  String get recurrenceTypeYearly => 'כל שנה (עברי)';
+
+  @override
+  String get recurrenceTypeMonthly => 'כל חודש (עברי)';
+
+  @override
+  String get recurrenceTypeWeekly => 'כל שבוע';
+
+  @override
+  String get recurrenceTypeDaily => 'כל יום';
+
+  @override
+  String get recurrenceUntilLabel => 'עד תאריך';
+
+  @override
+  String get recurrenceUntilNone => 'ללא תאריך סיום';
+
+  @override
+  String get recurrenceUntilClearTooltip => 'הסרת תאריך סיום';
+
+  @override
   String get hebrewDatePickerYearLabel => 'שנה';
 
   @override

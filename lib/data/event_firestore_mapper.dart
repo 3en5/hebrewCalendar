@@ -9,6 +9,15 @@
 /// repository is responsible for swapping in `FieldValue.serverTimestamp()`
 /// for the fields actually written to the server on create/update (see its
 /// doc comment for why).
+///
+/// `isRecurring` (M3a) is a derived, write-only convenience field: always
+/// recomputed from `event.recurrence.type` on write so it can never drift
+/// from the recurrence it summarizes, and never read back into [Event] on
+/// [eventFromFirestoreData] (the [RecurrenceRule] read from `recurrence` is
+/// the single source of truth). It exists purely so
+/// `FirestoreEventRepository` can query "all of this user's recurring
+/// events" as a plain equality filter instead of inspecting every event's
+/// full recurrence map.
 library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -40,6 +49,7 @@ Map<String, dynamic> eventToFirestoreData({
     'endTime': event.endTime == null ? null : _timeToMap(event.endTime!),
     'reminderMinutesBefore': event.reminderMinutesBefore,
     'recurrence': _recurrenceToMap(event.recurrence),
+    'isRecurring': event.recurrence.type != RecurrenceType.none,
     'createdAt': Timestamp.fromDate(event.createdAt),
     'updatedAt': Timestamp.fromDate(event.updatedAt),
   };

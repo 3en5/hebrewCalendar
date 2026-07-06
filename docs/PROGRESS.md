@@ -1,7 +1,60 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: M2 הושלם במלואו — M2a (מודל אירועים + CRUD בזיכרון) ✅ ו-M2b
-(חיווט Firebase: Auth, Firestore, Security Rules) ✅.** (ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: M3a הושלם — מנוע חזרתיות עבריים + שילוב repositories + עורך
+אירועים.** M3b (תצוגות שבוע/יום/אג'נדה) הבא בתור. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — M3a הושלם (מנוע חזרתיות עבריים)
+
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues), 175
+  טסטים עוברים (132 קיימים + 43 חדשים), `dart format --set-exit-if-changed`
+  נקי, בדיקת 500 שורות עוברת, כיסוי `lib/domain` בפועל 96.0% (מעל סף ה-90%).
+- נוצר `lib/domain/event/recurrence_expander.dart`: פונקציות טהורות
+  `occurrencesInRange`/`occurrencesInHebrewMonth` שמרחיבות `RecurrenceRule`
+  למופעים קונקרטיים, ללא תלות ב-Flutter/Firebase (רק ב-`HebrewDateEngine`
+  הפנימי לדומיין). שתי מדיניות תועדו הן בקוד והן ב-`ARCHITECTURE.md` §4:
+  מיפוי אדר (`hebrewYearly` — בסיס אדר/אדר א׳ חוזר באדר א׳ בשנה מעוברת,
+  בסיס אדר ב׳ חוזר באדר ב׳ בשנה מעוברת, שניהם חוזרים לאדר רגיל בשנה לא
+  מעוברת) ומדיניות יום 30 (`hebrewYearly`/`hebrewMonthly` — יום 30 נופל על
+  29 בחודש קצר, בלי כפילות). `weekly`/`daily` מחושבים באריתמטיקת ימים
+  לועזיים דרך `HebrewDateEngine`, מנורמלת ל-UTC כדי להימנע מבאג "יום קיץ"
+  ב-`DateTime` מקומי (ראה LESSONS.md).
+- נוצר `lib/domain/event/event_occurrence.dart`: `EventOccurrence` (זוג
+  `Event`+תאריך מופע קונקרטי) ו-`compareEventOccurrences` (סדר כרונולוגי
+  משותף ל-repositories). `EventRepository.watchEventsForHebrewMonth` שונה
+  מ-`Stream<List<Event>>` ל-`Stream<List<EventOccurrence>>` בכל המימושים
+  וקריאות ה-UI (providers, `MonthGrid`, `DayEventsSheet`).
+- `InMemoryEventRepository`/`FirestoreEventRepository` משתמשות באותה לוגיקת
+  הרחבה (`occurrencesInHebrewMonth`). ב-Firestore: שתי שאילתות ממוזגות
+  ידנית (event לא-חוזר לפי טווח `gregorianStart`+`isRecurring==false`, וכל
+  האירועים החוזרים של המשתמש `isRecurring==true` ללא סינון תאריך, מורחבים
+  בצד הלקוח לחודש המבוקש) — שילוב ידני עם `StreamController.broadcast`
+  שממתין לפליטה ראשונה משני המקורות לפני שהוא פולט תוצאה ממוזגת.
+- `lib/data/event_firestore_mapper.dart`: נוסף שדה `isRecurring` (bool,
+  נגזר מ-`recurrence.type`, write-only — לא נקרא בחזרה, ה-`recurrence`
+  המלא הוא מקור האמת). `firebase/firestore.rules` עודכן לוולידציית מבנה
+  `recurrence` (type/until/exceptions) ו-`isRecurring`; `firestore.indexes.json`
+  קיבל שני אינדקסים מורכבים חדשים (`ownerUid`+`isRecurring`,
+  `ownerUid`+`isRecurring`+`gregorianStart`). **הרולז/אינדקסים המעודכנים
+  טרם פורסמו** — ראה `firebase/README.md`.
+- עורך האירועים (`event_editor_screen.dart`) קיבל בורר חזרתיות
+  (`RecurrenceTypeSelector` — צ'יפים ללא חזרה/כל שנה/כל חודש/כל שבוע/כל
+  יום) ושדה "עד תאריך" אופציונלי (`RecurrenceUntilField`, שמשתמש מחדש
+  ב-`HebrewDatePickerSheet` הקיים). עריכת אירוע חוזר קיימת עורכת את הסדרה
+  כולה (משנה את מסמך הבסיס; המופעים מחושבים מחדש אוטומטית).
+- `DayEventsSheet`: מחיקת מופע חוזר פותחת דיאלוג עם שלוש אפשרויות —
+  ביטול / "מופע זה בלבד" (מוסיף את תאריך המופע ל-`recurrence.exceptions`
+  ומעדכן את האירוע) / "כל הסדרה" (מוחק את האירוע). אירוע לא-חוזר ממשיך
+  להשתמש בדיאלוג אישור בודד כמו קודם.
+- טסטים: `test/domain/event/recurrence_expander_{yearly,monthly,step,shared}_test.dart`
+  (פוצל מקובץ אחד שחרג מ-500 שורות) מכסים את כל סוגי החזרתיות, שתי
+  המדיניות, גבול `until` כולל, דילוג `exceptions`, ואין מופע לפני הבסיס.
+  `test/domain/event/event_occurrence_test.dart` מכסה שוויון/סדר. טסטי
+  repository/mapper/widget עודכנו לטיפוס `EventOccurrence` החדש ולשדה
+  `isRecurring`; נוסף `test/features/calendar/presentation/month_view_recurring_test.dart`
+  (מופע בחודש מאוחר יותר, מחיקת "מופע זה בלבד" משאירה מופעים אחרים).
+- **דורש פעולת משתמש:** פריסת ה-Security Rules/אינדקסים המעודכנים
+  (`firebase deploy --only firestore:rules,firestore:indexes`) — עד אז
+  Firestore האמיתי לא מכיר את `isRecurring`/מבנה ה-`recurrence` המורחב.
 
 ## 2026-07-06 — M2b הושלם (חצי שני של M2, חיווט Firebase)
 

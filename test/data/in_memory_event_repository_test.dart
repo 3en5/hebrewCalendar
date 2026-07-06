@@ -4,6 +4,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
 import 'package:hebrew_calendar/domain/event/event.dart';
+import 'package:hebrew_calendar/domain/event/event_occurrence.dart';
+import 'package:hebrew_calendar/domain/event/recurrence_rule.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 
 const HebrewDate _tishrei5 = HebrewDate(
@@ -101,23 +103,24 @@ void main() {
 
   group('watchEventsForHebrewMonth', () {
     test('emits an empty list before anything is created', () async {
-      final List<Event> first = await repository
+      final List<EventOccurrence> first = await repository
           .watchEventsForHebrewMonth(_tishrei5.year, _tishrei5.month)
           .first;
       expect(first, isEmpty);
     });
 
     test('emits the new event after create', () async {
-      final Stream<List<Event>> stream = repository.watchEventsForHebrewMonth(
-        _tishrei5.year,
-        _tishrei5.month,
-      );
-      final Future<List<List<Event>>> emissions = stream.take(2).toList();
+      final Stream<List<EventOccurrence>> stream = repository
+          .watchEventsForHebrewMonth(_tishrei5.year, _tishrei5.month);
+      final Future<List<List<EventOccurrence>>> emissions = stream
+          .take(2)
+          .toList();
       await repository.create(_draftEvent());
-      final List<List<Event>> results = await emissions;
+      final List<List<EventOccurrence>> results = await emissions;
       expect(results.first, isEmpty);
       expect(results.last, hasLength(1));
-      expect(results.last.single.title, 'אירוע');
+      expect(results.last.single.event.title, 'אירוע');
+      expect(results.last.single.occurrenceDate, _tishrei5);
     });
 
     test('does not include events from a different Hebrew month', () async {
@@ -130,7 +133,7 @@ void main() {
           ),
         ),
       );
-      final List<Event> tishreiEvents = await repository
+      final List<EventOccurrence> tishreiEvents = await repository
           .watchEventsForHebrewMonth(_tishrei5.year, _tishrei5.month)
           .first;
       expect(tishreiEvents, isEmpty);
@@ -138,27 +141,81 @@ void main() {
 
     test('reflects an update', () async {
       final Event created = await repository.create(_draftEvent());
-      final Stream<List<Event>> stream = repository.watchEventsForHebrewMonth(
-        _tishrei5.year,
-        _tishrei5.month,
-      );
-      final Future<List<List<Event>>> emissions = stream.take(2).toList();
+      final Stream<List<EventOccurrence>> stream = repository
+          .watchEventsForHebrewMonth(_tishrei5.year, _tishrei5.month);
+      final Future<List<List<EventOccurrence>>> emissions = stream
+          .take(2)
+          .toList();
       await repository.update(created.copyWith(title: 'עודכן'));
-      final List<List<Event>> results = await emissions;
-      expect(results.last.single.title, 'עודכן');
+      final List<List<EventOccurrence>> results = await emissions;
+      expect(results.last.single.event.title, 'עודכן');
     });
 
     test('reflects a delete', () async {
       final Event created = await repository.create(_draftEvent());
-      final Stream<List<Event>> stream = repository.watchEventsForHebrewMonth(
-        _tishrei5.year,
-        _tishrei5.month,
-      );
-      final Future<List<List<Event>>> emissions = stream.take(2).toList();
+      final Stream<List<EventOccurrence>> stream = repository
+          .watchEventsForHebrewMonth(_tishrei5.year, _tishrei5.month);
+      final Future<List<List<EventOccurrence>>> emissions = stream
+          .take(2)
+          .toList();
       await repository.delete(created.id);
-      final List<List<Event>> results = await emissions;
+      final List<List<EventOccurrence>> results = await emissions;
       expect(results.first, hasLength(1));
       expect(results.last, isEmpty);
     });
+
+    test(
+      'expands a recurring event into occurrences across later months',
+      () async {
+        final Event created = await repository.create(
+          _draftEvent().copyWith(
+            recurrence: const RecurrenceRule(
+              type: RecurrenceType.hebrewMonthly,
+            ),
+          ),
+        );
+        final List<EventOccurrence> nextMonth = await repository
+            .watchEventsForHebrewMonth(5786, HebrewMonth.cheshvan)
+            .first;
+        expect(nextMonth, hasLength(1));
+        expect(nextMonth.single.event.id, created.id);
+        expect(
+          nextMonth.single.occurrenceDate,
+          const HebrewDate(year: 5786, month: HebrewMonth.cheshvan, day: 5),
+        );
+      },
+    );
+
+    test(
+      'adding an occurrence date to exceptions removes just that occurrence',
+      () async {
+        final Event created = await repository.create(
+          _draftEvent().copyWith(
+            recurrence: const RecurrenceRule(
+              type: RecurrenceType.hebrewMonthly,
+            ),
+          ),
+        );
+        await repository.update(
+          created.copyWith(
+            recurrence: const RecurrenceRule(
+              type: RecurrenceType.hebrewMonthly,
+              exceptions: <HebrewDate>[
+                HebrewDate(year: 5786, month: HebrewMonth.cheshvan, day: 5),
+              ],
+            ),
+          ),
+        );
+
+        final List<EventOccurrence> tishreiEvents = await repository
+            .watchEventsForHebrewMonth(_tishrei5.year, _tishrei5.month)
+            .first;
+        final List<EventOccurrence> cheshvanEvents = await repository
+            .watchEventsForHebrewMonth(5786, HebrewMonth.cheshvan)
+            .first;
+        expect(tishreiEvents, hasLength(1));
+        expect(cheshvanEvents, isEmpty);
+      },
+    );
   });
 }

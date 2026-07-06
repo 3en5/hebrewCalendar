@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
 import 'package:hebrew_calendar/domain/event/event.dart';
+import 'package:hebrew_calendar/domain/event/event_occurrence.dart';
+import 'package:hebrew_calendar/domain/event/recurrence_rule.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_editor_controller.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
@@ -60,12 +62,12 @@ void main() {
     await tester.tap(find.byIcon(Icons.check));
     await tester.pumpAndSettle();
 
-    final List<Event> saved = await repository
+    final List<EventOccurrence> saved = await repository
         .watchEventsForHebrewMonth(_fixedDate.year, _fixedDate.month)
         .first;
     expect(saved, hasLength(1));
-    expect(saved.single.title, 'יום הולדת');
-    expect(saved.single.hebrewDate, _fixedDate);
+    expect(saved.single.event.title, 'יום הולדת');
+    expect(saved.single.event.hebrewDate, _fixedDate);
   });
 
   testWidgets('shows an inline error when saving with an empty title', (
@@ -85,9 +87,62 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('יש להזין כותרת'), findsOneWidget);
-    final List<Event> saved = await repository
+    final List<EventOccurrence> saved = await repository
         .watchEventsForHebrewMonth(_fixedDate.year, _fixedDate.month)
         .first;
     expect(saved, isEmpty);
+  });
+
+  testWidgets('saves a weekly recurring event with an until date', (
+    WidgetTester tester,
+  ) async {
+    final InMemoryEventRepository repository = InMemoryEventRepository();
+    addTearDown(repository.dispose);
+
+    const EventEditorArgs args = (initialDate: _fixedDate, existing: null);
+
+    await tester.pumpWidget(
+      _wrap(const EventEditorScreen(args: args), repository),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'שיעור שבועי');
+    // The recurrence section sits below the fold of the editor's ListView.
+    // `dragUntilVisible` stops as soon as a widget enters the sliver's
+    // cache extent, which can be slightly before it's actually within the
+    // visible viewport (hit-testable) — nudge a little further afterwards
+    // so `tap()` lands on it.
+    await tester.dragUntilVisible(
+      find.text('כל שבוע'),
+      find.byType(ListView),
+      const Offset(0, -100),
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -50));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('כל שבוע'));
+    await tester.pumpAndSettle();
+
+    await tester.dragUntilVisible(
+      find.text('עד תאריך'),
+      find.byType(ListView),
+      const Offset(0, -100),
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -50));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('עד תאריך'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('אישור'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+
+    final List<EventOccurrence> saved = await repository
+        .watchEventsForHebrewMonth(_fixedDate.year, _fixedDate.month)
+        .first;
+    expect(saved, hasLength(1));
+    final Event savedEvent = saved.single.event;
+    expect(savedEvent.recurrence.type, RecurrenceType.weekly);
+    expect(savedEvent.recurrence.until, isNotNull);
   });
 }

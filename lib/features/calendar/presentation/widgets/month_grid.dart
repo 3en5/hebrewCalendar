@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/dimens.dart';
-import '../../../../domain/event/event.dart';
+import '../../../../domain/event/event_occurrence.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../application/hebrew_date_engine_provider.dart';
@@ -44,11 +44,15 @@ class MonthGrid extends ConsumerWidget {
     final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
     final HebrewDate today = engine.fromGregorian(DateTime.now());
     final List<HebrewDate> cells = _buildCells(engine, displayedMonth);
-    final List<Event> monthEvents =
-        ref.watch(monthEventsProvider(displayedMonth)).value ?? const <Event>[];
-    final Map<int, List<Event>> eventsByDay = <int, List<Event>>{};
-    for (final Event event in monthEvents) {
-      eventsByDay.putIfAbsent(event.hebrewDate.day, () => <Event>[]).add(event);
+    final List<EventOccurrence> monthOccurrences =
+        ref.watch(monthEventsProvider(displayedMonth)).value ??
+        const <EventOccurrence>[];
+    final Map<int, List<EventOccurrence>> occurrencesByDay =
+        <int, List<EventOccurrence>>{};
+    for (final EventOccurrence occurrence in monthOccurrences) {
+      occurrencesByDay
+          .putIfAbsent(occurrence.occurrenceDate.day, () => <EventOccurrence>[])
+          .add(occurrence);
     }
 
     return Column(
@@ -67,18 +71,19 @@ class MonthGrid extends ConsumerWidget {
                   cellDate.year == displayedMonth.year &&
                   cellDate.month == displayedMonth.month;
               final DateTime gregorianDate = engine.toGregorian(cellDate);
-              final List<Event> dayEvents = inDisplayedMonth
-                  ? (eventsByDay[cellDate.day] ?? const <Event>[])
-                  : const <Event>[];
+              final List<EventOccurrence> dayOccurrences = inDisplayedMonth
+                  ? (occurrencesByDay[cellDate.day] ??
+                        const <EventOccurrence>[])
+                  : const <EventOccurrence>[];
               return DayCell(
                 hebrewDay: cellDate.day,
                 gregorianDay: gregorianDate.day,
                 isInDisplayedMonth: inDisplayedMonth,
                 isToday: cellDate == today,
-                hasEvents: dayEvents.isNotEmpty,
-                onTap: dayEvents.isEmpty
+                hasEvents: dayOccurrences.isNotEmpty,
+                onTap: dayOccurrences.isEmpty
                     ? null
-                    : () => _showDayEvents(context, cellDate, dayEvents),
+                    : () => _showDayEvents(context, cellDate, dayOccurrences),
               );
             },
           ),
@@ -90,13 +95,13 @@ class MonthGrid extends ConsumerWidget {
   void _showDayEvents(
     BuildContext context,
     HebrewDate date,
-    List<Event> events,
+    List<EventOccurrence> occurrences,
   ) {
     unawaited(
       showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
-        builder: (_) => DayEventsSheet(date: date, events: events),
+        builder: (_) => DayEventsSheet(date: date, occurrences: occurrences),
       ),
     );
   }
