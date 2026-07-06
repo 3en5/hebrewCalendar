@@ -100,17 +100,17 @@ abstract class AppLocalizations {
   /// **'יומן עברי'**
   String get appTitle;
 
-  /// Status text on the M0 placeholder home screen, confirming infrastructure is ready.
+  /// Tooltip for the month-view button that navigates to the previous Hebrew month.
   ///
   /// In he, this message translates to:
-  /// **'M0 — תשתית מוכנה'**
-  String get placeholderMilestoneStatus;
+  /// **'החודש הקודם'**
+  String get calendarPreviousMonth;
 
-  /// Subtitle explaining the placeholder screen is temporary, shown under the status text.
+  /// Tooltip for the month-view button that navigates to the next Hebrew month.
   ///
   /// In he, this message translates to:
-  /// **'מסך זמני לבדיקת תשתית האפליקציה'**
-  String get placeholderScreenSubtitle;
+  /// **'החודש הבא'**
+  String get calendarNextMonth;
 }
 
 class _AppLocalizationsDelegate

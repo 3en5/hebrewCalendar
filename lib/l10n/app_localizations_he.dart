@@ -12,8 +12,8 @@ class AppLocalizationsHe extends AppLocalizations {
   String get appTitle => 'יומן עברי';
 
   @override
-  String get placeholderMilestoneStatus => 'M0 — תשתית מוכנה';
+  String get calendarPreviousMonth => 'החודש הקודם';
 
   @override
-  String get placeholderScreenSubtitle => 'מסך זמני לבדיקת תשתית האפליקציה';
+  String get calendarNextMonth => 'החודש הבא';
 }

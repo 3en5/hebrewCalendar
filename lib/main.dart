@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
-import 'features/calendar/presentation/placeholder_home_screen.dart';
+import 'features/calendar/presentation/month_view_screen.dart';
 import 'l10n/app_localizations.dart';
 
 void main() {
@@ -12,8 +12,8 @@ void main() {
 
 /// Root widget of the HebrewCalendar app.
 ///
-/// M0 scope: app shell only — theme, RTL Hebrew localization and a
-/// placeholder home screen. No feature logic lives here.
+/// M1 scope: app shell (theme, RTL Hebrew localization) plus the Hebrew
+/// month view as the home screen.
 class HebrewCalendarApp extends StatelessWidget {
   const HebrewCalendarApp({super.key});
 
@@ -32,7 +32,7 @@ class HebrewCalendarApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const PlaceholderHomeScreen(),
+      home: const MonthViewScreen(),
     );
   }
 }
