@@ -37,9 +37,23 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        // Deterministic debug keystore committed to the repo so every build
+        // (local or CI) carries the same SHA-1 — the one registered in the
+        // Firebase console. Without this, Google Sign-In fails on APKs built
+        // on other machines/runners. Debug-only key; the release key will be
+        // separate and secret (M7).
+        getByName("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
+            // TODO(M7): dedicated release signing config from secrets.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }

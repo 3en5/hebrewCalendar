@@ -40,6 +40,8 @@ jobs:
     name: Build debug APK
     needs: test
     runs-on: ubuntu-latest
+    env:
+      HAS_GS_SECRET: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,10 +55,20 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # google-services.json is gitignored (RULES.md §5.4). The debug build
-      # only needs a structurally valid file, so CI uses a placeholder with
-      # fake keys; the real config never enters the repo or CI.
+      # google-services.json is gitignored (RULES.md §5.4). If the repo has
+      # the GOOGLE_SERVICES_JSON secret, the APK is built with the real
+      # config (installable + Google Sign-In works, thanks to the committed
+      # deterministic debug keystore whose SHA-1 is registered in Firebase).
+      - name: Write google-services.json from secret
+        if: ${{ env.HAS_GS_SECRET == 'true' }}
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
+      # Fallback: a structurally valid placeholder with fake keys, so the
+      # build still verifies Gradle wiring on forks/PRs without the secret.
       - name: Create placeholder google-services.json
+        if: ${{ env.HAS_GS_SECRET != 'true' }}
         run: |
           cat > android/app/google-services.json << 'EOF'
           {
@@ -84,3 +96,11 @@ jobs:
 
       - name: Build debug APK
         run: flutter build apk --debug
+
+      # Downloadable from the workflow run page (Actions -> run -> Artifacts)
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hebrew-calendar-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
