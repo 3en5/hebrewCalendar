@@ -46,6 +46,20 @@ class InMemoryEventRepository implements EventRepository {
     int year,
     HebrewMonth month,
   ) {
+    final HebrewDate from = HebrewDate(year: year, month: month, day: 1);
+    final HebrewDate to = HebrewDate(
+      year: year,
+      month: month,
+      day: _engine.daysInMonth(year, month),
+    );
+    return watchOccurrencesInRange(from, to);
+  }
+
+  @override
+  Stream<List<EventOccurrence>> watchOccurrencesInRange(
+    HebrewDate from,
+    HebrewDate to,
+  ) {
     // Built by hand (rather than an `async*` generator that `yield`s the
     // initial snapshot then `yield*`s a mapped `_changes.stream`) because
     // that two-step shape has a subscription-timing race: a broadcast
@@ -61,9 +75,9 @@ class InMemoryEventRepository implements EventRepository {
     controller = StreamController<List<EventOccurrence>>.broadcast(
       onListen: () {
         changesSubscription = _changes.stream.listen(
-          (_) => controller.add(_occurrencesForMonth(year, month)),
+          (_) => controller.add(_occurrencesForRange(from, to)),
         );
-        controller.add(_occurrencesForMonth(year, month));
+        controller.add(_occurrencesForRange(from, to));
       },
       onCancel: () {
         unawaited(changesSubscription?.cancel());
@@ -125,13 +139,13 @@ class InMemoryEventRepository implements EventRepository {
     }
   }
 
-  List<EventOccurrence> _occurrencesForMonth(int year, HebrewMonth month) {
+  List<EventOccurrence> _occurrencesForRange(HebrewDate from, HebrewDate to) {
     final List<EventOccurrence> matches = <EventOccurrence>[
       for (final Event event in _events.values)
-        ...occurrencesInHebrewMonth(
+        ...occurrencesForEventInRange(
           event: event,
-          year: year,
-          month: month,
+          from: from,
+          to: to,
           engine: _engine,
         ),
     ];

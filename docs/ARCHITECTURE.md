@@ -98,7 +98,7 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
 | M0 | תשתית | פרויקט Flutter, מבנה תיקיות, theme+dimens, CI, טסט ראשון | ⏳ |
 | M1 | מנוע עברי + תצוגת חודש | HebrewDateEngine עטוף ונבדק, גריד חודש עברי RTL, ניווט חודשים | ◻ |
 | M2 | אימות + CRUD (מפוצל) | **M2a** ✅: מודל דומיין `Event`/`RecurrenceRule`, ולידציה, `EventRepository` מופשט + מימוש בזיכרון, מסך עורך אירועים, שילוב עם תצוגת החודש — הכול ללא תלות ב-Firebase. **M2b** ✅: Google Sign-In (`firebase_auth`+`google_sign_in`), Firestore (`FirestoreEventRepository`), Security Rules כקוד (`firebase/`), שער אימות באפליקציה | ✅ |
-| M3 | תצוגות + חזרתיות | **M3a** ✅: מנוע הרחבת חזרתיות (`recurrence_expander.dart`), שילוב ב-repositories (`EventOccurrence`), עורך אירועים (בורר חזרתיות + "עד תאריך"), מחיקת מופע יחיד/כל הסדרה. **M3b** ◻: תצוגות שבוע/יום/אג'נדה | ◻ |
+| M3 | תצוגות + חזרתיות | **M3a** ✅: מנוע הרחבת חזרתיות (`recurrence_expander.dart`), שילוב ב-repositories (`EventOccurrence`), עורך אירועים (בורר חזרתיות + "עד תאריך"), מחיקת מופע יחיד/כל הסדרה. **M3b** ✅: `EventRepository.watchOccurrencesInRange` (טווח תאריכים שרירותי, לא רק חודש), תצוגות שבוע/יום/אג'נדה, `CalendarShellScreen` עם בורר תצוגה + כפתור "היום" | ✅ |
 | M4 | תזכורות | התראות מקומיות מדויקות, ניהול הרשאות | ◻ |
 | M5 | סנכרון גוגל | דו-כיווני מלא כמתואר ב-§5 | ◻ |
 | M6 | שיתוף והעשרה | משתתפים+הזמנות (FCM), קבצים מצורפים, מיקום | ◻ |

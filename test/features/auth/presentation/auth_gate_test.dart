@@ -1,6 +1,6 @@
 // Widget tests for the auth gate: docs/TESTING_AND_DEPLOY.md requires
 // widget tests for central screens; the auth gate decides which of two
-// central screens (sign-in vs. month view) the whole app shows.
+// central screens (sign-in vs. the calendar shell) the whole app shows.
 //
 // Uses only a fake AuthRepository — never touches real Firebase (task brief
 // M2b §5).
@@ -14,7 +14,7 @@ import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
 import 'package:hebrew_calendar/features/auth/application/auth_providers.dart';
 import 'package:hebrew_calendar/features/auth/presentation/auth_gate.dart';
 import 'package:hebrew_calendar/features/auth/presentation/sign_in_screen.dart';
-import 'package:hebrew_calendar/features/calendar/presentation/month_view_screen.dart';
+import 'package:hebrew_calendar/features/calendar/presentation/calendar_shell_screen.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
 import 'package:hebrew_calendar/l10n/app_localizations.dart';
 
@@ -50,7 +50,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(SignInScreen), findsOneWidget);
-    expect(find.byType(MonthViewScreen), findsNothing);
+    expect(find.byType(CalendarShellScreen), findsNothing);
   });
 
   testWidgets('shows the month view when signed in', (
@@ -69,7 +69,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(MonthViewScreen), findsOneWidget);
+    expect(find.byType(CalendarShellScreen), findsOneWidget);
     expect(find.byType(SignInScreen), findsNothing);
   });
 
@@ -88,12 +88,12 @@ void main() {
       ]),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(MonthViewScreen), findsOneWidget);
+    expect(find.byType(CalendarShellScreen), findsOneWidget);
 
     auth.emit(null);
     await tester.pumpAndSettle();
 
     expect(find.byType(SignInScreen), findsOneWidget);
-    expect(find.byType(MonthViewScreen), findsNothing);
+    expect(find.byType(CalendarShellScreen), findsNothing);
   });
 }

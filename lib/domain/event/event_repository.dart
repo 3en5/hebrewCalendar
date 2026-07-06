@@ -16,10 +16,26 @@ abstract class EventRepository {
   /// its own [Event.hebrewDate]); a recurring event contributes one
   /// [EventOccurrence] per date `recurrence_expander.dart` computes for it
   /// within that month (M3a — ARCHITECTURE.md §4 "materialize nothing,
-  /// expand at runtime").
+  /// expand at runtime"). Implementations delegate to
+  /// [watchOccurrencesInRange] for the month's `[1, daysInMonth]` range
+  /// rather than duplicating the query/expansion logic (M3b).
   Stream<List<EventOccurrence>> watchEventsForHebrewMonth(
     int year,
     HebrewMonth month,
+  );
+
+  /// Streams every occurrence that falls within `[from, to]` (both
+  /// boundaries inclusive, an arbitrary Hebrew-date range — not
+  /// month-shaped), re-emitting whenever that set changes.
+  ///
+  /// The week/day/agenda views (M3b) use this directly instead of
+  /// [watchEventsForHebrewMonth]: a week or a single day rarely aligns with
+  /// Hebrew month boundaries, and the agenda view needs a wide rolling
+  /// window. Expansion of recurring events follows the exact same
+  /// `recurrence_expander.dart` semantics as [watchEventsForHebrewMonth].
+  Stream<List<EventOccurrence>> watchOccurrencesInRange(
+    HebrewDate from,
+    HebrewDate to,
   );
 
   /// Fetches a single event by id, or null if it doesn't exist.

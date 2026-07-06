@@ -8,8 +8,7 @@ import '../../event_editor/application/event_repository_provider.dart';
 /// Streams the event occurrences (see [EventOccurrence] — recurring events
 /// are expanded, M3a) for the Hebrew month identified by [month].
 ///
-/// Only `month.year`/`month.month` are used — `month.day` is ignored, by
-/// the same convention [displayedMonthProvider] uses (always 1).
+/// Only `month.year`/`month.month` are used — `month.day` is ignored.
 ///
 /// `autoDispose.family`: a fresh, focused subscription per month page
 /// actually on screen, closed once that page scrolls out of view

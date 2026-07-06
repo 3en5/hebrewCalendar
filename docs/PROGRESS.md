@@ -1,7 +1,65 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: M3a הושלם — מנוע חזרתיות עבריים + שילוב repositories + עורך
-אירועים.** M3b (תצוגות שבוע/יום/אג'נדה) הבא בתור. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: M3 הושלם במלואו (M3a + M3b) — מנוע חזרתיות עבריים, שילוב
+repositories, ותצוגות שבוע/יום/אג'נדה עם מסך בית משותף.** M4 (תזכורות) הבא
+בתור. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — M3b הושלם (תצוגות שבוע/יום/אג'נדה + בורר תצוגה) — M3 הושלם במלואו
+
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues), 192
+  טסטים עוברים (175 קיימים + 17 חדשים), `dart format --set-exit-if-changed`
+  נקי, בדיקת 500 שורות עוברת.
+- **Repository:** `EventRepository` קיבל `watchOccurrencesInRange(from, to)`
+  — טווח תאריכים עברי שרירותי, לא בהכרח חודש שלם — לצד `watchEventsForHebrewMonth`
+  הקיים, שעכשיו מאציל אליו (חודש = הטווח `[1, daysInMonth]`) בשני המימושים
+  (`InMemoryEventRepository`, `FirestoreEventRepository`) במקום לשכפל לוגיקה.
+  ב-`recurrence_expander.dart` חולצה `occurrencesForEventInRange` (הרחבת
+  `RecurrenceRule` למופעים עבור טווח שרירותי, לא רק חודש) ו-`occurrencesInHebrewMonth`
+  הפכה לעטיפה דקה סביבה — כך שדף ה-Firestore, ה-repository בזיכרון, וה-domain
+  layer כולם משתפים בדיוק את אותה נקודת הרחבה יחידה. ב-Firestore, ה-merge של
+  שתי השאילתות (לא-חוזרים לפי `gregorianStart`, וכל החוזרים מורחבים בצד לקוח)
+  הוכלל מ"חודש" ל"טווח" בלי לשכפל את לוגיקת ה-`StreamController` הידני.
+- **`HebrewDateEngine`** קיבל `addDays`/`startOfWeek` (אריתמטיקת ימים
+  מנורמלת ל-UTC כמו ב-`recurrence_expander.dart`, כדי להימנע מבאג יום-קיץ —
+  ראה LESSONS.md) לצורך דפדוף תצוגות שבוע/יום.
+- **Application:** `calendar_view_provider.dart` (מחליף את
+  `displayed_month_provider.dart` שהוסר) מחזיק `CalendarViewType`
+  (חודש/שבוע/יום/אג'נדה) + `focusedDate` משותף לכל התצוגות ולבורר התצוגה;
+  `range_events_provider.dart` (`StreamProvider.autoDispose.family` על טווח
+  תאריכים) משמש תצוגות שבוע/יום/אג'נדה במקום `month_events_provider.dart`
+  (שנשאר לתצוגת החודש בלבד).
+- **Presentation:** `MonthViewScreen` פוצל ל-`CalendarShellScreen` (App Bar
+  + FAB משותפים, גוף מתחלף) ו-`MonthViewBody` (הגריד עצמו, ללא Scaffold
+  משלו). נוספו `WeekViewScreen`/`DayViewScreen`/`AgendaViewScreen` וקבוצת
+  widgets משותפים: `HourGrid` (גריד 24 שעות גולל, אלגוריתם חלוקה שווה
+  לאשכולות אירועים חופפים), `EventBlock`, `CalendarDayHeader` (מצב
+  `compact`/`full`), `AllDayEventsRow`, `DayOccurrences` (צורת קלט משותפת).
+  דפדוף בין עמודים (חודש/שבוע/יום) עובר דרך `PagedFocusSync` משותף — עיגון
+  קבוע + `PageController`, שמתעדכן רק כשהמיקוד משתנה *מחוץ* לתצוגה עצמה
+  (כפתור "היום", מעבר בין תצוגות), כדי למנוע לולאת עדכונים.
+- **החלטת סטייה:** הוסרו כפתורי החץ הקודם/הבא הישנים של תצוגת החודש ולא
+  נוספו חלופה לתצוגות האחרות — הניווט הוא בהחלקה בלבד (+ כפתור "היום"),
+  התואם בדיוק את אפליקציית Google Calendar לאנדרואיד עצמה (שגם היא ללא
+  כפתורי חץ), ומייתר את הצורך שהמסך המשותף "יגיע" לתוך ה-`PageController`
+  הפנימי של איזו תצוגה שמוצגת כרגע.
+- **FAB:** במקום הלוגיקה הישנה ("היום אם בחודש המוצג, אחרת ה-1 בחודש"), ה-FAB
+  יוצר תמיד אירוע על `focusedDate` הנוכחי — עמוד תצוגת החודש שומר את יום
+  החודש המדויק דרך ניווח חודשים (`addMonths` כבר שומר על יום-בחודש, מהודק
+  לפי אורך החודש), כך שההתנהגות בפועל דומה מאוד לישנה בלי טיפול מיוחד.
+- **טסטים:** `test/domain/hebrew_date/hebrew_date_engine_test.dart` קיבל
+  קבוצות ל-`addDays`/`startOfWeek`; `recurrence_expander_shared_test.dart`
+  קיבל טסטים ל-`occurrencesForEventInRange` (טווח שחוצה גבול חודש, וזהות
+  עם `occurrencesInHebrewMonth`); `in_memory_event_repository_test.dart`
+  קיבל קבוצת `watchOccurrencesInRange` (טווח חוצה חודשים, הרחבת חזרתיות עם
+  חריגים, האצלה מ-`watchEventsForHebrewMonth`). טסטי widget חדשים:
+  `calendar_shell_screen_test.dart` (בורר תצוגה, כפתור "היום"),
+  `week_view_screen_test.dart` (בלוק אירוע תחת יום השבוע הנכון — נבדק
+  גיאומטרית, לא רק טקסט), `day_view_screen_test.dart` (רק אירועי היום
+  הממוקד), `agenda_view_screen_test.dart` (קיבוץ לפי תאריך + מצב ריק).
+  `month_view_screen_test.dart` שונה שם ל-`month_view_body_test.dart`
+  ותוכנו הותאם ל-`calendar_view_provider`; `month_view_events_test.dart`/
+  `month_view_recurring_test.dart`/`auth_gate_test.dart` הותאמו לאותו שינוי
+  ול-`CalendarShellScreen`.
 
 ## 2026-07-06 — M3a הושלם (מנוע חזרתיות עבריים)
 

@@ -12,7 +12,7 @@ import 'package:hebrew_calendar/domain/event/event.dart';
 import 'package:hebrew_calendar/domain/event/recurrence_rule.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/features/auth/application/auth_providers.dart';
-import 'package:hebrew_calendar/features/calendar/application/displayed_month_provider.dart';
+import 'package:hebrew_calendar/features/calendar/application/calendar_view_provider.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
 import 'package:hebrew_calendar/main.dart';
 
@@ -35,11 +35,12 @@ const HebrewDate _baseDate = HebrewDate(
 );
 const ValueKey<String> _dotKey = ValueKey<String>('event-dot-10');
 
-class _MonthNotifier extends DisplayedMonthNotifier {
+class _MonthNotifier extends CalendarViewNotifier {
   _MonthNotifier(this._month);
   final HebrewDate _month;
   @override
-  HebrewDate build() => _month;
+  CalendarViewState build() =>
+      CalendarViewState(viewType: CalendarViewType.month, focusedDate: _month);
 }
 
 Event _monthlyRecurringEvent() {
@@ -66,7 +67,7 @@ Future<void> _pumpMonth(
   await tester.pumpWidget(
     ProviderScope(
       overrides: <Override>[
-        displayedMonthProvider.overrideWith(() => _MonthNotifier(month)),
+        calendarViewProvider.overrideWith(() => _MonthNotifier(month)),
         eventRepositoryProvider.overrideWithValue(repository),
         authRepositoryProvider.overrideWithValue(auth),
       ],

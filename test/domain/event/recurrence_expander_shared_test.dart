@@ -1,7 +1,8 @@
 // Unit tests for recurrence_expander.dart's cross-cutting rules that apply
 // to every RecurrenceType: `until` is an inclusive upper bound, dates in
-// `exceptions` are skipped, and occurrencesInHebrewMonth correctly wraps
-// each date as an EventOccurrence.
+// `exceptions` are skipped, occurrencesInHebrewMonth correctly wraps each
+// date as an EventOccurrence, and occurrencesForEventInRange (M3b) handles
+// arbitrary, non-month-shaped ranges consistently with the month-shaped one.
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/domain/event/event.dart';
@@ -153,6 +154,81 @@ void main() {
         expect(occurrence.event, event);
         expect(occurrence.isRecurring, isTrue);
       }
+    });
+  });
+
+  group('occurrencesForEventInRange (M3b — arbitrary, non-month-shaped '
+      'ranges)', () {
+    test('a range spanning parts of two Hebrew months returns occurrences '
+        'from both', () {
+      const HebrewDate base = HebrewDate(
+        year: 5786,
+        month: HebrewMonth.tishrei,
+        day: 1,
+      );
+      final Event event = buildRecurringEvent(
+        base,
+        const RecurrenceRule(type: RecurrenceType.daily),
+      );
+      // A one-week range straddling the Tishrei/Cheshvan boundary (Tishrei
+      // has 30 days).
+      const HebrewDate from = HebrewDate(
+        year: 5786,
+        month: HebrewMonth.tishrei,
+        day: 28,
+      );
+      const HebrewDate to = HebrewDate(
+        year: 5786,
+        month: HebrewMonth.cheshvan,
+        day: 3,
+      );
+      final List<EventOccurrence> occurrences = occurrencesForEventInRange(
+        event: event,
+        from: from,
+        to: to,
+        engine: recurrenceTestEngine,
+      );
+      final List<HebrewDate> dates = occurrences
+          .map((EventOccurrence o) => o.occurrenceDate)
+          .toList();
+      expect(dates, <HebrewDate>[
+        const HebrewDate(year: 5786, month: HebrewMonth.tishrei, day: 28),
+        const HebrewDate(year: 5786, month: HebrewMonth.tishrei, day: 29),
+        const HebrewDate(year: 5786, month: HebrewMonth.tishrei, day: 30),
+        const HebrewDate(year: 5786, month: HebrewMonth.cheshvan, day: 1),
+        const HebrewDate(year: 5786, month: HebrewMonth.cheshvan, day: 2),
+        const HebrewDate(year: 5786, month: HebrewMonth.cheshvan, day: 3),
+      ]);
+    });
+
+    test('occurrencesInHebrewMonth is exactly occurrencesForEventInRange '
+        'for that month\'s [1, daysInMonth] range', () {
+      const HebrewDate base = HebrewDate(
+        year: 5786,
+        month: HebrewMonth.tishrei,
+        day: 10,
+      );
+      final Event event = buildRecurringEvent(
+        base,
+        const RecurrenceRule(type: RecurrenceType.hebrewMonthly),
+      );
+      final List<EventOccurrence> viaMonth = occurrencesInHebrewMonth(
+        event: event,
+        year: 5786,
+        month: HebrewMonth.cheshvan,
+        engine: recurrenceTestEngine,
+      );
+      final List<EventOccurrence> viaRange = occurrencesForEventInRange(
+        event: event,
+        from: const HebrewDate(year: 5786, month: HebrewMonth.cheshvan, day: 1),
+        to: HebrewDate(
+          year: 5786,
+          month: HebrewMonth.cheshvan,
+          day: recurrenceTestEngine.daysInMonth(5786, HebrewMonth.cheshvan),
+        ),
+        engine: recurrenceTestEngine,
+      );
+      expect(viaMonth, viaRange);
     });
   });
 }

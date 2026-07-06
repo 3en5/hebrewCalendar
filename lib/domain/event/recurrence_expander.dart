@@ -48,6 +48,10 @@ import 'recurrence_rule.dart';
 /// in this displayed month" — it handles every [RecurrenceType] uniformly,
 /// including [RecurrenceType.none] (which yields at most the single
 /// occurrence on [Event.hebrewDate] itself, if that falls in the month).
+///
+/// A thin wrapper over [occurrencesForEventInRange] for a single-month
+/// window; see that function for the general case (M3b — week/day/agenda
+/// views need an arbitrary date range, not just a month).
 List<EventOccurrence> occurrencesInHebrewMonth({
   required Event event,
   required int year,
@@ -60,6 +64,26 @@ List<EventOccurrence> occurrencesInHebrewMonth({
     month: month,
     day: engine.daysInMonth(year, month),
   );
+  return occurrencesForEventInRange(
+    event: event,
+    from: from,
+    to: to,
+    engine: engine,
+  );
+}
+
+/// Returns every [EventOccurrence] of [event] within `[from, to]` (both
+/// boundaries inclusive) — the same expansion [occurrencesInHebrewMonth]
+/// uses for a single Hebrew month, generalized to an arbitrary Hebrew-date
+/// range. Shared by every [EventRepository] implementation's
+/// `watchOccurrencesInRange` (M3b) so the "expand a rule into occurrences,
+/// then wrap each as an [EventOccurrence]" logic lives in exactly one place.
+List<EventOccurrence> occurrencesForEventInRange({
+  required Event event,
+  required HebrewDate from,
+  required HebrewDate to,
+  required HebrewDateEngine engine,
+}) {
   final List<HebrewDate> dates = occurrencesInRange(
     base: event.hebrewDate,
     rule: event.recurrence,

@@ -9,7 +9,7 @@ import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
 import 'package:hebrew_calendar/domain/event/event.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/features/auth/application/auth_providers.dart';
-import 'package:hebrew_calendar/features/calendar/application/displayed_month_provider.dart';
+import 'package:hebrew_calendar/features/calendar/application/calendar_view_provider.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
 import 'package:hebrew_calendar/main.dart';
 
@@ -27,9 +27,12 @@ const HebrewDate _eventDate = HebrewDate(
 );
 const ValueKey<String> _eventDotKey = ValueKey<String>('event-dot-5');
 
-class _FixedMonthNotifier extends DisplayedMonthNotifier {
+class _FixedMonthNotifier extends CalendarViewNotifier {
   @override
-  HebrewDate build() => _fixedMonth;
+  CalendarViewState build() => const CalendarViewState(
+    viewType: CalendarViewType.month,
+    focusedDate: _fixedMonth,
+  );
 }
 
 Event _buildEvent() {
@@ -54,7 +57,7 @@ Future<InMemoryEventRepository> _pumpFixedMonth(WidgetTester tester) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: <Override>[
-        displayedMonthProvider.overrideWith(_FixedMonthNotifier.new),
+        calendarViewProvider.overrideWith(_FixedMonthNotifier.new),
         eventRepositoryProvider.overrideWithValue(repository),
         authRepositoryProvider.overrideWithValue(auth),
       ],

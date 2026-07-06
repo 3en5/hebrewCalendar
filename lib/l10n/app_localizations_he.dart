@@ -12,12 +12,6 @@ class AppLocalizationsHe extends AppLocalizations {
   String get appTitle => 'יומן עברי';
 
   @override
-  String get calendarPreviousMonth => 'החודש הקודם';
-
-  @override
-  String get calendarNextMonth => 'החודש הבא';
-
-  @override
   String get commonCancel => 'ביטול';
 
   @override
@@ -159,4 +153,25 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get signOutConfirmMessage => 'האם להתנתק מהחשבון?';
+
+  @override
+  String get calendarViewMonth => 'חודש';
+
+  @override
+  String get calendarViewWeek => 'שבוע';
+
+  @override
+  String get calendarViewDay => 'יום';
+
+  @override
+  String get calendarViewAgenda => 'אג\'נדה';
+
+  @override
+  String get calendarViewSwitcherTooltip => 'בחירת תצוגה';
+
+  @override
+  String get calendarTodayTooltip => 'היום';
+
+  @override
+  String get agendaEmptyState => 'אין אירועים קרובים';
 }

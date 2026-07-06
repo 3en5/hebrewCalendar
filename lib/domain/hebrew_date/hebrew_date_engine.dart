@@ -127,6 +127,30 @@ class HebrewDateEngine {
   /// The Hebrew month preceding [date]'s month (same day-of-month, clamped).
   HebrewDate previousMonth(HebrewDate date) => addMonths(date, -1);
 
+  /// Returns the [HebrewDate] that is [amount] Gregorian days after (or, if
+  /// negative, before) [date] — used by the week/day views (M3b) to page by
+  /// a fixed number of days rather than by Hebrew month.
+  ///
+  /// Arithmetic is done on a UTC-normalized copy of the Gregorian date, not
+  /// directly on the local [DateTime] [toGregorian] returns: adding a
+  /// [Duration] to a local midnight can land on the wrong day across a
+  /// daylight-saving transition (see docs/LESSONS.md, M3a — the same gotcha
+  /// `recurrence_expander.dart`'s `weekly`/`daily` stepping works around).
+  HebrewDate addDays(HebrewDate date, int amount) {
+    final DateTime local = toGregorian(date);
+    final DateTime utc = DateTime.utc(
+      local.year,
+      local.month,
+      local.day,
+    ).add(Duration(days: amount));
+    return fromGregorian(utc);
+  }
+
+  /// The Sunday on or before [date] — the first day of the Sunday-first
+  /// Hebrew-calendar week [date] falls in, used by the week view (M3b) to
+  /// find a week's boundaries.
+  HebrewDate startOfWeek(HebrewDate date) => addDays(date, -weekdayIndex(date));
+
   kosher.JewishDate _toJewishDate(HebrewDate date) {
     return kosher.JewishDate.initDate(
       jewishYear: date.year,

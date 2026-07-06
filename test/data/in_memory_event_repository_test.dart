@@ -218,4 +218,112 @@ void main() {
       },
     );
   });
+
+  group('watchOccurrencesInRange (M3b)', () {
+    test('emits an empty list before anything is created', () async {
+      final List<EventOccurrence> first = await repository
+          .watchOccurrencesInRange(_tishrei5, _tishrei5)
+          .first;
+      expect(first, isEmpty);
+    });
+
+    test('a range straddling a Hebrew month boundary returns occurrences from '
+        'both months, in chronological order', () async {
+      await repository.create(
+        _draftEvent(
+          title: 'סוף תשרי',
+          hebrewDate: const HebrewDate(
+            year: 5786,
+            month: HebrewMonth.tishrei,
+            day: 29,
+          ),
+        ),
+      );
+      await repository.create(
+        _draftEvent(
+          title: 'תחילת חשוון',
+          hebrewDate: const HebrewDate(
+            year: 5786,
+            month: HebrewMonth.cheshvan,
+            day: 2,
+          ),
+        ),
+      );
+      // Falls outside the queried range below (Tishrei 20).
+      await repository.create(
+        _draftEvent(
+          title: 'לא רלוונטי',
+          hebrewDate: const HebrewDate(
+            year: 5786,
+            month: HebrewMonth.tishrei,
+            day: 20,
+          ),
+        ),
+      );
+
+      final List<EventOccurrence> occurrences = await repository
+          .watchOccurrencesInRange(
+            const HebrewDate(year: 5786, month: HebrewMonth.tishrei, day: 28),
+            const HebrewDate(year: 5786, month: HebrewMonth.cheshvan, day: 3),
+          )
+          .first;
+
+      expect(
+        occurrences.map((EventOccurrence o) => o.event.title).toList(),
+        <String>['סוף תשרי', 'תחילת חשוון'],
+      );
+    });
+
+    test(
+      'expands a recurring event across the range, respecting exceptions',
+      () async {
+        final Event created = await repository.create(
+          _draftEvent().copyWith(
+            recurrence: const RecurrenceRule(
+              type: RecurrenceType.hebrewMonthly,
+              exceptions: <HebrewDate>[
+                HebrewDate(year: 5786, month: HebrewMonth.kislev, day: 5),
+              ],
+            ),
+          ),
+        );
+
+        final List<EventOccurrence> occurrences = await repository
+            .watchOccurrencesInRange(
+              _tishrei5,
+              const HebrewDate(year: 5786, month: HebrewMonth.tevet, day: 5),
+            )
+            .first;
+
+        expect(
+          occurrences.map((EventOccurrence o) => o.occurrenceDate).toList(),
+          <HebrewDate>[
+            _tishrei5,
+            const HebrewDate(year: 5786, month: HebrewMonth.cheshvan, day: 5),
+            // Kislev 5 is skipped: it's an exception.
+            const HebrewDate(year: 5786, month: HebrewMonth.tevet, day: 5),
+          ],
+        );
+        expect(
+          occurrences.every((EventOccurrence o) => o.event.id == created.id),
+          isTrue,
+        );
+      },
+    );
+
+    test('watchEventsForHebrewMonth delegates to the same expansion as an '
+        'equivalent watchOccurrencesInRange call', () async {
+      await repository.create(_draftEvent());
+      final List<EventOccurrence> viaMonth = await repository
+          .watchEventsForHebrewMonth(_tishrei5.year, _tishrei5.month)
+          .first;
+      final List<EventOccurrence> viaRange = await repository
+          .watchOccurrencesInRange(
+            const HebrewDate(year: 5786, month: HebrewMonth.tishrei, day: 1),
+            const HebrewDate(year: 5786, month: HebrewMonth.tishrei, day: 30),
+          )
+          .first;
+      expect(viaMonth, viaRange);
+    });
+  });
 }

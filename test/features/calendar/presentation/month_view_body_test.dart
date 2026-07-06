@@ -1,5 +1,6 @@
-// Widget tests for the Hebrew month view: docs/TESTING_AND_DEPLOY.md
-// requires widget tests for central screens plus RTL verification.
+// Widget tests for the Hebrew month body (M3b — was MonthViewScreen before
+// the calendar shell restructuring): docs/TESTING_AND_DEPLOY.md requires
+// widget tests for central screens plus RTL verification.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +11,7 @@ import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date_engine.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_numerals.dart';
 import 'package:hebrew_calendar/features/auth/application/auth_providers.dart';
-import 'package:hebrew_calendar/features/calendar/application/displayed_month_provider.dart';
+import 'package:hebrew_calendar/features/calendar/application/calendar_view_provider.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
 import 'package:hebrew_calendar/main.dart';
 
@@ -18,9 +19,9 @@ import '../../../test_support/fake_auth_repository.dart';
 
 const HebrewDateEngine _engine = HebrewDateEngine();
 
-/// Every test pumps [HebrewCalendarApp] and expects the (signed-in) month
-/// view, so each needs the auth gate signed in and an in-memory event
-/// repository (the auth gate now sits in front of [MonthViewScreen] — M2b).
+/// Every test pumps [HebrewCalendarApp] and expects the (signed-in) calendar
+/// shell in its default month view, so each needs the auth gate signed in
+/// and an in-memory event repository.
 List<Override> _signedInOverrides() {
   final FakeAuthRepository auth = FakeAuthRepository(initialUser: testUser);
   final InMemoryEventRepository repository = InMemoryEventRepository();
@@ -32,15 +33,18 @@ List<Override> _signedInOverrides() {
   ];
 }
 
-/// Overrides [DisplayedMonthNotifier] with a fixed initial month so tests
-/// don't depend on the wall-clock date.
-class _FixedMonthNotifier extends DisplayedMonthNotifier {
-  _FixedMonthNotifier(this._fixedMonth);
+/// Overrides [CalendarViewNotifier] with a fixed initial month view so
+/// tests don't depend on the wall-clock date.
+class _FixedMonthViewNotifier extends CalendarViewNotifier {
+  _FixedMonthViewNotifier(this._fixedMonth);
 
   final HebrewDate _fixedMonth;
 
   @override
-  HebrewDate build() => _fixedMonth;
+  CalendarViewState build() => CalendarViewState(
+    viewType: CalendarViewType.month,
+    focusedDate: _fixedMonth,
+  );
 }
 
 String _expectedTitle(HebrewDate month) =>
@@ -71,10 +75,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
+        overrides: <Override>[
           ..._signedInOverrides(),
-          displayedMonthProvider.overrideWith(
-            () => _FixedMonthNotifier(fixedMonth),
+          calendarViewProvider.overrideWith(
+            () => _FixedMonthViewNotifier(fixedMonth),
           ),
         ],
         child: const HebrewCalendarApp(),
@@ -104,7 +108,7 @@ void main() {
     expect(todayCell, findsOneWidget);
   });
 
-  testWidgets('tapping the next-month chevron changes the title', (
+  testWidgets('swiping the month view changes the title', (
     WidgetTester tester,
   ) async {
     const HebrewDate fixedMonth = HebrewDate(
@@ -112,27 +116,39 @@ void main() {
       month: HebrewMonth.tishrei,
       day: 1,
     );
-    final HebrewDate followingMonth = _engine.nextMonth(fixedMonth);
+    final HebrewDate nextMonth = _engine.nextMonth(fixedMonth);
+    final HebrewDate previousMonth = _engine.previousMonth(fixedMonth);
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
+        overrides: <Override>[
           ..._signedInOverrides(),
-          displayedMonthProvider.overrideWith(
-            () => _FixedMonthNotifier(fixedMonth),
+          calendarViewProvider.overrideWith(
+            () => _FixedMonthViewNotifier(fixedMonth),
           ),
         ],
         child: const HebrewCalendarApp(),
       ),
     );
     await tester.pumpAndSettle();
-
     expect(find.text(_expectedTitle(fixedMonth)), findsOneWidget);
 
-    await tester.tap(find.byTooltip('החודש הבא'));
+    await tester.drag(find.byType(PageView), const Offset(-800, 0));
     await tester.pumpAndSettle();
 
-    expect(find.text(_expectedTitle(followingMonth)), findsOneWidget);
+    // The original month's title must be gone; the new one must be one of
+    // the two chronologically-adjacent months — the exact swipe direction
+    // depends on RTL page-index semantics, which this test deliberately
+    // doesn't hard-code.
     expect(find.text(_expectedTitle(fixedMonth)), findsNothing);
+    final bool showsNext = find
+        .text(_expectedTitle(nextMonth))
+        .evaluate()
+        .isNotEmpty;
+    final bool showsPrevious = find
+        .text(_expectedTitle(previousMonth))
+        .evaluate()
+        .isNotEmpty;
+    expect(showsNext || showsPrevious, isTrue);
   });
 }

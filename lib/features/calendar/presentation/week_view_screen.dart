@@ -1,0 +1,152 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/theme/dimens.dart';
+import '../../../domain/event/event.dart';
+import '../../../domain/event/event_occurrence.dart';
+import '../../../domain/hebrew_date/hebrew_date.dart';
+import '../../../domain/hebrew_date/hebrew_date_engine.dart';
+import '../../event_editor/presentation/event_editor_screen.dart';
+import '../application/calendar_view_provider.dart';
+import '../application/hebrew_date_engine_provider.dart';
+import '../application/range_events_provider.dart';
+import 'paged_focus_sync.dart';
+import 'widgets/all_day_events_row.dart';
+import 'widgets/calendar_day_header.dart';
+import 'widgets/day_occurrences.dart';
+import 'widgets/hour_grid.dart';
+
+const int _daysPerWeek = 7;
+
+/// The week body (M3b): a horizontal seven-day layout starting Sunday
+/// (rightmost under RTL — falls out of the ambient `Directionality`, no
+/// manual left/right needed), a day-headers row, an all-day events row, and
+/// a scrollable 24-hour grid — paged by week via [PagedFocusSync].
+class WeekViewScreen extends ConsumerStatefulWidget {
+  const WeekViewScreen({super.key});
+
+  @override
+  ConsumerState<WeekViewScreen> createState() => _WeekViewScreenState();
+}
+
+class _WeekViewScreenState extends ConsumerState<WeekViewScreen> {
+  late final PagedFocusSync _sync;
+
+  @override
+  void initState() {
+    super.initState();
+    final HebrewDateEngine engine = ref.read(hebrewDateEngineProvider);
+    _sync = PagedFocusSync(
+      initialFocus: ref.read(calendarViewProvider).focusedDate,
+      roundToGranularity: engine.startOfWeek,
+      stepDate: (HebrewDate anchor, int delta) =>
+          engine.addDays(anchor, delta * _daysPerWeek),
+      onPageDateChanged: (HebrewDate date) =>
+          ref.read(calendarViewProvider.notifier).setFocusedDate(date),
+      onAnchorChangedExternally: () => setState(() {}),
+    );
+  }
+
+  @override
+  void dispose() {
+    _sync.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<CalendarViewState>(calendarViewProvider, (previous, next) {
+      _sync.syncExternalFocus(next.focusedDate);
+    });
+
+    return PageView.builder(
+      controller: _sync.pageController,
+      itemCount: PagedFocusSync.pageWindow * 2 + 1,
+      onPageChanged: _sync.onPageChanged,
+      itemBuilder: (BuildContext context, int index) {
+        return _WeekPage(weekStart: _sync.dateForPage(index));
+      },
+    );
+  }
+}
+
+class _WeekPage extends ConsumerWidget {
+  const _WeekPage({required this.weekStart});
+
+  final HebrewDate weekStart;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
+    final HebrewDate today = engine.fromGregorian(DateTime.now());
+    final HebrewDate weekEnd = engine.addDays(weekStart, _daysPerWeek - 1);
+    final List<HebrewDate> days = <HebrewDate>[
+      for (int i = 0; i < _daysPerWeek; i++) engine.addDays(weekStart, i),
+    ];
+
+    final List<EventOccurrence> occurrences =
+        ref.watch(rangeEventsProvider((from: weekStart, to: weekEnd))).value ??
+        const <EventOccurrence>[];
+    final List<DayOccurrences> columns = <DayOccurrences>[
+      for (final HebrewDate day in days)
+        DayOccurrences(
+          date: day,
+          occurrences: occurrences
+              .where((EventOccurrence o) => o.occurrenceDate == day)
+              .toList(),
+        ),
+    ];
+
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            SizedBox(width: hourLabelWidth),
+            for (final HebrewDate day in days)
+              Expanded(
+                child: CalendarDayHeader(
+                  key: ValueKey<String>('week-day-header-$day'),
+                  date: day,
+                  isToday: day == today,
+                ),
+              ),
+          ],
+        ),
+        AllDayEventsRow(
+          columns: columns,
+          onEventTap: (EventOccurrence occurrence) => _openEditor(
+            context,
+            initialDate: occurrence.event.hebrewDate,
+            existing: occurrence.event,
+          ),
+        ),
+        Expanded(
+          child: HourGrid(
+            columns: columns,
+            onEmptySlotTap: (HebrewDate date, int hour) =>
+                _openEditor(context, initialDate: date, existing: null),
+            onEventTap: (EventOccurrence occurrence) => _openEditor(
+              context,
+              initialDate: occurrence.event.hebrewDate,
+              existing: occurrence.event,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openEditor(
+    BuildContext context, {
+    required HebrewDate initialDate,
+    required Event? existing,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => EventEditorScreen(
+          args: (initialDate: initialDate, existing: existing),
+        ),
+      ),
+    );
+  }
+}

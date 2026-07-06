@@ -4,14 +4,6 @@
   "@appTitle": {
     "description": "The application title, shown in the app bar and OS task switcher."
   },
-  "calendarPreviousMonth": "החודש הקודם",
-  "@calendarPreviousMonth": {
-    "description": "Tooltip for the month-view button that navigates to the previous Hebrew month."
-  },
-  "calendarNextMonth": "החודש הבא",
-  "@calendarNextMonth": {
-    "description": "Tooltip for the month-view button that navigates to the next Hebrew month."
-  },
   "commonCancel": "ביטול",
   "@commonCancel": {
     "description": "Generic cancel button label, used in confirmation dialogs."
@@ -200,5 +192,33 @@
   "signOutConfirmMessage": "האם להתנתק מהחשבון?",
   "@signOutConfirmMessage": {
     "description": "Body text of the confirmation dialog shown before signing out."
+  },
+  "calendarViewMonth": "חודש",
+  "@calendarViewMonth": {
+    "description": "Calendar view switcher option/current-view label: month view."
+  },
+  "calendarViewWeek": "שבוע",
+  "@calendarViewWeek": {
+    "description": "Calendar view switcher option/current-view label: week view."
+  },
+  "calendarViewDay": "יום",
+  "@calendarViewDay": {
+    "description": "Calendar view switcher option/current-view label: day view."
+  },
+  "calendarViewAgenda": "אג'נדה",
+  "@calendarViewAgenda": {
+    "description": "Calendar view switcher option/current-view label: agenda view. Also shown as the app bar title while the agenda view is active."
+  },
+  "calendarViewSwitcherTooltip": "בחירת תצוגה",
+  "@calendarViewSwitcherTooltip": {
+    "description": "Tooltip for the app bar's view switcher (month/week/day/agenda) button."
+  },
+  "calendarTodayTooltip": "היום",
+  "@calendarTodayTooltip": {
+    "description": "Tooltip for the app bar's 'today' button, which refocuses the calendar on today without changing the selected view."
+  },
+  "agendaEmptyState": "אין אירועים קרובים",
+  "@agendaEmptyState": {
+    "description": "Empty-state message shown in the agenda view when there are no upcoming occurrences in the loaded window."
   }
 }

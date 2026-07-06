@@ -259,6 +259,80 @@ void main() {
     });
   });
 
+  group('addDays (M3b — week/day view paging)', () {
+    test('addDays(date, 0) returns the same date', () {
+      const HebrewDate date = HebrewDate(
+        year: 5786,
+        month: HebrewMonth.tishrei,
+        day: 10,
+      );
+      expect(engine.addDays(date, 0), date);
+    });
+
+    test('adding 1 day crosses a Hebrew month boundary', () {
+      final int elulDays = engine.daysInMonth(5785, HebrewMonth.elul);
+      final HebrewDate lastDayOfYear = HebrewDate(
+        year: 5785,
+        month: HebrewMonth.elul,
+        day: elulDays,
+      );
+      expect(
+        engine.addDays(lastDayOfYear, 1),
+        const HebrewDate(year: 5786, month: HebrewMonth.tishrei, day: 1),
+      );
+    });
+
+    test('addDays and subtracting the same amount are exact inverses', () {
+      const HebrewDate date = HebrewDate(
+        year: 5786,
+        month: HebrewMonth.shvat,
+        day: 5,
+      );
+      expect(engine.addDays(engine.addDays(date, 40), -40), date);
+    });
+
+    test('adding 7 days always lands on the same weekday', () {
+      const HebrewDate date = HebrewDate(
+        year: 5786,
+        month: HebrewMonth.tishrei,
+        day: 1,
+      );
+      final HebrewDate nextWeek = engine.addDays(date, 7);
+      expect(engine.weekdayIndex(nextWeek), engine.weekdayIndex(date));
+    });
+  });
+
+  group('startOfWeek (M3b — week view boundaries)', () {
+    test('a Sunday is its own start of week', () {
+      const HebrewDate roshHashana = HebrewDate(
+        // 1 Tishrei 5771 is a Thursday per the anchor-date test above, so
+        // step forward to a known Sunday instead.
+        year: 5771,
+        month: HebrewMonth.tishrei,
+        day: 1,
+      );
+      final HebrewDate sunday = engine.addDays(
+        roshHashana,
+        7 - engine.weekdayIndex(roshHashana),
+      );
+      expect(engine.weekdayIndex(sunday), 0);
+      expect(engine.startOfWeek(sunday), sunday);
+    });
+
+    test('any day in the week maps to the same Sunday', () {
+      const HebrewDate date = HebrewDate(
+        year: 5786,
+        month: HebrewMonth.tishrei,
+        day: 15,
+      );
+      final HebrewDate sunday = engine.startOfWeek(date);
+      expect(engine.weekdayIndex(sunday), 0);
+      for (int offset = 0; offset < 7; offset++) {
+        expect(engine.startOfWeek(engine.addDays(sunday, offset)), sunday);
+      }
+    });
+  });
+
   group('monthName', () {
     test('returns the expected Hebrew names, including Adar variants', () {
       expect(engine.monthName(HebrewMonth.tishrei), 'תשרי');

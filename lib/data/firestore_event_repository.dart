@@ -40,35 +40,62 @@ class FirestoreEventRepository implements EventRepository {
   CollectionReference<Map<String, dynamic>> get _events =>
       _firestore.collection('events');
 
-  /// M3a: a recurring event's `gregorianStart` only reflects its anchor
-  /// date, which may fall in a completely different month than an
-  /// occurrence being displayed — so recurring events can't be filtered by
-  /// the displayed month's Gregorian range server-side. Instead this
-  /// combines two queries: non-recurring events within the month's
-  /// Gregorian range (as before, `isRecurring == false` added so recurring
-  /// events aren't double-counted), and *all* of this user's recurring
-  /// events (`isRecurring == true`, unfiltered by date — there are only
-  /// ever as many of these as the user has created series), expanding the
-  /// latter into occurrences for [year]/[month] via `recurrence_expander.dart`
-  /// — the same expansion `InMemoryEventRepository` uses.
+  /// Delegates to [watchOccurrencesInRange] for the month's `[1,
+  /// daysInMonth]` range (M3b) rather than duplicating the query/merge
+  /// logic.
   @override
   Stream<List<EventOccurrence>> watchEventsForHebrewMonth(
     int year,
     HebrewMonth month,
   ) {
-    final ({DateTime start, DateTime endExclusive}) range =
-        hebrewMonthGregorianRange(_engine, year, month);
+    final HebrewDate from = HebrewDate(year: year, month: month, day: 1);
+    final HebrewDate to = HebrewDate(
+      year: year,
+      month: month,
+      day: _engine.daysInMonth(year, month),
+    );
+    return watchOccurrencesInRange(from, to);
+  }
+
+  /// M3a: a recurring event's `gregorianStart` only reflects its anchor
+  /// date, which may fall in a completely different month/range than an
+  /// occurrence being displayed — so recurring events can't be filtered by
+  /// [from]/[to]'s Gregorian range server-side. Instead this combines two
+  /// queries: non-recurring events within that Gregorian range (as before,
+  /// `isRecurring == false` added so recurring events aren't
+  /// double-counted), and *all* of this user's recurring events
+  /// (`isRecurring == true`, unfiltered by date — there are only ever as
+  /// many of these as the user has created series), expanding the latter
+  /// into occurrences for `[from, to]` via `recurrence_expander.dart` — the
+  /// same expansion `InMemoryEventRepository` uses (M3b — generalized from
+  /// a single Hebrew month to an arbitrary range for the week/day/agenda
+  /// views).
+  @override
+  Stream<List<EventOccurrence>> watchOccurrencesInRange(
+    HebrewDate from,
+    HebrewDate to,
+  ) {
+    final DateTime start = _engine.toGregorian(from);
+    final DateTime toDay = _engine.toGregorian(to);
+    // Exclusive upper bound: the calendar day after `to` at midnight. Built
+    // via the `DateTime` constructor (which normalizes an out-of-range day
+    // field, e.g. day 32, into the following month) rather than `add(const
+    // Duration(days: 1))`, since only the calendar day matters here — no
+    // `Duration` arithmetic across a possible daylight-saving transition
+    // (see docs/LESSONS.md, M3a) is needed for a single +1 day step.
+    final DateTime endExclusive = DateTime(
+      toDay.year,
+      toDay.month,
+      toDay.day + 1,
+    );
     final Stream<List<Event>> nonRecurring = _events
         .where('ownerUid', isEqualTo: ownerUid)
         .where('isRecurring', isEqualTo: false)
         .where(
           'gregorianStart',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(range.start),
+          isGreaterThanOrEqualTo: Timestamp.fromDate(start),
         )
-        .where(
-          'gregorianStart',
-          isLessThan: Timestamp.fromDate(range.endExclusive),
-        )
+        .where('gregorianStart', isLessThan: Timestamp.fromDate(endExclusive))
         .orderBy('gregorianStart')
         .snapshots()
         .map(_mapDocs);
@@ -78,7 +105,7 @@ class FirestoreEventRepository implements EventRepository {
         .snapshots()
         .map(_mapDocs);
 
-    return _combineAndExpand(nonRecurring, recurring, year, month);
+    return _combineAndExpand(nonRecurring, recurring, from, to);
   }
 
   static List<Event> _mapDocs(QuerySnapshot<Map<String, dynamic>> snapshot) =>
@@ -90,7 +117,7 @@ class FirestoreEventRepository implements EventRepository {
           .toList();
 
   /// Combines the latest values of [nonRecurringStream] and
-  /// [recurringStream] (expanding the latter for [year]/[month]) into one
+  /// [recurringStream] (expanding the latter for `[from, to]`) into one
   /// merged, sorted [EventOccurrence] stream — re-emitting whenever either
   /// source updates. Both `snapshots()` streams are broadcast streams that
   /// replay their current server/cache state to a new listener (unlike the
@@ -100,8 +127,8 @@ class FirestoreEventRepository implements EventRepository {
   Stream<List<EventOccurrence>> _combineAndExpand(
     Stream<List<Event>> nonRecurringStream,
     Stream<List<Event>> recurringStream,
-    int year,
-    HebrewMonth month,
+    HebrewDate from,
+    HebrewDate to,
   ) {
     late final StreamController<List<EventOccurrence>> controller;
     List<Event>? latestNonRecurring;
@@ -119,10 +146,10 @@ class FirestoreEventRepository implements EventRepository {
         for (final Event event in nonRecurring)
           EventOccurrence(event: event, occurrenceDate: event.hebrewDate),
         for (final Event event in recurring)
-          ...occurrencesInHebrewMonth(
+          ...occurrencesForEventInRange(
             event: event,
-            year: year,
-            month: month,
+            from: from,
+            to: to,
             engine: _engine,
           ),
       ]..sort(compareEventOccurrences);

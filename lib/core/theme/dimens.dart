@@ -57,6 +57,22 @@ double get spacingXl => spacing(2.0);
 /// Extra-extra-large spacing (page-level top/bottom breathing room).
 double get spacingXxl => spacing(3.0);
 
+/// Height of one hour row in the week/day hour grid (M3b), derived from
+/// [kBaseFontSize] like every other layout constant in this file — not a
+/// font size, but RULES.md §4.1's "single base, everything relative"
+/// principle applies to layout rhythm just as much as typography.
+double get hourRowHeight => spacing(4.0);
+
+/// Width of the leading hour-label gutter in the week/day hour grid (M3b).
+double get hourLabelWidth => spacing(3.0);
+
+/// Minimum visual height of a timed event block in the hour grid (M3b), so
+/// a very short (or zero-duration) event stays legible/tappable.
+double get eventBlockMinHeight => spacing(1.5);
+
+/// Height of a single all-day event chip row above the hour grid (M3b).
+double get allDayChipHeight => spacing(1.75);
+
 /// Responsive breakpoints per Material 3 window size classes, expressed in
 /// logical pixels (dp). Widths below [breakpointCompactMax] are "compact",
 /// widths below [breakpointMediumMax] are "medium", everything above is

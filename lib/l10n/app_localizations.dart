@@ -100,18 +100,6 @@ abstract class AppLocalizations {
   /// **'יומן עברי'**
   String get appTitle;
 
-  /// Tooltip for the month-view button that navigates to the previous Hebrew month.
-  ///
-  /// In he, this message translates to:
-  /// **'החודש הקודם'**
-  String get calendarPreviousMonth;
-
-  /// Tooltip for the month-view button that navigates to the next Hebrew month.
-  ///
-  /// In he, this message translates to:
-  /// **'החודש הבא'**
-  String get calendarNextMonth;
-
   /// Generic cancel button label, used in confirmation dialogs.
   ///
   /// In he, this message translates to:
@@ -387,6 +375,48 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'האם להתנתק מהחשבון?'**
   String get signOutConfirmMessage;
+
+  /// Calendar view switcher option/current-view label: month view.
+  ///
+  /// In he, this message translates to:
+  /// **'חודש'**
+  String get calendarViewMonth;
+
+  /// Calendar view switcher option/current-view label: week view.
+  ///
+  /// In he, this message translates to:
+  /// **'שבוע'**
+  String get calendarViewWeek;
+
+  /// Calendar view switcher option/current-view label: day view.
+  ///
+  /// In he, this message translates to:
+  /// **'יום'**
+  String get calendarViewDay;
+
+  /// Calendar view switcher option/current-view label: agenda view. Also shown as the app bar title while the agenda view is active.
+  ///
+  /// In he, this message translates to:
+  /// **'אג\'נדה'**
+  String get calendarViewAgenda;
+
+  /// Tooltip for the app bar's view switcher (month/week/day/agenda) button.
+  ///
+  /// In he, this message translates to:
+  /// **'בחירת תצוגה'**
+  String get calendarViewSwitcherTooltip;
+
+  /// Tooltip for the app bar's 'today' button, which refocuses the calendar on today without changing the selected view.
+  ///
+  /// In he, this message translates to:
+  /// **'היום'**
+  String get calendarTodayTooltip;
+
+  /// Empty-state message shown in the agenda view when there are no upcoming occurrences in the loaded window.
+  ///
+  /// In he, this message translates to:
+  /// **'אין אירועים קרובים'**
+  String get agendaEmptyState;
 }
 
 class _AppLocalizationsDelegate
