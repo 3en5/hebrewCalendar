@@ -1,6 +1,41 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: M1 הושלם ✅ → הבא: M2 — אימות + CRUD** (ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: M2 מפוצל לשני חצאים — M2a (מודל אירועים + CRUD בזיכרון) הושלם ✅;
+M2b (חיווט Firebase: Auth, Firestore, Rules) ממתין לקונפיגורציית Firebase
+מהמשתמש.** (ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — M2a הושלם (חצי ראשון של M2, ללא תלות ב-Firebase)
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues),
+  98 טסטים עוברים, `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות עוברת.
+- החלטת פיצול: M2 המקורי (אימות + CRUD) פוצל ל-M2a (מודל הדומיין + CRUD מול
+  repository בזיכרון, ללא Firebase) ו-M2b (Google Sign-In, Firestore, Security
+  Rules) — M2b ימומש לאחר שהמשתמש יספק קונפיגורציית Firebase. שום תלות ב-
+  Firebase לא נוספה בשלב זה.
+- נוצר `lib/domain/event/`: ישות טהורה `Event` (כולל `EventTimeOfDay` —
+  תחליף Flutter-free ל-`TimeOfDay`), `RecurrenceRule`/`RecurrenceType` (מבנה
+  נתונים בלבד; הרחבת חזרתיות היא M3), `event_validation.dart` (ולידטורים
+  טהורים עם שגיאות טיפוסיות שישוכפלו ב-Security Rules ב-M2b), וממשק מופשט
+  `EventRepository`.
+- נוצר `lib/data/in_memory_event_repository.dart`: המימוש היחיד עד M2b
+  ולצמיתות בטסטים; `id`/`now` ניתנים להזרקה לדטרמיניזם בטסטים. ראה
+  `docs/LESSONS.md` לגבי מלכודת timing עם broadcast stream שהתגלתה תוך כדי
+  כתיבת הטסטים ותוקנה במימוש.
+- נוצר `lib/features/event_editor/`: מסך יצירה/עריכת אירוע RTL בהשראת
+  Google Calendar — כותרת, מתג "כל היום", בורר תאריך עברי (שלוש רשימות
+  נפתחות בגימטריה, כולל אדר א׳/אדר ב׳ בשנה מעוברת), שעות התחלה/סיום דרך
+  `showTimePicker` הרגיל של Flutter (מומר מיד ל-`EventTimeOfDay` כדי
+  שה-domain יישאר Flutter-free), תיאור, מיקום, תזכורת יחידה (ללא/10/30/60
+  דקות — M2a; ריבוי תזכורות אפשרי בעתיד בלי שינוי סכימה). Riverpod:
+  `eventRepositoryProvider` (לא autoDispose — זהו מאגר נתונים, לא state של
+  מסך) ו-`eventEditorControllerProvider` (autoDispose.family לפי
+  `EventEditorArgs`). כל ה-`TextEditingController`ים מנוקים ב-`dispose`.
+- שולבה תצוגת החודש עם אירועים: FAB ליצירת אירוע (ליום הנוכחי אם הוא
+  בחודש המוצג, אחרת ל-1 בחודש), נקודת אינדיקציה בתא יום עם אירועים (לא
+  צ'יפים — תא הגריד קטן מדי עבורם), הקשה על יום עם אירועים פותחת
+  `DayEventsSheet` עם עריכה/מחיקה (כולל דיאלוג אישור).
+- הוכרעה סטייה קטנה מהניסוח המקורי: אינדיקציית האירועים בגריד היא נקודה
+  אחת ולא עד שני צ'יפים — תא היום קיים מ-M1 קטן מדי לצ'יפים קריאים; המשימה
+  אפשרה זאת במפורש ("whichever fits cell size").
 
 ## 2026-07-06 — M1 הושלם
 - מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues),

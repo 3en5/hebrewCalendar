@@ -111,6 +111,180 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'החודש הבא'**
   String get calendarNextMonth;
+
+  /// Generic cancel button label, used in confirmation dialogs.
+  ///
+  /// In he, this message translates to:
+  /// **'ביטול'**
+  String get commonCancel;
+
+  /// Tooltip for the floating action button that opens the event editor to create a new event.
+  ///
+  /// In he, this message translates to:
+  /// **'הוספת אירוע'**
+  String get addEventTooltip;
+
+  /// App bar title for the event editor screen in create mode.
+  ///
+  /// In he, this message translates to:
+  /// **'אירוע חדש'**
+  String get eventEditorTitleNew;
+
+  /// App bar title for the event editor screen in edit mode.
+  ///
+  /// In he, this message translates to:
+  /// **'עריכת אירוע'**
+  String get eventEditorTitleEdit;
+
+  /// Tooltip/label for the save action in the event editor.
+  ///
+  /// In he, this message translates to:
+  /// **'שמירה'**
+  String get eventSave;
+
+  /// Label for the event title text field.
+  ///
+  /// In he, this message translates to:
+  /// **'כותרת'**
+  String get eventFieldTitleLabel;
+
+  /// Label for the event description text field.
+  ///
+  /// In he, this message translates to:
+  /// **'תיאור'**
+  String get eventFieldDescriptionLabel;
+
+  /// Label for the event location text field.
+  ///
+  /// In he, this message translates to:
+  /// **'מיקום'**
+  String get eventFieldLocationLabel;
+
+  /// Label for the all-day switch in the event editor, and the time label shown for an all-day event.
+  ///
+  /// In he, this message translates to:
+  /// **'כל היום'**
+  String get eventAllDayLabel;
+
+  /// Label for the Hebrew date field/picker in the event editor.
+  ///
+  /// In he, this message translates to:
+  /// **'תאריך עברי'**
+  String get eventHebrewDateLabel;
+
+  /// Label for the event start time field.
+  ///
+  /// In he, this message translates to:
+  /// **'שעת התחלה'**
+  String get eventStartTimeLabel;
+
+  /// Label for the event end time field.
+  ///
+  /// In he, this message translates to:
+  /// **'שעת סיום'**
+  String get eventEndTimeLabel;
+
+  /// Placeholder shown for a start/end time field before a time has been picked.
+  ///
+  /// In he, this message translates to:
+  /// **'בחירת שעה'**
+  String get eventNoTimeSet;
+
+  /// Section heading above the reminder selector in the event editor.
+  ///
+  /// In he, this message translates to:
+  /// **'תזכורת'**
+  String get eventRemindersLabel;
+
+  /// Reminder chip label meaning no reminder is set.
+  ///
+  /// In he, this message translates to:
+  /// **'ללא תזכורת'**
+  String get eventReminderNone;
+
+  /// Reminder chip label for a fixed number of minutes before the event, e.g. '10 דקות לפני'.
+  ///
+  /// In he, this message translates to:
+  /// **'{minutes} דקות לפני'**
+  String eventReminderMinutesBefore(int minutes);
+
+  /// Inline validation error when the event title is empty.
+  ///
+  /// In he, this message translates to:
+  /// **'יש להזין כותרת'**
+  String get eventValidationTitleRequired;
+
+  /// Inline validation error when the event title exceeds the maximum length.
+  ///
+  /// In he, this message translates to:
+  /// **'הכותרת ארוכה מדי'**
+  String get eventValidationTitleTooLong;
+
+  /// Inline validation error when the event description exceeds the maximum length.
+  ///
+  /// In he, this message translates to:
+  /// **'התיאור ארוך מדי'**
+  String get eventValidationDescriptionTooLong;
+
+  /// Inline validation error when the event location exceeds the maximum length.
+  ///
+  /// In he, this message translates to:
+  /// **'המיקום ארוך מדי'**
+  String get eventValidationLocationTooLong;
+
+  /// Inline validation error when the event end time is not after the start time.
+  ///
+  /// In he, this message translates to:
+  /// **'שעת הסיום חייבת להיות אחרי שעת ההתחלה'**
+  String get eventValidationEndBeforeStart;
+
+  /// Tooltip/label for the edit action on an event in the day events sheet.
+  ///
+  /// In he, this message translates to:
+  /// **'עריכה'**
+  String get eventEditAction;
+
+  /// Tooltip/label for the delete action on an event, and the confirm button in the delete confirmation dialog.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיקה'**
+  String get eventDeleteAction;
+
+  /// Title of the confirmation dialog shown before deleting an event.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיקת אירוע'**
+  String get eventDeleteConfirmTitle;
+
+  /// Body text of the confirmation dialog shown before deleting an event.
+  ///
+  /// In he, this message translates to:
+  /// **'האם למחוק אירוע זה? לא ניתן לבטל פעולה זו.'**
+  String get eventDeleteConfirmMessage;
+
+  /// Label for the year dropdown in the Hebrew date picker sheet.
+  ///
+  /// In he, this message translates to:
+  /// **'שנה'**
+  String get hebrewDatePickerYearLabel;
+
+  /// Label for the month dropdown in the Hebrew date picker sheet.
+  ///
+  /// In he, this message translates to:
+  /// **'חודש'**
+  String get hebrewDatePickerMonthLabel;
+
+  /// Label for the day dropdown in the Hebrew date picker sheet.
+  ///
+  /// In he, this message translates to:
+  /// **'יום'**
+  String get hebrewDatePickerDayLabel;
+
+  /// Confirm button label in the Hebrew date picker sheet.
+  ///
+  /// In he, this message translates to:
+  /// **'אישור'**
+  String get hebrewDatePickerConfirm;
 }
 
 class _AppLocalizationsDelegate

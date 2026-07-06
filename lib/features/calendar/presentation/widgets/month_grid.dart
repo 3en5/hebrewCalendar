@@ -1,11 +1,16 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/dimens.dart';
+import '../../../../domain/event/event.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../application/hebrew_date_engine_provider.dart';
+import '../../application/month_events_provider.dart';
 import 'day_cell.dart';
+import 'day_events_sheet.dart';
 
 /// Sunday-first single-letter weekday abbreviations (א׳..ש׳). Saturday uses
 /// ש for Shabbat rather than the number 7, per Hebrew calendar convention.
@@ -39,6 +44,12 @@ class MonthGrid extends ConsumerWidget {
     final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
     final HebrewDate today = engine.fromGregorian(DateTime.now());
     final List<HebrewDate> cells = _buildCells(engine, displayedMonth);
+    final List<Event> monthEvents =
+        ref.watch(monthEventsProvider(displayedMonth)).value ?? const <Event>[];
+    final Map<int, List<Event>> eventsByDay = <int, List<Event>>{};
+    for (final Event event in monthEvents) {
+      eventsByDay.putIfAbsent(event.hebrewDate.day, () => <Event>[]).add(event);
+    }
 
     return Column(
       children: <Widget>[
@@ -56,16 +67,37 @@ class MonthGrid extends ConsumerWidget {
                   cellDate.year == displayedMonth.year &&
                   cellDate.month == displayedMonth.month;
               final DateTime gregorianDate = engine.toGregorian(cellDate);
+              final List<Event> dayEvents = inDisplayedMonth
+                  ? (eventsByDay[cellDate.day] ?? const <Event>[])
+                  : const <Event>[];
               return DayCell(
                 hebrewDay: cellDate.day,
                 gregorianDay: gregorianDate.day,
                 isInDisplayedMonth: inDisplayedMonth,
                 isToday: cellDate == today,
+                hasEvents: dayEvents.isNotEmpty,
+                onTap: dayEvents.isEmpty
+                    ? null
+                    : () => _showDayEvents(context, cellDate, dayEvents),
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+  void _showDayEvents(
+    BuildContext context,
+    HebrewDate date,
+    List<Event> events,
+  ) {
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => DayEventsSheet(date: date, events: events),
+      ),
     );
   }
 

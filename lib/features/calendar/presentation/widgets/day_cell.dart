@@ -14,6 +14,8 @@ class DayCell extends StatelessWidget {
     required this.gregorianDay,
     required this.isInDisplayedMonth,
     required this.isToday,
+    this.hasEvents = false,
+    this.onTap,
     super.key,
   });
 
@@ -29,6 +31,14 @@ class DayCell extends StatelessWidget {
 
   /// Whether this cell is today.
   final bool isToday;
+
+  /// Whether at least one event falls on this day — shown as a small dot
+  /// (the cell is too small for Google Calendar-style title chips).
+  final bool hasEvents;
+
+  /// Called when the cell is tapped; null (no ink response) when there is
+  /// nothing to show for this day.
+  final VoidCallback? onTap;
 
   static const double _dimmedOpacity = 0.38;
 
@@ -46,36 +56,58 @@ class DayCell extends StatelessWidget {
 
     return Semantics(
       label: isToday ? '${hebrewDayNumeral(hebrewDay)} — היום' : null,
-      child: Padding(
-        padding: EdgeInsetsDirectional.all(spacingXs),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              width: rem(2.0),
-              height: rem(2.0),
-              alignment: Alignment.center,
-              decoration: isToday
-                  ? BoxDecoration(
-                      color: colorScheme.primary,
-                      shape: BoxShape.circle,
-                    )
-                  : null,
-              child: Text(
-                hebrewDayNumeral(hebrewDay),
-                style: TextStyle(
-                  fontSize: bodyLargeRem,
-                  fontWeight: FontWeight.w600,
-                  color: hebrewDayColor,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsetsDirectional.all(spacingXs),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                width: rem(2.0),
+                height: rem(2.0),
+                alignment: Alignment.center,
+                decoration: isToday
+                    ? BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                      )
+                    : null,
+                child: Text(
+                  hebrewDayNumeral(hebrewDay),
+                  style: TextStyle(
+                    fontSize: bodyLargeRem,
+                    fontWeight: FontWeight.w600,
+                    color: hebrewDayColor,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: spacingXs),
-            Text(
-              '$gregorianDay',
-              style: TextStyle(fontSize: captionRem, color: gregorianDayColor),
-            ),
-          ],
+              SizedBox(height: spacingXs),
+              Text(
+                '$gregorianDay',
+                style: TextStyle(
+                  fontSize: captionRem,
+                  color: gregorianDayColor,
+                ),
+              ),
+              SizedBox(height: spacingXs),
+              SizedBox(
+                width: spacingSm,
+                height: spacingSm,
+                child: hasEvents
+                    ? DecoratedBox(
+                        key: ValueKey<String>('event-dot-$hebrewDay'),
+                        decoration: BoxDecoration(
+                          color: colorScheme.secondary.withValues(
+                            alpha: opacity,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                    : null,
+              ),
+            ],
+          ),
         ),
       ),
     );

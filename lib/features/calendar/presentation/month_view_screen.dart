@@ -7,6 +7,7 @@ import '../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../event_editor/presentation/event_editor_screen.dart';
 import '../application/displayed_month_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
 import 'widgets/month_grid.dart';
@@ -109,6 +110,37 @@ class _MonthViewScreenState extends ConsumerState<MonthViewScreen> {
         itemBuilder: (BuildContext context, int index) {
           return MonthGrid(displayedMonth: _monthForPage(index));
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () =>
+            _openEditorForNewEvent(context, displayedMonth, engine),
+        tooltip: l10n.addEventTooltip,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  /// The initial Hebrew date pre-filled for a new event created from the
+  /// FAB: today, if today falls within the currently displayed month;
+  /// otherwise the 1st of the displayed month.
+  void _openEditorForNewEvent(
+    BuildContext context,
+    HebrewDate displayedMonth,
+    HebrewDateEngine engine,
+  ) {
+    final HebrewDate today = engine.fromGregorian(DateTime.now());
+    final HebrewDate initialDate =
+        today.year == displayedMonth.year && today.month == displayedMonth.month
+        ? today
+        : HebrewDate(
+            year: displayedMonth.year,
+            month: displayedMonth.month,
+            day: 1,
+          );
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            EventEditorScreen(args: (initialDate: initialDate, existing: null)),
       ),
     );
   }

@@ -1,0 +1,164 @@
+// Unit tests for InMemoryEventRepository: create/update/delete and the
+// watchEventsForHebrewMonth stream's emissions on each mutation.
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
+import 'package:hebrew_calendar/domain/event/event.dart';
+import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
+
+const HebrewDate _tishrei5 = HebrewDate(
+  year: 5786,
+  month: HebrewMonth.tishrei,
+  day: 5,
+);
+
+Event _draftEvent({String title = 'אירוע', HebrewDate hebrewDate = _tishrei5}) {
+  final DateTime now = DateTime(2026, 1, 1);
+  return Event(
+    id: 'ignored-on-create',
+    ownerUid: 'uid-1',
+    calendarId: 'default',
+    title: title,
+    hebrewDate: hebrewDate,
+    createdAt: now,
+    updatedAt: now,
+  );
+}
+
+void main() {
+  late InMemoryEventRepository repository;
+  int idCounter = 0;
+
+  setUp(() {
+    idCounter = 0;
+    repository = InMemoryEventRepository(
+      idGenerator: () => 'test-event-${idCounter++}',
+      now: () => DateTime(2026, 7, 6),
+    );
+  });
+
+  tearDown(() {
+    repository.dispose();
+  });
+
+  group('create', () {
+    test('assigns a repository-generated id, ignoring the given one', () async {
+      final Event created = await repository.create(_draftEvent());
+      expect(created.id, 'test-event-0');
+    });
+
+    test('sets createdAt and updatedAt to the same timestamp', () async {
+      final Event created = await repository.create(_draftEvent());
+      expect(created.createdAt, DateTime(2026, 7, 6));
+      expect(created.updatedAt, DateTime(2026, 7, 6));
+    });
+
+    test('is retrievable via getById', () async {
+      final Event created = await repository.create(_draftEvent());
+      final Event? fetched = await repository.getById(created.id);
+      expect(fetched, created);
+    });
+  });
+
+  group('update', () {
+    test('overwrites fields and bumps updatedAt but keeps createdAt', () async {
+      repository = InMemoryEventRepository(
+        idGenerator: () => 'test-event-${idCounter++}',
+        now: () {
+          idCounter++;
+          return idCounter == 1 ? DateTime(2026, 1, 1) : DateTime(2026, 1, 2);
+        },
+      );
+      final Event created = await repository.create(_draftEvent());
+      final Event updated = await repository.update(
+        created.copyWith(title: 'כותרת חדשה'),
+      );
+      expect(updated.title, 'כותרת חדשה');
+      expect(updated.createdAt, created.createdAt);
+      expect(updated.updatedAt, isNot(created.createdAt));
+    });
+
+    test('throws for an id that does not exist', () async {
+      expect(
+        () => repository.update(_draftEvent().copyWith(id: 'missing')),
+        throwsStateError,
+      );
+    });
+  });
+
+  group('delete', () {
+    test('removes an existing event', () async {
+      final Event created = await repository.create(_draftEvent());
+      await repository.delete(created.id);
+      expect(await repository.getById(created.id), isNull);
+    });
+
+    test('is a no-op for an id that does not exist', () async {
+      await repository.delete('does-not-exist');
+      // No exception thrown is the assertion.
+    });
+  });
+
+  group('watchEventsForHebrewMonth', () {
+    test('emits an empty list before anything is created', () async {
+      final List<Event> first = await repository
+          .watchEventsForHebrewMonth(_tishrei5.year, _tishrei5.month)
+          .first;
+      expect(first, isEmpty);
+    });
+
+    test('emits the new event after create', () async {
+      final Stream<List<Event>> stream = repository.watchEventsForHebrewMonth(
+        _tishrei5.year,
+        _tishrei5.month,
+      );
+      final Future<List<List<Event>>> emissions = stream.take(2).toList();
+      await repository.create(_draftEvent());
+      final List<List<Event>> results = await emissions;
+      expect(results.first, isEmpty);
+      expect(results.last, hasLength(1));
+      expect(results.last.single.title, 'אירוע');
+    });
+
+    test('does not include events from a different Hebrew month', () async {
+      await repository.create(
+        _draftEvent(
+          hebrewDate: const HebrewDate(
+            year: 5786,
+            month: HebrewMonth.cheshvan,
+            day: 5,
+          ),
+        ),
+      );
+      final List<Event> tishreiEvents = await repository
+          .watchEventsForHebrewMonth(_tishrei5.year, _tishrei5.month)
+          .first;
+      expect(tishreiEvents, isEmpty);
+    });
+
+    test('reflects an update', () async {
+      final Event created = await repository.create(_draftEvent());
+      final Stream<List<Event>> stream = repository.watchEventsForHebrewMonth(
+        _tishrei5.year,
+        _tishrei5.month,
+      );
+      final Future<List<List<Event>>> emissions = stream.take(2).toList();
+      await repository.update(created.copyWith(title: 'עודכן'));
+      final List<List<Event>> results = await emissions;
+      expect(results.last.single.title, 'עודכן');
+    });
+
+    test('reflects a delete', () async {
+      final Event created = await repository.create(_draftEvent());
+      final Stream<List<Event>> stream = repository.watchEventsForHebrewMonth(
+        _tishrei5.year,
+        _tishrei5.month,
+      );
+      final Future<List<List<Event>>> emissions = stream.take(2).toList();
+      await repository.delete(created.id);
+      final List<List<Event>> results = await emissions;
+      expect(results.first, hasLength(1));
+      expect(results.last, isEmpty);
+    });
+  });
+}

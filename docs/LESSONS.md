@@ -37,3 +37,29 @@
   בזמן אמת — סוכן יכול להיראות "מת" (קובץ קטן וישן) בזמן שהוא עובד.
   הסימן האמין לפעילות: שינויים בעץ העבודה של git ותהליכי dart/flutter
   רצים. מעקב סיום נכון: יציבות `git status --porcelain` + ps לאורך כמה דקות.
+
+- **2026-07-06 · M2a, `flutter_riverpod` 3.3.2 API:** `StreamProviderFamily`,
+  `NotifierProviderFamily` ו-`Override` (וכל שם הנחוץ להצהרת טיפוס מפורשת
+  ל-provider מסוג `.family`/`overrides:`) **אינם** מיוצאים מ-
+  `package:flutter_riverpod/flutter_riverpod.dart` הראשי — יש לייבא אותם
+  במפורש מ-`package:flutter_riverpod/misc.dart`. שימוש ב-`var`/`final`
+  ללא טיפוס מפורש (או ב-Dart, הרבה widget code) לא נתקל בזה כי הטיפוס
+  מוסק; הבעיה עולה רק כשרוצים להצהיר את הטיפוס של המשתנה/שדה במפורש
+  (כפי שדורש RULES.md `always_declare_return_types`/קונבנציית הפרויקט).
+
+- **2026-07-06 · M2a, מלכודת timing ב-broadcast `Stream` בזיכרון:** מימוש
+  `InMemoryEventRepository.watchEventsForHebrewMonth` הראשוני היה `async*`
+  ש-`yield`ת snapshot נוכחי ואז `yield*`ת `_changes.stream` ממופה. זה נשבר:
+  broadcast `StreamController` **זורק** אירועי `add()` שאין להם מאזין באותו
+  רגע, וה-generator נרשם כמאזין ל-`_changes` רק *אחרי* שמסר את הערך
+  הראשון שלו — כך שמוטציה סינכרונית מיד אחרי ה-subscribe (בדיוק המצב
+  בטסט: `stream.take(2).toList()` ואז `create()` בלי המתנה בין השניים)
+  מוחמצת בשקט: הראשונה שנתפסת בתמונת המצב הראשונה (race, לא ריק כמצופה),
+  והשנייה לעולם לא מגיעה (timeout). התיקון: לבנות את ה-`Stream` ידנית עם
+  `StreamController.broadcast(onListen: ...)` שבו ההרשמה ל-`_changes`
+  והפליטה הראשונית קורות יחד, סינכרונית, באותו callback — כך שאין חלון
+  זמן שבו מוטציה יכולה "ליפול בין הכיסאות". לקח כללי: כל `Stream` בזיכרון
+  שמשלב "ערך התחלתי + עדכונים עתידיים" על בסיס broadcast controller חייב
+  להירשם לעדכונים *לפני* (או באותו טיק סינכרוני של) חישוב הערך ההתחלתי,
+  אחרת יש חלון race — גם אם בשימוש אמיתי מה-UI (בניגוד לטסט סינכרוני) החלון
+  נדיר שיתממש בפועל.

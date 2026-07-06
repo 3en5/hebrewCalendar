@@ -11,5 +11,126 @@
   "calendarNextMonth": "החודש הבא",
   "@calendarNextMonth": {
     "description": "Tooltip for the month-view button that navigates to the next Hebrew month."
+  },
+  "commonCancel": "ביטול",
+  "@commonCancel": {
+    "description": "Generic cancel button label, used in confirmation dialogs."
+  },
+  "addEventTooltip": "הוספת אירוע",
+  "@addEventTooltip": {
+    "description": "Tooltip for the floating action button that opens the event editor to create a new event."
+  },
+  "eventEditorTitleNew": "אירוע חדש",
+  "@eventEditorTitleNew": {
+    "description": "App bar title for the event editor screen in create mode."
+  },
+  "eventEditorTitleEdit": "עריכת אירוע",
+  "@eventEditorTitleEdit": {
+    "description": "App bar title for the event editor screen in edit mode."
+  },
+  "eventSave": "שמירה",
+  "@eventSave": {
+    "description": "Tooltip/label for the save action in the event editor."
+  },
+  "eventFieldTitleLabel": "כותרת",
+  "@eventFieldTitleLabel": {
+    "description": "Label for the event title text field."
+  },
+  "eventFieldDescriptionLabel": "תיאור",
+  "@eventFieldDescriptionLabel": {
+    "description": "Label for the event description text field."
+  },
+  "eventFieldLocationLabel": "מיקום",
+  "@eventFieldLocationLabel": {
+    "description": "Label for the event location text field."
+  },
+  "eventAllDayLabel": "כל היום",
+  "@eventAllDayLabel": {
+    "description": "Label for the all-day switch in the event editor, and the time label shown for an all-day event."
+  },
+  "eventHebrewDateLabel": "תאריך עברי",
+  "@eventHebrewDateLabel": {
+    "description": "Label for the Hebrew date field/picker in the event editor."
+  },
+  "eventStartTimeLabel": "שעת התחלה",
+  "@eventStartTimeLabel": {
+    "description": "Label for the event start time field."
+  },
+  "eventEndTimeLabel": "שעת סיום",
+  "@eventEndTimeLabel": {
+    "description": "Label for the event end time field."
+  },
+  "eventNoTimeSet": "בחירת שעה",
+  "@eventNoTimeSet": {
+    "description": "Placeholder shown for a start/end time field before a time has been picked."
+  },
+  "eventRemindersLabel": "תזכורת",
+  "@eventRemindersLabel": {
+    "description": "Section heading above the reminder selector in the event editor."
+  },
+  "eventReminderNone": "ללא תזכורת",
+  "@eventReminderNone": {
+    "description": "Reminder chip label meaning no reminder is set."
+  },
+  "eventReminderMinutesBefore": "{minutes} דקות לפני",
+  "@eventReminderMinutesBefore": {
+    "description": "Reminder chip label for a fixed number of minutes before the event, e.g. '10 דקות לפני'.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "eventValidationTitleRequired": "יש להזין כותרת",
+  "@eventValidationTitleRequired": {
+    "description": "Inline validation error when the event title is empty."
+  },
+  "eventValidationTitleTooLong": "הכותרת ארוכה מדי",
+  "@eventValidationTitleTooLong": {
+    "description": "Inline validation error when the event title exceeds the maximum length."
+  },
+  "eventValidationDescriptionTooLong": "התיאור ארוך מדי",
+  "@eventValidationDescriptionTooLong": {
+    "description": "Inline validation error when the event description exceeds the maximum length."
+  },
+  "eventValidationLocationTooLong": "המיקום ארוך מדי",
+  "@eventValidationLocationTooLong": {
+    "description": "Inline validation error when the event location exceeds the maximum length."
+  },
+  "eventValidationEndBeforeStart": "שעת הסיום חייבת להיות אחרי שעת ההתחלה",
+  "@eventValidationEndBeforeStart": {
+    "description": "Inline validation error when the event end time is not after the start time."
+  },
+  "eventEditAction": "עריכה",
+  "@eventEditAction": {
+    "description": "Tooltip/label for the edit action on an event in the day events sheet."
+  },
+  "eventDeleteAction": "מחיקה",
+  "@eventDeleteAction": {
+    "description": "Tooltip/label for the delete action on an event, and the confirm button in the delete confirmation dialog."
+  },
+  "eventDeleteConfirmTitle": "מחיקת אירוע",
+  "@eventDeleteConfirmTitle": {
+    "description": "Title of the confirmation dialog shown before deleting an event."
+  },
+  "eventDeleteConfirmMessage": "האם למחוק אירוע זה? לא ניתן לבטל פעולה זו.",
+  "@eventDeleteConfirmMessage": {
+    "description": "Body text of the confirmation dialog shown before deleting an event."
+  },
+  "hebrewDatePickerYearLabel": "שנה",
+  "@hebrewDatePickerYearLabel": {
+    "description": "Label for the year dropdown in the Hebrew date picker sheet."
+  },
+  "hebrewDatePickerMonthLabel": "חודש",
+  "@hebrewDatePickerMonthLabel": {
+    "description": "Label for the month dropdown in the Hebrew date picker sheet."
+  },
+  "hebrewDatePickerDayLabel": "יום",
+  "@hebrewDatePickerDayLabel": {
+    "description": "Label for the day dropdown in the Hebrew date picker sheet."
+  },
+  "hebrewDatePickerConfirm": "אישור",
+  "@hebrewDatePickerConfirm": {
+    "description": "Confirm button label in the Hebrew date picker sheet."
   }
 }
