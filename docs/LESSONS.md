@@ -106,3 +106,10 @@
   להירשם לעדכונים *לפני* (או באותו טיק סינכרוני של) חישוב הערך ההתחלתי,
   אחרת יש חלון race — גם אם בשימוש אמיתי מה-UI (בניגוד לטסט סינכרוני) החלון
   נדיר שיתממש בפועל.
+
+- **2026-07-06 · CI עם קונפיג Firebase מוסתר:** `google-services.json` ב-gitignore
+  ולכן ג'וב בניית ה-APK ב-CI נכשל על "File google-services.json is missing".
+  הפתרון: ה-workflow יוצר קובץ placeholder עם ערכים מזויפים (רק ה-package_name
+  חייב להיות אמיתי) — מספיק לבניית debug, והקונפיג האמיתי לא נחשף. בנוסף,
+  פלאגיני Firebase דורשים NDK 27 — נקבע `ndkVersion = "27.0.12077973"` מפורש
+  ב-`android/app/build.gradle.kts`.

@@ -11,7 +11,9 @@ plugins {
 android {
     namespace = "com.hebrewcalendar.hebrew_calendar"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Firebase plugins (firebase_core/auth, cloud_firestore, google_sign_in)
+    // require NDK 27; flutter.ndkVersion is older.
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
