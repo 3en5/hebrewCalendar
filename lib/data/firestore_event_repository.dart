@@ -8,7 +8,11 @@ import '../domain/event/event_repository.dart';
 import '../domain/event/recurrence_expander.dart';
 import '../domain/hebrew_date/hebrew_date.dart';
 import '../domain/hebrew_date/hebrew_date_engine.dart';
+import '../domain/sync/export_candidate.dart';
+import '../domain/sync/remote_event_snapshot.dart';
+import '../domain/sync/sync_state.dart';
 import 'event_firestore_mapper.dart';
+import 'firestore_event_sync_support.dart';
 
 /// [EventRepository] backed by the `events` root Firestore collection
 /// (ARCHITECTURE.md §4), scoped to a single signed-in [ownerUid].
@@ -31,11 +35,22 @@ class FirestoreEventRepository implements EventRepository {
     FirebaseFirestore? firestore,
     HebrewDateEngine engine = const HebrewDateEngine(),
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _engine = engine;
+       _engine = engine,
+       _sync = FirestoreEventSyncSupport(
+         firestore: firestore ?? FirebaseFirestore.instance,
+         ownerUid: ownerUid,
+         engine: engine,
+       );
 
   final String ownerUid;
   final FirebaseFirestore _firestore;
   final HebrewDateEngine _engine;
+
+  /// M5a sync-support methods (`getAllForSync`/`updateSyncState`/etc.) live
+  /// in a separate helper class, not inline here — RULES.md §2, a
+  /// sync-aware repository combining CRUD/watch/sync in one file would
+  /// exceed 500 lines.
+  final FirestoreEventSyncSupport _sync;
 
   CollectionReference<Map<String, dynamic>> get _events =>
       _firestore.collection('events');
@@ -191,10 +206,13 @@ class FirestoreEventRepository implements EventRepository {
   @override
   Future<Event> create(Event event) async {
     final DateTime now = DateTime.now();
+    // A newly-created event always needs exporting (M5a: repository update
+    // hook, RULES.md §6 — kept here, not in UI callers).
     final Event toStore = event.copyWith(
       ownerUid: ownerUid,
       createdAt: now,
       updatedAt: now,
+      googleSync: event.googleSync.copyWith(dirty: true),
     );
     final DocumentReference<Map<String, dynamic>> docRef = _events.doc();
     final Map<String, dynamic> data =
@@ -217,10 +235,14 @@ class FirestoreEventRepository implements EventRepository {
     }
     final DateTime createdAt =
         (existingData['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+    // Every local edit marks the event dirty again (M5a repository hook) —
+    // only `updateSyncState` (used exclusively by the sync engine) may
+    // leave `dirty` alone.
     final Event toStore = event.copyWith(
       ownerUid: ownerUid,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+      googleSync: event.googleSync.copyWith(dirty: true),
     );
     final Map<String, dynamic> data =
         eventToFirestoreData(event: toStore, engine: _engine)
@@ -232,6 +254,45 @@ class FirestoreEventRepository implements EventRepository {
 
   @override
   Future<void> delete(String id) async {
-    await _events.doc(id).delete();
+    final DocumentReference<Map<String, dynamic>> docRef = _events.doc(id);
+    final DocumentSnapshot<Map<String, dynamic>> snapshot = await docRef.get();
+    final Map<String, dynamic>? data = snapshot.data();
+    if (data != null) {
+      await _sync.enqueuePendingDeletionIfNeeded(
+        eventFromFirestoreData(snapshot.id, data),
+      );
+    }
+    await docRef.delete();
   }
+
+  @override
+  Future<List<Event>> getAllForSync() => _sync.getAllForSync();
+
+  @override
+  Future<Event?> getByGoogleEventId(String googleEventId) =>
+      _sync.getByGoogleEventId(googleEventId);
+
+  @override
+  Future<void> updateSyncState(
+    String eventId, {
+    GoogleSyncState? googleSync,
+    Map<String, GoogleSyncState>? googleInstanceSync,
+  }) => _sync.updateSyncState(
+    eventId,
+    googleSync: googleSync,
+    googleInstanceSync: googleInstanceSync,
+  );
+
+  @override
+  Future<List<PendingGoogleDeletion>> takePendingGoogleDeletions() =>
+      _sync.takePendingGoogleDeletions();
+
+  @override
+  Future<Event> upsertFromGoogle(
+    RemoteEventSnapshot snapshot, {
+    String? existingEventId,
+  }) => _sync.upsertFromGoogle(snapshot, existingEventId: existingEventId);
+
+  @override
+  Future<void> applyRemoteDelete(String id) => _sync.applyRemoteDelete(id);
 }

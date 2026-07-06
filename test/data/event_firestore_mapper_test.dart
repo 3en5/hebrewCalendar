@@ -7,10 +7,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/event_firestore_mapper.dart';
 import 'package:hebrew_calendar/domain/event/event.dart';
+import 'package:hebrew_calendar/domain/event/event_source.dart';
 import 'package:hebrew_calendar/domain/event/event_time_of_day.dart';
 import 'package:hebrew_calendar/domain/event/recurrence_rule.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date_engine.dart';
+import 'package:hebrew_calendar/domain/sync/sync_state.dart';
 
 const HebrewDateEngine _engine = HebrewDateEngine();
 
@@ -241,6 +243,54 @@ void main() {
           end.toDate().difference(start.toDate()),
           const Duration(days: 1),
         );
+      },
+    );
+  });
+
+  group('M5a Google sync fields', () {
+    test('round-trips a non-default source/googleSync/googleInstanceSync', () {
+      final Event original = _baseEvent().copyWith(
+        source: EventSource.google,
+        googleSync: GoogleSyncState(
+          googleEventId: 'g-1',
+          etag: 'etag-1',
+          lastSyncedAt: DateTime(2026, 2, 1, 8),
+          dirty: true,
+        ),
+        googleInstanceSync: <String, GoogleSyncState>{
+          '5786-tishrei-10': const GoogleSyncState(googleEventId: 'g-2'),
+        },
+      );
+      final Map<String, dynamic> data = eventToFirestoreData(
+        event: original,
+        engine: _engine,
+      );
+      expect(data['source'], 'google');
+      final Event restored = eventFromFirestoreData(original.id, data);
+      expect(restored, original);
+      expect(restored.source, EventSource.google);
+      expect(restored.googleSync.googleEventId, 'g-1');
+      expect(restored.googleSync.dirty, isTrue);
+      expect(
+        restored.googleInstanceSync['5786-tishrei-10']?.googleEventId,
+        'g-2',
+      );
+    });
+
+    test(
+      'defaults source to app and sync state to empty when missing from the map',
+      () {
+        final Event original = _baseEvent();
+        final Map<String, dynamic> data =
+            eventToFirestoreData(event: original, engine: _engine)
+              ..remove('source')
+              ..remove('googleSync')
+              ..remove('googleInstanceSync');
+
+        final Event restored = eventFromFirestoreData(original.id, data);
+        expect(restored.source, EventSource.app);
+        expect(restored.googleSync, const GoogleSyncState());
+        expect(restored.googleInstanceSync, isEmpty);
       },
     );
   });

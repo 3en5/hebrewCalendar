@@ -23,10 +23,12 @@ library;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../domain/event/event.dart';
+import '../domain/event/event_source.dart';
 import '../domain/event/event_time_of_day.dart';
 import '../domain/event/recurrence_rule.dart';
 import '../domain/hebrew_date/hebrew_date.dart';
 import '../domain/hebrew_date/hebrew_date_engine.dart';
+import '../domain/sync/sync_state.dart';
 
 /// Converts [event] to the map shape stored at `events/{eventId}`.
 Map<String, dynamic> eventToFirestoreData({
@@ -52,6 +54,12 @@ Map<String, dynamic> eventToFirestoreData({
     'isRecurring': event.recurrence.type != RecurrenceType.none,
     'createdAt': Timestamp.fromDate(event.createdAt),
     'updatedAt': Timestamp.fromDate(event.updatedAt),
+    'source': event.source.name,
+    'googleSync': syncStateToMap(event.googleSync),
+    'googleInstanceSync': event.googleInstanceSync.map(
+      (String key, GoogleSyncState value) =>
+          MapEntry<String, dynamic>(key, syncStateToMap(value)),
+    ),
   };
 }
 
@@ -85,6 +93,13 @@ Event eventFromFirestoreData(String id, Map<String, dynamic> data) {
     recurrence: _recurrenceFromMap(_asStringMap(data['recurrence'])),
     createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    source: EventSource.values.byName(
+      data['source'] as String? ?? EventSource.app.name,
+    ),
+    googleSync: syncStateFromMap(_asStringMap(data['googleSync'])),
+    googleInstanceSync: instanceSyncFromMap(
+      data['googleInstanceSync'] as Map<String, dynamic>?,
+    ),
   );
 }
 
@@ -194,4 +209,37 @@ Map<String, dynamic>? _asStringMap(Object? value) {
     return null;
   }
   return Map<String, dynamic>.from(value as Map<dynamic, dynamic>);
+}
+
+Map<String, dynamic> syncStateToMap(GoogleSyncState state) => <String, dynamic>{
+  'googleEventId': state.googleEventId,
+  'etag': state.etag,
+  'lastSyncedAt': state.lastSyncedAt == null
+      ? null
+      : Timestamp.fromDate(state.lastSyncedAt!),
+  'dirty': state.dirty,
+};
+
+GoogleSyncState syncStateFromMap(Map<String, dynamic>? map) {
+  if (map == null) {
+    return const GoogleSyncState();
+  }
+  return GoogleSyncState(
+    googleEventId: map['googleEventId'] as String?,
+    etag: map['etag'] as String?,
+    lastSyncedAt: (map['lastSyncedAt'] as Timestamp?)?.toDate(),
+    dirty: map['dirty'] as bool? ?? false,
+  );
+}
+
+Map<String, GoogleSyncState> instanceSyncFromMap(Map<String, dynamic>? map) {
+  if (map == null) {
+    return const <String, GoogleSyncState>{};
+  }
+  return map.map(
+    (String key, dynamic value) => MapEntry<String, GoogleSyncState>(
+      key,
+      syncStateFromMap(_asStringMap(value)),
+    ),
+  );
 }

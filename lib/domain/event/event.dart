@@ -1,4 +1,6 @@
 import '../hebrew_date/hebrew_date.dart';
+import '../sync/sync_state.dart';
+import 'event_source.dart';
 import 'event_time_of_day.dart';
 import 'recurrence_rule.dart';
 
@@ -25,6 +27,9 @@ class Event {
     this.recurrence = const RecurrenceRule(),
     required this.createdAt,
     required this.updatedAt,
+    this.source = EventSource.app,
+    this.googleSync = const GoogleSyncState(),
+    this.googleInstanceSync = const <String, GoogleSyncState>{},
   });
 
   /// Repository-assigned identifier. Empty for an event not yet persisted.
@@ -62,6 +67,26 @@ class Event {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  /// Where this event originated (M5a — ARCHITECTURE.md §5): [EventSource.app]
+  /// for events created in this app, [EventSource.google] for events
+  /// imported from Google Calendar sync.
+  final EventSource source;
+
+  /// Google Calendar sync bookkeeping for this event's *single* remote
+  /// counterpart (M5a — ARCHITECTURE.md §4 `googleSync`). Meaningful as the
+  /// 1:1 mapping for a non-recurring event; for a recurring event
+  /// (`recurrence.type != RecurrenceType.none`) its `googleEventId`/`etag`
+  /// stay null (there is no single remote counterpart — see
+  /// [googleInstanceSync]) while its `dirty`/`lastSyncedAt` still apply to
+  /// the series as a whole ("this series has a pending edit to push").
+  final GoogleSyncState googleSync;
+
+  /// Per-materialized-instance Google Calendar sync bookkeeping for a
+  /// recurring event, keyed by `occurrence_key.dart`'s `occurrenceKeyFor`
+  /// (M5a — ARCHITECTURE.md §5 "individual materialized instances"). Empty
+  /// for a non-recurring event, which uses [googleSync] directly instead.
+  final Map<String, GoogleSyncState> googleInstanceSync;
+
   /// Returns a copy with the given fields replaced. Pass [clearStartTime]
   /// / [clearEndTime] to explicitly null out a time (a plain `startTime:
   /// null` argument is indistinguishable from "leave unchanged").
@@ -82,6 +107,9 @@ class Event {
     RecurrenceRule? recurrence,
     DateTime? createdAt,
     DateTime? updatedAt,
+    EventSource? source,
+    GoogleSyncState? googleSync,
+    Map<String, GoogleSyncState>? googleInstanceSync,
   }) => Event(
     id: id ?? this.id,
     ownerUid: ownerUid ?? this.ownerUid,
@@ -97,6 +125,9 @@ class Event {
     recurrence: recurrence ?? this.recurrence,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    source: source ?? this.source,
+    googleSync: googleSync ?? this.googleSync,
+    googleInstanceSync: googleInstanceSync ?? this.googleInstanceSync,
   );
 
   @override
@@ -118,11 +149,20 @@ class Event {
         other.recurrence != recurrence ||
         other.createdAt != createdAt ||
         other.updatedAt != updatedAt ||
-        other.reminderMinutesBefore.length != reminderMinutesBefore.length) {
+        other.source != source ||
+        other.googleSync != googleSync ||
+        other.reminderMinutesBefore.length != reminderMinutesBefore.length ||
+        other.googleInstanceSync.length != googleInstanceSync.length) {
       return false;
     }
     for (int i = 0; i < reminderMinutesBefore.length; i++) {
       if (other.reminderMinutesBefore[i] != reminderMinutesBefore[i]) {
+        return false;
+      }
+    }
+    for (final MapEntry<String, GoogleSyncState> entry
+        in googleInstanceSync.entries) {
+      if (other.googleInstanceSync[entry.key] != entry.value) {
         return false;
       }
     }
@@ -144,7 +184,14 @@ class Event {
     recurrence,
     createdAt,
     updatedAt,
+    source,
+    googleSync,
     Object.hashAll(reminderMinutesBefore),
+    Object.hashAllUnordered(
+      googleInstanceSync.entries.map(
+        (MapEntry<String, GoogleSyncState> e) => Object.hash(e.key, e.value),
+      ),
+    ),
   );
 
   @override

@@ -187,4 +187,39 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get notificationsPermissionDeniedMessage =>
       'בלי הרשאת התראות, תזכורות לאירועים לא יוצגו. ניתן להפעיל בהגדרות המכשיר.';
+
+  @override
+  String get settingsTooltip => 'הגדרות';
+
+  @override
+  String get settingsScreenTitle => 'הגדרות';
+
+  @override
+  String get settingsGoogleSyncSectionTitle => 'סנכרון עם יומן Google';
+
+  @override
+  String get settingsGoogleSyncEnableLabel => 'סנכרון עם Google Calendar';
+
+  @override
+  String settingsGoogleSyncLastSyncedAt(String time) {
+    return 'סונכרן לאחרונה: $time';
+  }
+
+  @override
+  String get settingsGoogleSyncNeverSynced => 'טרם בוצע סנכרון';
+
+  @override
+  String get settingsGoogleSyncNowButton => 'סנכרן עכשיו';
+
+  @override
+  String get settingsGoogleSyncSyncingLabel => 'מסנכרן...';
+
+  @override
+  String settingsGoogleSyncErrorPrefix(String message) {
+    return 'שגיאת סנכרון: $message';
+  }
+
+  @override
+  String get settingsGoogleSyncAccessDeniedMessage =>
+      'לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.';
 }

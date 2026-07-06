@@ -1,8 +1,93 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: M4 הושלם — תזכורות/התראות מקומיות (מתכנן טהור + מתאם
-`flutter_local_notifications` + אורקסטרטור Riverpod).** M5 (סנכרון גוגל) הבא
-בתור. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: M5a הושלם — מנוע סנכרון Google Calendar דו-כיווני (טריגרים
+בפורגראונד).** M5b (סנכרון תקופתי ברקע דרך WorkManager) הבא בתור.
+(ראה אבני דרך ב-ARCHITECTURE.md §9)
+
+## 2026-07-06 — M5a הושלם (מנוע סנכרון Google Calendar, טריגרים בפורגראונד)
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 288 טסטים עוברים (221 קיימים
+  + 67 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות
+  עוברת, כיסוי `lib/domain` בפועל 95.75% (מעל סף ה-90%).
+- תלות חדשה: `http: ^1.5.0` (נוספה במפורש כתלות ישירה — הייתה כבר תלות עקיפה
+  דרך חבילות אחרות). **לא** נוספו `googleapis`/`googleapis_auth`/
+  `extension_google_sign_in_as_googleapis_auth` שהוצעו בברירת המחדל במשימה —
+  ראה `docs/LESSONS.md` להסבר המלא (`google_sign_in` v7 חושף כבר bearer
+  headers ישירות, וה-client המחולל של `googleapis` לא חשף שליטה נוחה בכותרת
+  `If-Match` הנדרשת לזיהוי קונפליקטים; המימוש קורא ל-Calendar v3 REST ישירות
+  דרך `package:http`).
+- **תכנון (RULES.md §2 — מנוע מונוליתי היה חורג מ-500 שורות):** פיצול קפדני
+  domain/data/features, ARCHITECTURE.md §5 מתעד את כולו בפירוט:
+  - **`lib/domain/sync/`** (טהור לגמרי): `sync_state.dart` (`GoogleSyncState`,
+    `SyncStatus`), `remote_event_snapshot.dart`, `sync_action.dart` (sealed
+    class), `export_candidate.dart`, `occurrence_key.dart`,
+    `sync_settings_store.dart`, `sync_run_result.dart`, ו-**`sync_planner.dart`**
+    — הליבה: `planExportActions`/`planImportActions`/`resolveConflict`,
+    שם חי כל היגיון פתרון הקונפליקטים (last-write-wins, זיהוי echo של יצוא
+    עצמי, מחיקה דו-כיוונית) — נבדק ביחידה במלואו
+    (`test/domain/sync/sync_planner_export_test.dart`+`sync_planner_import_test.dart`,
+    פוצל מקובץ אחד שחרג מ-500 שורות).
+  - **`lib/data/sync/`**: `google_calendar_api.dart` (ממשק מופשט + DTOs
+    עצמאיים, לא googleapis) עם `google_calendar_api_impl.dart` (מימוש REST
+    אמיתי), `event_sync_mapper.dart`, `sync_import_pass.dart`/
+    `sync_export_pass.dart` (חצי-משיכה/חצי-דחיפה, כל אחד קורא ל-
+    `sync_planner.dart`), `sync_engine.dart` (`SyncEngine.runSync` —
+    האורקסטרטור), ו-`firestore_sync_settings_store.dart`/
+    `in_memory_sync_settings_store.dart`.
+  - **`Event`** קיבל `source` (`EventSource.app`/`google`), `googleSync`
+    (`GoogleSyncState` — מיפוי יחיד לאירוע לא-חוזר), `googleInstanceSync`
+    (מפת `GoogleSyncState` לפי מפתח מופע, לאירועים חוזרים — ARCHITECTURE.md §4
+    מתעד את ההבחנה). `EventRepository` קיבל `getAllForSync`/
+    `getByGoogleEventId`/`updateSyncState` (לא מסמן dirty מחדש)/
+    `takePendingGoogleDeletions`/`upsertFromGoogle`/`applyRemoteDelete`;
+    `create`/`update` הרגילים ממשיכים לסמן `googleSync.dirty=true` בכל עריכה
+    (repository hook, לא UI — RULES.md §6), ו-`delete` מתעד
+    `PendingGoogleDeletion` כשיש מצב סנכרון קיים (ב-Firestore: עמיד תחת
+    `users/{uid}/pendingGoogleDeletions`, לא רק בזיכרון — M5a הוא
+    foreground-only, ראה LESSONS.md למגבלה).
+  - **`lib/features/settings/`**: מסך הגדרות ראשון של האפליקציה (כפתור גיר
+    ב-App Bar של `CalendarShellScreen`) עם סעיף "סנכרון עם יומן Google":
+    מתג הפעלה (מבקש scope `calendar.events` כ-incremental authorization רק
+    כשמפעילים, לא בכניסה), זמן סנכרון אחרון, כפתור "סנכרן עכשיו" עם
+    אינדיקציית התקדמות, הצגת שגיאה בעברית. `google_sync_trigger_service.dart`
+    (בדומה ל-`reminder_sync_service.dart`, ללא Riverpod): טריגר פתיחה
+    (מתוגבל לפעם ב-5 דקות) וטריגר עריכה מקומית (debounce 30 שניות, האזנה
+    ל-`watchOccurrencesInRange` רחב). `google_sync_providers.dart` מחווט
+    ל-Riverpod; `CalendarShellScreen` צופה ב-provider כדי שהטריגרים יעבדו כל
+    עוד המסך מוצג (לא רק כשההגדרות פתוחות), ומבוטל בהתנתקות.
+- **חלון יצוא מתגלגל**: ~24 חודשים, מורחב דרך `recurrence_expander.dart`'s
+  `occurrencesForEventInRange` — אותו קוד הרחבה שמזין את תצוגות היומן, כדי
+  שהמופעים שהמשתמש רואה יהיו בדיוק אלה שמיוצאים (כולל מדיניות מיפוי אדר/יום
+  30). דה-דופ ע"י `extendedProperties` (`hebcalEventId`/`hebcalOccurrence`):
+  בסנכרון מלא, `SyncImportPass` בונה lookup מכל אירוע גוגל שנושא את
+  הסימונים שלנו, ו-`SyncExportPass` מאמץ מיפוי קיים במקום ליצור כפול כשמצב
+  הידוע המקומי ריק.
+- **Firestore**: `firestore.rules` עודכן לוולידציית `source`/`googleSync`/
+  `googleInstanceSync` ב-`events/{eventId}`, `googleSyncEnabled`/
+  `googleSyncToken`/`googleLastSyncedAt` ב-`users/{uid}`, ואוסף-משנה חדש
+  `users/{uid}/pendingGoogleDeletions/{eventId}`. **טרם פורסם** — ראה
+  `firebase/README.md`.
+- **טסטים**: `test/domain/sync/sync_planner_export_test.dart`+
+  `sync_planner_import_test.dart` (17 טסטים — הליבה: create/update/skip,
+  מחיקת מופעים stale, שילוב אמיתי עם `recurrence_expander.dart` למיפוי אדר/
+  יום 30/סדרה שבועית; last-write-wins, echo, מחיקה דו-כיוונית, פתרון
+  קונפליקט אחרי 412), `test/data/sync/sync_engine_test.dart` (9 טסטים עם
+  `FakeGoogleCalendarApi`+`InMemoryEventRepository`: מנוטרל, סנכרון ראשון/
+  תוספתי, 410, 412, דה-דופ, מחיקה דו-כיוונית, אירוע חוזר), `test/features/
+  settings/application/google_sync_trigger_service_test.dart` (10 טסטים:
+  הפעלה/כיבוי, טריגרים, debounce, שגיאה), `test/features/settings/
+  presentation/settings_screen_test.dart` (3 טסטי widget), ותוספות ל-
+  `event_test.dart`/`event_firestore_mapper_test.dart`/
+  `in_memory_event_repository_sync_test.dart` (קובץ חדש, פוצל מ-
+  `in_memory_event_repository_test.dart` שחרג מ-500 שורות). 8 טסטי ה-widget
+  הקיימים שמרנדרים את `CalendarShellScreen` קיבלו override נוסף ל-
+  `googleCalendarApiProvider`/`syncSettingsStoreProvider` (אותו דפוס בדיוק
+  כמו `notificationSchedulerProvider` ב-M4 — ראה LESSONS.md).
+- **דורש פעולת משתמש:** פריסת ה-Security Rules המעודכנות (ראה למעלה); בדיקה
+  ידנית אמיתית מול Google Calendar אמיתי לא בוצעה כאן (אין רשת ל-Google APIs
+  בסביבת הסוכן — כל הלוגיקה אומתה ביחידה עם `FakeGoogleCalendarApi`); מומלץ
+  לבדוק ידנית: הפעלת סנכרון, בקשת ההרשאה בפועל, יצוא/יבוא אמיתי, טיפול
+  ב-410/412 אמיתיים.
 
 ## 2026-07-06 — M4 הושלם (תזכורות/התראות מקומיות)
 

@@ -441,6 +441,66 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'בלי הרשאת התראות, תזכורות לאירועים לא יוצגו. ניתן להפעיל בהגדרות המכשיר.'**
   String get notificationsPermissionDeniedMessage;
+
+  /// Tooltip for the app bar's gear icon that opens the settings screen (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'הגדרות'**
+  String get settingsTooltip;
+
+  /// App bar title for the settings screen (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'הגדרות'**
+  String get settingsScreenTitle;
+
+  /// Section heading for the Google Calendar sync settings (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון עם יומן Google'**
+  String get settingsGoogleSyncSectionTitle;
+
+  /// Label for the switch that enables/disables Google Calendar sync (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון עם Google Calendar'**
+  String get settingsGoogleSyncEnableLabel;
+
+  /// Shows when Google Calendar sync last completed successfully (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'סונכרן לאחרונה: {time}'**
+  String settingsGoogleSyncLastSyncedAt(String time);
+
+  /// Shown instead of a last-sync time before Google Calendar sync has ever completed (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'טרם בוצע סנכרון'**
+  String get settingsGoogleSyncNeverSynced;
+
+  /// Manual sync-now button label on the settings screen (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרן עכשיו'**
+  String get settingsGoogleSyncNowButton;
+
+  /// Shown while a Google Calendar sync pass is in progress (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'מסנכרן...'**
+  String get settingsGoogleSyncSyncingLabel;
+
+  /// Prefix shown before the error detail when the last Google Calendar sync pass failed (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'שגיאת סנכרון: {message}'**
+  String settingsGoogleSyncErrorPrefix(String message);
+
+  /// Snackbar shown when the user denies the Google Calendar access request while enabling sync (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.'**
+  String get settingsGoogleSyncAccessDeniedMessage;
 }
 
 class _AppLocalizationsDelegate

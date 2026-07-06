@@ -190,6 +190,60 @@
   לעץ ה-widgets, אך **רק** כשהאפליקציה תומכת בשפה יחידה קבועה כפי שקורה
   כאן — לא פתרון כללי לריבוי שפות.
 
+- **2026-07-06 · M5a, `google_sign_in` v7 חושף bearer headers ישירות — מייתר
+  את הצורך ב-`googleapis`/`googleapis_auth`:** לפי המשימה, המסלול המוצע
+  ל-auth מול Calendar API היה `googleapis`+`googleapis_auth` או
+  `extension_google_sign_in_as_googleapis_auth`. בבדיקת המקור המותקן בפועל
+  (`google_sign_in-7.2.0/lib/google_sign_in.dart`) התברר ש-
+  `GoogleSignInAccount.authorizationClient.authorizationHeaders(scopes,
+  promptIfNecessary: true)` כבר מחזיר `Map<String,String>` מוכן
+  (`{'Authorization': 'Bearer $token', 'X-Goog-AuthUser': '0'}`) — אין צורך
+  ב-`googleapis_auth`'s `AuthClient`/`clientViaUserConsent` בכלל, ו-
+  `extension_google_sign_in_as_googleapis_auth` (הבנוי סביב ה-API הישן של
+  v6, `GoogleSignInAccount.authHeaders`) לא מתאים למבנה v7 ממילא (ראה הלקח
+  הקודם על v7 being a rewrite). בנוסף, ה-client המחולל של `package:googleapis`
+  (`CalendarApi.events.patch`/`.delete`) אינו חושף דרך נוחה להגדיר header
+  מותאם אישית כמו `If-Match` — קריטי למנגנון זיהוי הקונפליקטים מבוסס-etag
+  (ARCHITECTURE.md §5). ההחלטה: `google_calendar_api_impl.dart` קורא ל-
+  Calendar v3 REST ישירות דרך `package:http` (JSON ידני, לא טיפוסי
+  googleapis) — שליטה מלאה בכותרות/קודי סטטוס (410/412), ושתי תלויות פחות
+  שאי אפשר לבדוק במלואן בסביבה בלי גישת רשת ל-Google APIs ממילא. לקח כללי:
+  לפני שמוסיפים תלות SDK "מומלצת" לאינטגרציה חדשה, לבדוק את ה-API בפועל של
+  התלות שכבר קיימת (כאן: `google_sign_in`) — לפעמים כבר יש בה את מה שצריך.
+
+- **2026-07-06 · M5a, מודל סנכרון-לפי-מופע לאירוע חוזר דורש הרחבה מעבר
+  ל-`googleSync` היחיד שב-ARCHITECTURE.md §4 המקורי:** השדה `googleSync
+  {googleEventId, etag, lastSyncedAt, dirty}` שהוגדר מראש הוא מיפוי **יחיד**
+  בין מסמך `Event` למופע גוגל יחיד — נכון לאירוע לא-חוזר, אבל אירוע חוזר
+  מיוצא כמה מופעים ממומשים (ARCHITECTURE.md §5, "individual materialized
+  instances"), ומסמך יחיד לא יכול להחזיק `googleEventId` יחיד לכמה אירועי
+  גוגל. הפתרון: שדה נוסף `googleInstanceSync` (מפה: מפתח מופע דטרמיניסטי,
+  `occurrence_key.dart`, -> `GoogleSyncState` לאותו מופע ספציפי) — `googleSync`
+  עצמו נשאר ומשמש (א) את המיפוי היחיד לאירוע לא-חוזר, ו-(ב) את דגל
+  `dirty`/`lastSyncedAt` **ברמת הסדרה כולה** גם לאירוע חוזר ("יש עריכה
+  ממתינה לדחיפה של כל המופעים"), בלי `googleEventId`/`etag` (חסרי משמעות
+  ברמת הסדרה). זו הרחבה תואמת-לאחור של המבנה שתוכנן ב-M2b, לא סטייה ממנו —
+  תועד ב-ARCHITECTURE.md §4/§5 בהתאם. לקח כללי: כששדה יחיד "X -> מזהה מרוחק
+  אחד" מתוכנן לפני שסוג-אחד-לרבים (yearly/monthly/וכו') ידוע להיות אפשרי,
+  לרוב יידרש שדה-מפה נלווה ברמת "כל מופע בנפרד" לצד היחיד ברמת "כל הישות".
+
+- **2026-07-06 · M5a, תור מחיקות ממתינות ל-Google Calendar חייב עמידות
+  ב-Firestore, לא רק בזיכרון, כי M5a הוא foreground-only:** מחיקת אירוע
+  מקומי (`EventRepository.delete`) שכבר יוצא לגוגל צריכה לגרום למחיקה
+  מרוחקת גם היא (ARCHITECTURE.md §5, "deletions propagate both ways") — אבל
+  ברגע המחיקה עצמה ייתכן שאין חיבור רשת/הסנכרון מנוטרל/האפליקציה עומדת
+  להיסגר. ב-`InMemoryEventRepository` (המשמש טסטים בלבד) תור פשוט בזיכרון
+  (`List<PendingGoogleDeletion>`) מספיק — הוא ממילא לא שורד בין הרצות
+  אפליקציה. אבל ב-`FirestoreEventRepository` (`firestore_event_sync_support.dart`)
+  אותו תור-בזיכרון היה אומר שמחיקה בין `delete()` להרצת `runSync()` הבאה,
+  אם התהליך נהרג באמצע, אובדת בשקט לצמיתות — כי אין (עדיין, עד M5b)
+  WorkManager תקופתי שינסה שוב במהרה. הפתרון: התור נשמר כמסמכים תחת
+  `users/{uid}/pendingGoogleDeletions/{eventId}` (עמיד), מתרוקן (וכל מסמך
+  נמחק) רק כשהמנוע בפועל מצליח לשלוח את בקשת המחיקה לגוגל. לקח כללי: תור
+  "משימות ממתינות" שנוצר ע"י פעולת משתמש חד-פעמית (לא stream מתמשך) חייב
+  אחסון עמיד ברגע שאין עדיין מנגנון רקע אמין שמנקה אותו במהרה — "בזיכרון
+  זמנית, נשלים עמידות ב-M הבא" הוא סיכון איבוד שקט, לא רק חוסר-אופטימיזציה.
+
 - **2026-07-06 · M4, טסטי widget שמרנדרים מסך שמפעיל שירות רקע (subscription+
   Timer) חייבים fake לתלות החיצונית, לא רק try/catch בתוכה:** חיווט
   `reminderSyncServiceProvider` (autoDispose) מ-`CalendarShellScreen` גרם

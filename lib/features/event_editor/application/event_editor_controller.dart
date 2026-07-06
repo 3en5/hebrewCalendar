@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show NotifierProviderFamily;
 
+import '../../../domain/event/default_calendar_id.dart';
 import '../../../domain/event/event.dart';
 import '../../../domain/event/event_time_of_day.dart';
 import '../../../domain/event/event_validation.dart';
@@ -9,13 +10,11 @@ import '../../../domain/hebrew_date/hebrew_date.dart';
 import 'event_editor_state.dart';
 import 'event_repository_provider.dart';
 
+export '../../../domain/event/default_calendar_id.dart' show kDefaultCalendarId;
+
 /// Placeholder identity used until Firebase Auth lands in M2b (ARCHITECTURE
 /// §9 — M2 is split; M2a has no signed-in user yet).
 const String kLocalOwnerUid = 'local-user';
-
-/// Placeholder calendar id used until per-user calendars (ARCHITECTURE §4,
-/// `users/{uid}/calendars/{calId}`) land alongside Firebase Auth in M2b.
-const String kDefaultCalendarId = 'default';
 
 /// Identifies which event the editor is working on: a blank [initialDate]
 /// to create a new event, or an [existing] event to edit.

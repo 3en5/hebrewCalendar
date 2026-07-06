@@ -41,6 +41,27 @@
 עד שהצעד הזה לא בוצע (על ידי המשתמש/מפעיל הפרויקט), Firestore עובד לפי
 ברירת המחדל שלו — חסימת כל גישה ללא Rules מפורסמות. ראה `docs/PROGRESS.md`.
 
+## עדכון M5a (סנכרון דו-כיווני עם Google Calendar)
+
+`firestore.rules` השתנה כדי לתמוך בסנכרון גוגל (ARCHITECTURE.md §5):
+
+- מסמך `users/{uid}` מקבל שלושה שדות חדשים לוולידציה (כולם אופציונליים,
+  לא נכתבים בכניסה עצמה): `googleSyncEnabled` (bool), `googleSyncToken`
+  (string|null), `googleLastSyncedAt` (timestamp|null) — נכתבים ע"י
+  `lib/data/sync/firestore_sync_settings_store.dart` כשהמשתמש מפעיל/מכבה
+  סנכרון או כשעובר sync pass.
+- מסמך `events/{eventId}` מקבל שלושה שדות חדשים לוולידציה: `source`
+  (`'app'`/`'google'`), `googleSync` (מפת `GoogleSyncState`: `googleEventId`/
+  `etag`/`lastSyncedAt`/`dirty`), `googleInstanceSync` (מפה של אותו מבנה,
+  לפי מפתח מופע — אירועים חוזרים בלבד).
+- אוסף-משנה חדש `users/{uid}/pendingGoogleDeletions/{eventId}`: תור מחיקות
+  מקומיות שממתינות לניקוי מרוחק ב-Google Calendar
+  (`lib/data/firestore_event_sync_support.dart`) — נגיש רק לאותו `uid`.
+
+**יש לפרוס מחדש** (`firebase deploy --only firestore:rules`, או הדבקה
+ידנית — ראה "פריסה" למעלה) לפני שסנכרון גוגל אמיתי ייחשף מול Firestore;
+עד אז כתיבת השדות החדשים עלולה להיכשל מול ה-Rules הישנות.
+
 ## עדכון M3a (אירועים חוזרים עבריים)
 
 `firestore.rules` ו-`firestore.indexes.json` השתנו כדי לתמוך באירועים

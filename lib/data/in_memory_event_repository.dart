@@ -1,11 +1,16 @@
 import 'dart:async';
 
+import '../domain/event/default_calendar_id.dart';
 import '../domain/event/event.dart';
 import '../domain/event/event_occurrence.dart';
 import '../domain/event/event_repository.dart';
+import '../domain/event/event_source.dart';
 import '../domain/event/recurrence_expander.dart';
 import '../domain/hebrew_date/hebrew_date.dart';
 import '../domain/hebrew_date/hebrew_date_engine.dart';
+import '../domain/sync/export_candidate.dart';
+import '../domain/sync/remote_event_snapshot.dart';
+import '../domain/sync/sync_state.dart';
 
 /// In-memory [EventRepository]: the only implementation until Firebase
 /// wiring lands in M2b, and the permanent implementation used by widget
@@ -30,6 +35,11 @@ class InMemoryEventRepository implements EventRepository {
   final DateTime Function() _now;
   final HebrewDateEngine _engine;
   final Map<String, Event> _events = <String, Event>{};
+
+  /// Deletions queued for the M5a sync engine to clean up remotely — see
+  /// [delete]/[takePendingGoogleDeletions].
+  final List<PendingGoogleDeletion> _pendingDeletions =
+      <PendingGoogleDeletion>[];
 
   /// Broadcasts a signal (no payload) whenever [_events] changes; each
   /// [watchEventsForHebrewMonth] subscription recomputes its own filtered
@@ -93,10 +103,13 @@ class InMemoryEventRepository implements EventRepository {
   @override
   Future<Event> create(Event event) async {
     final DateTime timestamp = _now();
+    // A newly-created event always needs exporting (M5a: repository update
+    // hook, RULES.md §6 — kept here, not in UI callers).
     final Event created = event.copyWith(
       id: _idGenerator(),
       createdAt: timestamp,
       updatedAt: timestamp,
+      googleSync: event.googleSync.copyWith(dirty: true),
     );
     _events[created.id] = created;
     _notify();
@@ -109,9 +122,14 @@ class InMemoryEventRepository implements EventRepository {
     if (existing == null) {
       throw StateError('No event with id "${event.id}" exists.');
     }
+    // Every local edit marks the event dirty again (M5a repository hook),
+    // regardless of which sync state the caller passed in — only
+    // `updateSyncState` (used exclusively by the sync engine) is allowed to
+    // leave `dirty` alone.
     final Event updated = event.copyWith(
       createdAt: existing.createdAt,
       updatedAt: _now(),
+      googleSync: event.googleSync.copyWith(dirty: true),
     );
     _events[updated.id] = updated;
     _notify();
@@ -120,8 +138,119 @@ class InMemoryEventRepository implements EventRepository {
 
   @override
   Future<void> delete(String id) async {
+    final Event? existing = _events.remove(id);
+    if (existing == null) {
+      return;
+    }
+    _enqueuePendingDeletionIfSynced(existing);
+    _notify();
+  }
+
+  @override
+  Future<List<Event>> getAllForSync() async => _events.values.toList();
+
+  @override
+  Future<Event?> getByGoogleEventId(String googleEventId) async {
+    for (final Event event in _events.values) {
+      if (event.googleSync.googleEventId == googleEventId) {
+        return event;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<void> updateSyncState(
+    String eventId, {
+    GoogleSyncState? googleSync,
+    Map<String, GoogleSyncState>? googleInstanceSync,
+  }) async {
+    final Event? existing = _events[eventId];
+    if (existing == null) {
+      return;
+    }
+    final Map<String, GoogleSyncState> mergedInstances =
+        <String, GoogleSyncState>{
+          ...existing.googleInstanceSync,
+          ...?googleInstanceSync,
+        };
+    _events[eventId] = existing.copyWith(
+      googleSync: googleSync ?? existing.googleSync,
+      googleInstanceSync: mergedInstances,
+    );
+    _notify();
+  }
+
+  @override
+  Future<List<PendingGoogleDeletion>> takePendingGoogleDeletions() async {
+    final List<PendingGoogleDeletion> drained = List<PendingGoogleDeletion>.of(
+      _pendingDeletions,
+    );
+    _pendingDeletions.clear();
+    return drained;
+  }
+
+  @override
+  Future<Event> upsertFromGoogle(
+    RemoteEventSnapshot snapshot, {
+    String? existingEventId,
+  }) async {
+    final DateTime start = snapshot.start ?? _now();
+    final HebrewDate hebrewDate = _engine.fromGregorian(start);
+    final GoogleSyncState syncState = GoogleSyncState(
+      googleEventId: snapshot.googleEventId,
+      etag: snapshot.etag,
+      lastSyncedAt: _now(),
+    );
+    final Event? existing = existingEventId == null
+        ? null
+        : _events[existingEventId];
+    final Event upserted =
+        (existing ??
+                Event(
+                  id: _idGenerator(),
+                  ownerUid: '',
+                  calendarId: kDefaultCalendarId,
+                  title: snapshot.summary,
+                  hebrewDate: hebrewDate,
+                  createdAt: _now(),
+                  updatedAt: snapshot.updatedAt,
+                ))
+            .copyWith(
+              title: snapshot.summary,
+              description: snapshot.description,
+              location: snapshot.location,
+              hebrewDate: hebrewDate,
+              allDay: snapshot.isAllDay,
+              updatedAt: snapshot.updatedAt,
+              source: EventSource.google,
+              googleSync: syncState,
+              clearStartTime: snapshot.isAllDay,
+              clearEndTime: snapshot.isAllDay,
+            );
+    _events[upserted.id] = upserted;
+    _notify();
+    return upserted;
+  }
+
+  @override
+  Future<void> applyRemoteDelete(String id) async {
     if (_events.remove(id) != null) {
       _notify();
+    }
+  }
+
+  void _enqueuePendingDeletionIfSynced(Event event) {
+    final List<GoogleSyncState> instances = <GoogleSyncState>[
+      if (event.googleSync.googleEventId != null) event.googleSync,
+      ...event.googleInstanceSync.values.where(
+        (GoogleSyncState state) => state.googleEventId != null,
+      ),
+    ];
+    if (instances.isNotEmpty) {
+      _pendingDeletions.add(
+        PendingGoogleDeletion(eventId: event.id, remoteInstances: instances),
+      );
     }
   }
 

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
+import 'package:hebrew_calendar/data/sync/in_memory_sync_settings_store.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date_engine.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_numerals.dart';
@@ -18,9 +19,11 @@ import 'package:hebrew_calendar/features/calendar/presentation/month_view_body.d
 import 'package:hebrew_calendar/features/calendar/presentation/week_view_screen.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
 import 'package:hebrew_calendar/features/notifications/application/reminder_providers.dart';
+import 'package:hebrew_calendar/features/settings/application/google_sync_providers.dart';
 import 'package:hebrew_calendar/main.dart';
 
 import '../../../test_support/fake_auth_repository.dart';
+import '../../../test_support/fake_google_calendar_api.dart';
 import '../../../test_support/fake_notification_scheduler.dart';
 
 const HebrewDateEngine _engine = HebrewDateEngine();
@@ -36,6 +39,8 @@ List<Override> _signedInOverrides() {
     notificationSchedulerProvider.overrideWithValue(
       FakeNotificationScheduler(),
     ),
+    googleCalendarApiProvider.overrideWithValue(FakeGoogleCalendarApi()),
+    syncSettingsStoreProvider.overrideWithValue(InMemorySyncSettingsStore()),
   ];
 }
 

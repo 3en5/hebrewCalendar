@@ -10,6 +10,8 @@ import '../../../l10n/app_localizations.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../event_editor/presentation/event_editor_screen.dart';
 import '../../notifications/application/reminder_providers.dart';
+import '../../settings/application/google_sync_providers.dart';
+import '../../settings/presentation/settings_screen.dart';
 import '../application/calendar_view_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
 import 'agenda_view_screen.dart';
@@ -44,6 +46,11 @@ class CalendarShellScreen extends ConsumerWidget {
     // screen; `autoDispose` tears it down (subscription + every scheduled
     // notification cancelled) once it isn't, i.e. on sign-out.
     ref.watch(reminderSyncServiceProvider);
+    // M5a: same lifecycle for the Google Calendar sync trigger service —
+    // keeps its app-open/post-edit-debounce triggers alive whenever the
+    // calendar shell is on screen (not just while the settings screen
+    // itself is open), torn down on sign-out.
+    ref.watch(googleSyncTriggerServiceProvider);
     // Requests notification permission once ever (persisted flag); shows a
     // Hebrew rationale snackbar only if it was denied.
     ref.listen<AsyncValue<bool>>(reminderPermissionProvider, (
@@ -70,6 +77,13 @@ class CalendarShellScreen extends ConsumerWidget {
                 ref.read(calendarViewProvider.notifier).goToToday(),
           ),
           _ViewSwitcher(current: state.viewType, l10n: l10n),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: l10n.settingsTooltip,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+            ),
+          ),
           PopupMenuButton<_OverflowAction>(
             onSelected: (_OverflowAction action) {
               switch (action) {

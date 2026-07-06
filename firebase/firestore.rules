@@ -35,6 +35,12 @@ service cloud.firestore {
     // (see lib/features/auth/data/auth_repository.dart). Only the owning
     // uid may read or write it, and only a fixed field whitelist is
     // accepted.
+    //
+    // M5a: `googleSyncEnabled`/`googleSyncToken`/`googleLastSyncedAt` are the
+    // Google Calendar sync feature's own settings (`lib/domain/sync/
+    // sync_settings_store.dart`), merged in by `FirestoreSyncSettingsStore` —
+    // not written on sign-in, but on the same document, so the whitelist and
+    // per-field type checks include them too.
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid) && isValidUserDoc(request.resource.data);
@@ -42,12 +48,26 @@ service cloud.firestore {
       allow delete: if false;
 
       function isValidUserDoc(data) {
-        return data.keys().hasOnly(['displayName', 'email', 'photoUrl', 'createdAt'])
+        return data.keys().hasOnly([
+            'displayName', 'email', 'photoUrl', 'createdAt',
+            'googleSyncEnabled', 'googleSyncToken', 'googleLastSyncedAt'
+          ])
           && data.createdAt is timestamp
           && (!('displayName' in data) || data.displayName == null || data.displayName is string)
           && (!('email' in data) || data.email == null || data.email is string)
-          && (!('photoUrl' in data) || data.photoUrl == null || data.photoUrl is string);
+          && (!('photoUrl' in data) || data.photoUrl == null || data.photoUrl is string)
+          && (!('googleSyncEnabled' in data) || data.googleSyncEnabled is bool)
+          && (!('googleSyncToken' in data) || data.googleSyncToken == null || data.googleSyncToken is string)
+          && (!('googleLastSyncedAt' in data) || data.googleLastSyncedAt == null || data.googleLastSyncedAt is timestamp);
       }
+    }
+
+    // users/{uid}/pendingGoogleDeletions/{eventId} — M5a: a durable queue of
+    // local deletions still awaiting remote Google Calendar cleanup
+    // (`lib/data/firestore_event_sync_support.dart`). Only the owning uid's
+    // own sync engine ever reads/writes this.
+    match /users/{uid}/pendingGoogleDeletions/{eventId} {
+      allow read, write: if isOwner(uid);
     }
 
     // events/{eventId} — root collection (not nested under users/{uid}) so
@@ -88,7 +108,20 @@ service cloud.firestore {
           && data.recurrence is map
           && isValidRecurrence(data.recurrence)
           && data.createdAt is timestamp
-          && data.updatedAt is timestamp;
+          && data.updatedAt is timestamp
+          && (!('source' in data) || data.source in ['app', 'google'])
+          && (!('googleSync' in data) || isValidSyncState(data.googleSync))
+          && (!('googleInstanceSync' in data) || data.googleInstanceSync is map);
+      }
+
+      // M5a: `googleSync`/each `googleInstanceSync` entry
+      // (`lib/domain/sync/sync_state.dart`'s `GoogleSyncState`).
+      function isValidSyncState(state) {
+        return state is map
+          && (!('googleEventId' in state) || state.googleEventId == null || state.googleEventId is string)
+          && (!('etag' in state) || state.etag == null || state.etag is string)
+          && (!('lastSyncedAt' in state) || state.lastSyncedAt == null || state.lastSyncedAt is timestamp)
+          && (!('dirty' in state) || state.dirty is bool);
       }
 
       function isValidRecurrence(rec) {

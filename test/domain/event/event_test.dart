@@ -4,9 +4,11 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/domain/event/event.dart';
+import 'package:hebrew_calendar/domain/event/event_source.dart';
 import 'package:hebrew_calendar/domain/event/event_time_of_day.dart';
 import 'package:hebrew_calendar/domain/event/recurrence_rule.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
+import 'package:hebrew_calendar/domain/sync/sync_state.dart';
 
 Event _buildEvent({
   String id = 'event-1',
@@ -118,5 +120,82 @@ void main() {
       );
       expect(updated.recurrence.type, RecurrenceType.weekly);
     });
+  });
+
+  group('M5a Google sync fields', () {
+    test(
+      'source defaults to app, googleSync/googleInstanceSync default empty',
+      () {
+        final Event event = _buildEvent();
+        expect(event.source, EventSource.app);
+        expect(event.googleSync, const GoogleSyncState());
+        expect(event.googleInstanceSync, isEmpty);
+      },
+    );
+
+    test(
+      'copyWith overwrites source/googleSync/googleInstanceSync independently',
+      () {
+        final Event original = _buildEvent();
+        final Event updated = original.copyWith(
+          source: EventSource.google,
+          googleSync: const GoogleSyncState(googleEventId: 'g-1', dirty: true),
+          googleInstanceSync: const <String, GoogleSyncState>{
+            '5786-tishrei-5': GoogleSyncState(googleEventId: 'g-2'),
+          },
+        );
+        expect(updated.source, EventSource.google);
+        expect(updated.googleSync.googleEventId, 'g-1');
+        expect(
+          updated.googleInstanceSync['5786-tishrei-5']?.googleEventId,
+          'g-2',
+        );
+        // Unrelated fields untouched.
+        expect(updated.title, original.title);
+      },
+    );
+
+    test('two events differing only in googleSync are unequal', () {
+      final Event a = _buildEvent();
+      final Event b = a.copyWith(
+        googleSync: const GoogleSyncState(googleEventId: 'g-1'),
+      );
+      expect(a, isNot(b));
+    });
+
+    test(
+      'two events differing only in googleInstanceSync contents are unequal',
+      () {
+        final Event a = _buildEvent().copyWith(
+          googleInstanceSync: const <String, GoogleSyncState>{
+            'k1': GoogleSyncState(googleEventId: 'g-1'),
+          },
+        );
+        final Event b = _buildEvent().copyWith(
+          googleInstanceSync: const <String, GoogleSyncState>{
+            'k1': GoogleSyncState(googleEventId: 'g-2'),
+          },
+        );
+        expect(a, isNot(b));
+      },
+    );
+
+    test(
+      'two events with the same googleInstanceSync map (different instances) are equal',
+      () {
+        final Event a = _buildEvent().copyWith(
+          googleInstanceSync: const <String, GoogleSyncState>{
+            'k1': GoogleSyncState(googleEventId: 'g-1'),
+          },
+        );
+        final Event b = _buildEvent().copyWith(
+          googleInstanceSync: const <String, GoogleSyncState>{
+            'k1': GoogleSyncState(googleEventId: 'g-1'),
+          },
+        );
+        expect(a, b);
+        expect(a.hashCode, b.hashCode);
+      },
+    );
   });
 }

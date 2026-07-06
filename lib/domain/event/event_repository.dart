@@ -1,4 +1,7 @@
 import '../hebrew_date/hebrew_date.dart';
+import '../sync/export_candidate.dart';
+import '../sync/remote_event_snapshot.dart';
+import '../sync/sync_state.dart';
 import 'event.dart';
 import 'event_occurrence.dart';
 
@@ -50,5 +53,56 @@ abstract class EventRepository {
   Future<Event> update(Event event);
 
   /// Removes the event with the given id, if it exists.
+  ///
+  /// M5a: if the removed event had any Google sync state
+  /// (`Event.googleSync`/`Event.googleInstanceSync`), a [PendingGoogleDeletion]
+  /// recording its remote instance(s) is queued (drainable via
+  /// [takePendingGoogleDeletions]) so the sync engine can delete them
+  /// remotely on its next push — ARCHITECTURE.md §5 "deletions propagate
+  /// both ways". Kept in the repository layer (RULES.md §6), not the UI.
   Future<void> delete(String id);
+
+  /// Every one of this repository's events, regardless of Hebrew
+  /// date/range — used by the M5a sync engine to find every dirty event to
+  /// push, and every event's current Google sync state to reconcile against
+  /// an incoming remote snapshot.
+  Future<List<Event>> getAllForSync();
+
+  /// The local event whose [Event.googleSync]/[Event.googleInstanceSync]
+  /// references [googleEventId], or null if none does — used by the M5a
+  /// sync engine's import path to tell "already-imported, check for
+  /// changes" apart from "brand new, import it".
+  Future<Event?> getByGoogleEventId(String googleEventId);
+
+  /// Records the outcome of a successful export push for [eventId]: updates
+  /// [googleSync] (the event's own single sync state, for a non-recurring
+  /// event) and/or merges [googleInstanceSync] entries (for a recurring
+  /// event's per-occurrence state) without touching any other field —
+  /// crucially, without re-marking the event dirty (unlike [update], which
+  /// is the user-facing mutation path).
+  Future<void> updateSyncState(
+    String eventId, {
+    GoogleSyncState? googleSync,
+    Map<String, GoogleSyncState>? googleInstanceSync,
+  });
+
+  /// Drains and returns every [PendingGoogleDeletion] queued by [delete]
+  /// since the last call — each call empties the queue, so a deletion is
+  /// only ever handed to the sync engine once.
+  Future<List<PendingGoogleDeletion>> takePendingGoogleDeletions();
+
+  /// Creates a new local event from an imported Google Calendar [snapshot]
+  /// (`source: EventSource.google`), or updates the existing local event
+  /// [existingEventId] with it — the M5a sync engine's import-side write
+  /// path, used for both [CreateLocalAction] and [UpdateLocalAction].
+  Future<Event> upsertFromGoogle(
+    RemoteEventSnapshot snapshot, {
+    String? existingEventId,
+  });
+
+  /// Removes the local event [id] because Google Calendar reported its
+  /// counterpart deleted — unlike [delete], this never queues a
+  /// [PendingGoogleDeletion] (it is already gone remotely; queuing one would
+  /// try to delete it again next push).
+  Future<void> applyRemoteDelete(String id);
 }

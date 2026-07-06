@@ -52,8 +52,19 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
   reminders [{minutesBefore, method}]
   participantUids[], participantEmails[], invitesStatus{}
   attachments [{storagePath, name, size, mime}]
+  source                        # 'app' | 'google' (M5a) — מקור האירוע
   googleSync {googleEventId, etag, lastSyncedAt, dirty}
+  googleInstanceSync            # מפה: מפתח מופע -> {googleEventId, etag, lastSyncedAt, dirty} (M5a)
 ```
+- **M5a — `googleSync` מול `googleInstanceSync`:** `googleSync` (כפי שהוגדר במקור) הוא המיפוי היחיד
+  לגוגל של אירוע **לא**-חוזר בלבד. אירוע חוזר מיוצא כמופעים מרובים (§5), ואין לו מיפוי יחיד — עבורו
+  `googleSync.dirty`/`lastSyncedAt` עדיין חלים על הסדרה כולה ("יש עריכה ממתינה לדחיפה"), אבל
+  `googleEventId`/`etag` נשארים ריקים; כל מופע ממופה בנפרד תחת `googleInstanceSync[occurrenceKey]`
+  (המפתח מ-`domain/sync/occurrence_key.dart`). זו הרחבה של המבנה ב-M2b/M3a, לא סתירה לו — נדרשה כי
+  מסמך יחיד לא יכול להחזיק מיפוי 1:1 לכמה אירועי גוגל בו-זמנית.
+- **users/{uid}** מקבל גם `googleSyncEnabled`/`googleSyncToken`/`googleLastSyncedAt` (M5a —
+  `domain/sync/sync_settings_store.dart`), ו-`users/{uid}/pendingGoogleDeletions/{eventId}` הוא
+  אוסף-משנה חדש: תור מחיקות מקומיות שממתינות לניקוי מרוחק (§5).
 - **עיקרון חזרתיות עברית:** לא משכפלים מסמכים; מופעים (instances) מחושבים בזמן ריצה
   מ-`RecurrenceRule` דרך `HebrewDateEngine`, וממומשים (materialized) רק לחריגים ולסנכרון גוגל.
 - אינדקסים: `events` על (`ownerUid`,`gregorianStart`), על (`ownerUid`,`isRecurring`,`gregorianStart`)
@@ -80,6 +91,60 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
   לולאות נמנעות ע"י extendedProperties + השוואת חתימת תוכן.
 - מנוע הסנכרון רץ כ-service באפליקציה (WorkManager תקופתי + טריגר בפתיחה) —
   לא ב-Cloud Functions, כדי שהטוקנים יישארו במכשיר.
+- **מימוש M5a (טריגרים בפורגראונד בלבד; M5b = WorkManager תקופתי, עדיין ◻):**
+  פיצול לפי אחריות (RULES.md §2 — מנוע סנכרון מונוליתי היה חורג מ-500 שורות):
+  1. **`lib/domain/sync/`** — טהור לגמרי (ללא Flutter/Firebase/googleapis): `sync_state.dart`
+     (`GoogleSyncState`, `SyncStatus`), `remote_event_snapshot.dart` (`RemoteEventSnapshot` — DTO
+     קריאה, ללא טיפוסי googleapis), `sync_action.dart` (`SyncAction` sealed class:
+     `Create/Update/DeleteRemoteAction`, `Create/Update/DeleteLocalAction`, `SkipAction`),
+     `export_candidate.dart` (`ExportCandidate`/`StaleExportInstance`/`PendingGoogleDeletion`),
+     `occurrence_key.dart` (`occurrenceKeyFor` — מפתח דטרמיניסטי, גם ל-`hebcalOccurrence` וגם
+     למפתח ב-`googleInstanceSync`), ו-**`sync_planner.dart`** — הליבה: `planExportActions`
+     (החלטת create/update/delete ליצוא, כולל "stale instances" של סדרה חוזרת),
+     `planImportActions` (last-write-wins לפי `updated`, דילוג echo של יצוא עצמי דרך
+     `RemoteEventSnapshot.isOwnExport`, מחיקה משני הכיוונים), ו-`resolveConflict` (פתרון אחרי
+     412 — אותה השוואת last-write-wins, אך מחליטה בין "לדחוף שוב עם ה-etag הטרי" ל"לאמץ את
+     המרוחק"). כל היגיון הקונפליקטים חי כאן בלבד ונבדק ביחידה במלואו (task brief M5a §5).
+  2. **`lib/data/sync/`** — האורקסטרציה/האינטגרציה: `google_calendar_api.dart` (ממשק מופשט
+     `GoogleCalendarApi` + DTOs עצמאיים `GoogleEventWrite`/`GoogleEventsPage`, לא googleapis —
+     כדי שיהיה fakeable ללא רשת), `google_calendar_api_impl.dart` (מימוש אמיתי מול Calendar v3
+     REST ישירות דרך `package:http`, **לא** `package:googleapis`/`googleapis_auth` — ראה
+     `docs/LESSONS.md`), `event_sync_mapper.dart` (בניית `GoogleEventWrite` מ-`Event`+תאריך מופע),
+     `sync_import_pass.dart`/`sync_export_pass.dart` (חצי-משיכה/חצי-דחיפה, שכל אחד מהם קורא
+     ל-`sync_planner.dart` ומבצע בפועל דרך `GoogleCalendarApi`+`EventRepository`),
+     `sync_engine.dart` (`SyncEngine.runSync` — האורקסטרטור: טוען הגדרות, מדלג אם מנוטרל, מריץ
+     import ואז export, שומר syncToken/lastSyncedAt, הופך חריגה ל-`SyncRunResult.failure`),
+     ו-`firestore_sync_settings_store.dart`/`in_memory_sync_settings_store.dart` (מימוש
+     `SyncSettingsStore`).
+  3. **`EventRepository`** (§4/M2a) קיבל שיטות תמיכת-סנכרון: `getAllForSync`, `getByGoogleEventId`,
+     `updateSyncState` (רושם מצב סנכרון **בלי** לסמן dirty מחדש — בניגוד ל-`create`/`update`
+     הרגילים, שממשיכים לסמן `googleSync.dirty=true` בכל עריכה מקומית — hook בשכבת ה-repository,
+     לא ב-UI, כנדרש), `takePendingGoogleDeletions` (תור שמתרוקן פעם אחת), `upsertFromGoogle`
+     (יצירה/עדכון מקומי ממקור גוגל, `source: google`), ו-`applyRemoteDelete` (מחיקה שמקורה
+     בגוגל — לא מתעד `PendingGoogleDeletion`, בניגוד ל-`delete` הרגיל). ב-Firestore, תור
+     המחיקות הממתינות נשמר בעמידות (`users/{uid}/pendingGoogleDeletions`) ולא רק בזיכרון,
+     כי M5a הוא foreground-only (ראה LESSONS.md למגבלה שנובעת מכך).
+  4. **חלון יצוא מתגלגל**: ~24 חודשים (730 ימים) מ"עכשיו", מחושב מחדש בכל `runSync`. אירוע חוזר
+     מורחב למופעים בטווח הזה דרך `recurrence_expander.dart`'s `occurrencesForEventInRange` —
+     **אותו** קוד הרחבה שמשמש את תצוגות היומן, כדי שמופעים שהמשתמש רואה בלוח יהיו בדיוק אלה
+     שמיוצאים (כולל מדיניות מיפוי אדר ומדיניות יום 30, §4).
+  5. **Dedup-by-extendedProperties**: בסנכרון מלא (ללא syncToken — ראשון, או אחרי 410),
+     `SyncImportPass` בונה `ownExportsLookup` (מפתח `eventId|occurrenceKey` -> `googleEventId`+`etag`)
+     מכל אירוע גוגל שנושא `hebcalEventId`/`hebcalOccurrence` שלנו. `SyncExportPass` בודק את
+     ה-lookup הזה לפני שהוא יוצר יצוא חדש למופע ש"מצב הידוע" שלו ריק — כך אין יצוא כפול גם
+     כשה-state המקומי אבד/התאפס.
+  6. **הגדרות (`lib/features/settings/`)**: `google_sync_trigger_service.dart`
+     (`GoogleSyncTriggerService`, בדומה ל-`reminder_sync_service.dart` — ללא Riverpod): טריגר
+     פתיחת-אפליקציה (`triggerAppOpen`, מתוגבל לפעם ב-5 דקות) וטריגר עריכה מקומית (האזנה ל-
+     `EventRepository.watchOccurrencesInRange` רחב, debounce 30 שניות). `enable()` מבקש את
+     scope ה-`calendar.events` כ-incremental authorization (**לא** בזמן הכניסה — רק כשמפעילים
+     סנכרון בהגדרות) דרך `GoogleCalendarApi.requestAccess`. `google_sync_providers.dart` מחווט
+     את זה ל-Riverpod (בדומה ל-`reminder_providers.dart`), ו-`CalendarShellScreen` צופה
+     ב-`googleSyncTriggerServiceProvider` (autoDispose, מבוטל בהתנתקות) כדי שהטריגרים יעבדו כל
+     עוד המסך מוצג — לא רק כשמסך ההגדרות עצמו פתוח.
+- **סטייה קטנה מהתוכנית המקורית:** לא נוספה תלות ב-`googleapis`/`googleapis_auth`/
+  `extension_google_sign_in_as_googleapis_auth` — ראה `docs/LESSONS.md` להסבר המלא; זו בחירת
+  מימוש (data layer), לא שינוי בתוכן/היקף ה-M5a עצמו.
 
 ## 6. תזכורות והתראות
 - תזכורות מקומיות: `flutter_local_notifications` + תזמון מדויק (exact alarms עם הרשאה).
@@ -136,7 +201,7 @@ events/{eventId}                # אוסף שורש — כדי לאפשר שית
 | M2 | אימות + CRUD (מפוצל) | **M2a** ✅: מודל דומיין `Event`/`RecurrenceRule`, ולידציה, `EventRepository` מופשט + מימוש בזיכרון, מסך עורך אירועים, שילוב עם תצוגת החודש — הכול ללא תלות ב-Firebase. **M2b** ✅: Google Sign-In (`firebase_auth`+`google_sign_in`), Firestore (`FirestoreEventRepository`), Security Rules כקוד (`firebase/`), שער אימות באפליקציה | ✅ |
 | M3 | תצוגות + חזרתיות | **M3a** ✅: מנוע הרחבת חזרתיות (`recurrence_expander.dart`), שילוב ב-repositories (`EventOccurrence`), עורך אירועים (בורר חזרתיות + "עד תאריך"), מחיקת מופע יחיד/כל הסדרה. **M3b** ✅: `EventRepository.watchOccurrencesInRange` (טווח תאריכים שרירותי, לא רק חודש), תצוגות שבוע/יום/אג'נדה, `CalendarShellScreen` עם בורר תצוגה + כפתור "היום" | ✅ |
 | M4 | תזכורות | התראות מקומיות מדויקות, ניהול הרשאות | ✅ |
-| M5 | סנכרון גוגל | דו-כיווני מלא כמתואר ב-§5 | ◻ |
+| M5 | סנכרון גוגל | **M5a** ✅: מנוע סנכרון דו-כיווני מלא (`sync_planner.dart` טהור + `sync_engine.dart`/`GoogleCalendarApi`), טריגרים בפורגראונד בלבד (פתיחת אפליקציה + debounce אחרי עריכה מקומית), מסך הגדרות ראשון. **M5b** ◻: סנכרון תקופתי ברקע דרך WorkManager | ✅ M5a / ◻ M5b |
 | M6 | שיתוף והעשרה | משתתפים+הזמנות (FCM), קבצים מצורפים, מיקום | ◻ |
 | M7 | גיבוי, ליטוש, שחרור | יצוא/שחזור, בדיקות קצה, חתימה, Play Store | ◻ |
 

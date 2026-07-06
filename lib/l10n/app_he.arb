@@ -236,5 +236,55 @@
   "notificationsPermissionDeniedMessage": "בלי הרשאת התראות, תזכורות לאירועים לא יוצגו. ניתן להפעיל בהגדרות המכשיר.",
   "@notificationsPermissionDeniedMessage": {
     "description": "Snackbar rationale shown once (M4) when the user denies the OS notification permission, explaining reminders won't show without it."
+  },
+  "settingsTooltip": "הגדרות",
+  "@settingsTooltip": {
+    "description": "Tooltip for the app bar's gear icon that opens the settings screen (M5a)."
+  },
+  "settingsScreenTitle": "הגדרות",
+  "@settingsScreenTitle": {
+    "description": "App bar title for the settings screen (M5a)."
+  },
+  "settingsGoogleSyncSectionTitle": "סנכרון עם יומן Google",
+  "@settingsGoogleSyncSectionTitle": {
+    "description": "Section heading for the Google Calendar sync settings (M5a)."
+  },
+  "settingsGoogleSyncEnableLabel": "סנכרון עם Google Calendar",
+  "@settingsGoogleSyncEnableLabel": {
+    "description": "Label for the switch that enables/disables Google Calendar sync (M5a)."
+  },
+  "settingsGoogleSyncLastSyncedAt": "סונכרן לאחרונה: {time}",
+  "@settingsGoogleSyncLastSyncedAt": {
+    "description": "Shows when Google Calendar sync last completed successfully (M5a).",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsGoogleSyncNeverSynced": "טרם בוצע סנכרון",
+  "@settingsGoogleSyncNeverSynced": {
+    "description": "Shown instead of a last-sync time before Google Calendar sync has ever completed (M5a)."
+  },
+  "settingsGoogleSyncNowButton": "סנכרן עכשיו",
+  "@settingsGoogleSyncNowButton": {
+    "description": "Manual sync-now button label on the settings screen (M5a)."
+  },
+  "settingsGoogleSyncSyncingLabel": "מסנכרן...",
+  "@settingsGoogleSyncSyncingLabel": {
+    "description": "Shown while a Google Calendar sync pass is in progress (M5a)."
+  },
+  "settingsGoogleSyncErrorPrefix": "שגיאת סנכרון: {message}",
+  "@settingsGoogleSyncErrorPrefix": {
+    "description": "Prefix shown before the error detail when the last Google Calendar sync pass failed (M5a).",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsGoogleSyncAccessDeniedMessage": "לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.",
+  "@settingsGoogleSyncAccessDeniedMessage": {
+    "description": "Snackbar shown when the user denies the Google Calendar access request while enabling sync (M5a)."
   }
 }
