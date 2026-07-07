@@ -40,6 +40,13 @@ class GoogleSyncSection extends StatelessWidget {
 
   bool get _isSyncing => state.status == SyncStatus.syncing;
 
+  /// Device-feedback round #3: while [GoogleSyncSettingsState.authorizing]
+  /// is true, the enable switch is disabled and shows a small progress
+  /// indicator instead of its usual leading space, so a second tap during
+  /// the in-flight Google authorization request can't fire a second
+  /// attempt.
+  bool get _isBusy => _isSyncing || state.authorizing;
+
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
@@ -118,7 +125,14 @@ class GoogleSyncSection extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               title: Text(l10n.settingsGoogleSyncEnableLabel),
               value: state.enabled,
-              onChanged: _isSyncing ? null : onEnabledChanged,
+              onChanged: _isBusy ? null : onEnabledChanged,
+              secondary: state.authorizing
+                  ? SizedBox(
+                      width: bodyRem,
+                      height: bodyRem,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
             ),
             Padding(
               padding: EdgeInsetsDirectional.only(bottom: spacingSm),

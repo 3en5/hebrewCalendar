@@ -21,9 +21,11 @@ library;
 
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
+import '../../core/auth/google_sign_in_gate.dart';
 import '../../domain/sync/remote_event_snapshot.dart';
 import 'google_calendar_api.dart';
 
@@ -57,18 +59,44 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
   /// foreground settings screen.
   final bool allowInteractiveAuth;
 
+  /// Device-feedback round #3's contract for the return value: `false`
+  /// means a *quiet* decline — no signed-in account to authorize against at
+  /// all, or the user explicitly dismissed the consent dialog
+  /// (`GoogleSignInExceptionCode.canceled`) — nothing the caller needs to
+  /// surface as an error. Anything else that goes wrong (an uninitialized
+  /// `GoogleSignIn.instance`, a network failure, any other
+  /// `GoogleSignInException`) is *thrown*, not swallowed into `false`, so
+  /// `GoogleSyncTriggerService.enable()` can tell the two apart and only
+  /// show the user a real error message for the latter.
   @override
   Future<bool> requestAccess() async {
     final GoogleSignInAccount? account = await _currentAccount();
     if (account == null) {
+      debugPrint(
+        '[sync-settings] requestAccess(): no signed-in Google account, '
+        'declining quietly',
+      );
       return false;
     }
     try {
       final Map<String, String>? headers = await account.authorizationClient
           .authorizationHeaders(_kCalendarScopes, promptIfNecessary: true);
+      debugPrint(
+        '[sync-settings] requestAccess(): authorizeScopes -> '
+        'granted=${headers != null}',
+      );
       return headers != null;
-    } on GoogleSignInException {
-      return false;
+    } on GoogleSignInException catch (error) {
+      if (error.code == GoogleSignInExceptionCode.canceled) {
+        debugPrint(
+          '[sync-settings] requestAccess(): user canceled the consent dialog',
+        );
+        return false;
+      }
+      debugPrint(
+        '[sync-settings] requestAccess(): authorization failed: $error',
+      );
+      rethrow;
     }
   }
 
@@ -177,9 +205,23 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
     _throwIfError(response);
   }
 
-  Future<GoogleSignInAccount?> _currentAccount() {
-    return _googleSignIn.attemptLightweightAuthentication() ??
-        Future<GoogleSignInAccount?>.value();
+  /// The single choke point through which every method in this class
+  /// touches `GoogleSignIn.instance` — routes through [GoogleSignInGate]
+  /// first (device-feedback round #3: a restored FirebaseAuth session never
+  /// calls `GoogleSignIn.instance.initialize()` via the interactive sign-in
+  /// flow, so without this guard, calling `attemptLightweightAuthentication`
+  /// here first would be the first-ever use of the singleton this process —
+  /// undefined behavior per the v7 API contract, see docs/LESSONS.md).
+  Future<GoogleSignInAccount?> _currentAccount() async {
+    await GoogleSignInGate.ensure(_googleSignIn.initialize);
+    final GoogleSignInAccount? account =
+        await (_googleSignIn.attemptLightweightAuthentication() ??
+            Future<GoogleSignInAccount?>.value());
+    debugPrint(
+      '[sync-settings] attemptLightweightAuthentication() -> '
+      'account=${account?.id}',
+    );
+    return account;
   }
 
   Future<Map<String, String>> _authHeaders() async {

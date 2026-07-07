@@ -14,6 +14,20 @@ class FakeGoogleCalendarApi implements GoogleCalendarApi {
 
   int requestAccessCallCount = 0;
 
+  /// If set, the next [requestAccess] call throws this instead of returning
+  /// [accessGranted] (consumed once) — simulates a genuine authorization
+  /// failure (device-feedback round #3: e.g. `GoogleSignIn.instance` never
+  /// initialized on a restored session), as distinct from [accessGranted]
+  /// `false` (a quiet decline/cancel — see `GoogleCalendarApi.requestAccess`'s
+  /// doc for the contract this fake mirrors).
+  Object? nextRequestAccessError;
+
+  /// If set, [requestAccess] awaits this future before resolving (consumed
+  /// once) — lets a test observe transient state (e.g.
+  /// `GoogleSyncSettingsState.authorizing`) while the request is still in
+  /// flight.
+  Future<void>? holdRequestAccessUntil;
+
   /// The remote "server" state: id -> snapshot. Tests seed/inspect this
   /// directly instead of going through HTTP.
   final Map<String, RemoteEventSnapshot> events =
@@ -46,6 +60,16 @@ class FakeGoogleCalendarApi implements GoogleCalendarApi {
   @override
   Future<bool> requestAccess() async {
     requestAccessCallCount++;
+    final Future<void>? hold = holdRequestAccessUntil;
+    if (hold != null) {
+      holdRequestAccessUntil = null;
+      await hold;
+    }
+    final Object? error = nextRequestAccessError;
+    if (error != null) {
+      nextRequestAccessError = null;
+      throw error;
+    }
     return accessGranted;
   }
 

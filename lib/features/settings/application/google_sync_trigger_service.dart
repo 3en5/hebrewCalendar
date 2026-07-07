@@ -234,13 +234,60 @@ class GoogleSyncTriggerService {
   /// authorization (ARCHITECTURE.md §5 — not at sign-in) and, if granted,
   /// persists the enabled flag and runs a first sync immediately. Returns
   /// whether the scope was granted.
+  ///
+  /// Device-feedback round #3 ("the enable toggle silently does nothing"):
+  /// the confirmed root cause was that [GoogleCalendarApi.requestAccess]
+  /// could *throw* (most commonly: a restored FirebaseAuth session never
+  /// runs the interactive sign-in flow that initializes
+  /// `GoogleSignIn.instance` — see `core/auth/google_sign_in_gate.dart`) and
+  /// nothing here ever caught it — the exception propagated out through
+  /// `settings_screen.dart`'s `unawaited(_onEnabledChanged(...))`, where it
+  /// was silently dropped by the app's global `runZonedGuarded` handler
+  /// (logged, never crashing, but also never reaching the UI): the switch
+  /// never flips, no snackbar, no dialog, exactly as reported. Every path
+  /// through this method now ends in an explicit state update — a quiet
+  /// decline (no account / user canceled), a surfaced error (anything
+  /// else), or success — never a silently-propagating exception.
   Future<bool> enable() async {
-    final bool granted = await _api.requestAccess();
-    if (!granted) {
+    debugPrint('[sync-settings] enable() called');
+    _state = _state.copyWith(authorizing: true);
+    _emit();
+    final bool granted;
+    try {
+      granted = await _api.requestAccess();
+      debugPrint(
+        '[sync-settings] enable(): requestAccess() -> granted=$granted',
+      );
+    } catch (error) {
+      debugPrint('[sync-settings] enable(): requestAccess() threw: $error');
+      _state = _state.copyWith(
+        authorizing: false,
+        status: SyncStatus.error,
+        errorMessage: error.toString(),
+      );
+      _emit();
       return false;
     }
+    if (!granted) {
+      // A quiet decline (no signed-in account, or the user canceled the
+      // consent dialog) — not an error to surface, just revert to idle.
+      _state = _state.copyWith(
+        authorizing: false,
+        status: SyncStatus.idle,
+        clearErrorMessage: true,
+      );
+      _emit();
+      return false;
+    }
+    debugPrint('[sync-settings] enable(): settings store write starting');
     await _settingsStore.setEnabled(true);
-    _state = _state.copyWith(enabled: true);
+    debugPrint('[sync-settings] enable(): settings store write done');
+    _state = _state.copyWith(
+      authorizing: false,
+      enabled: true,
+      status: SyncStatus.idle,
+      clearErrorMessage: true,
+    );
     _emit();
     _subscribeToLocalChanges();
     await _backgroundScheduler.registerPeriodic();
@@ -252,9 +299,31 @@ class GoogleSyncTriggerService {
   /// periodic background sync task (the sync token and per-event Google
   /// sync state are left as-is, so re-enabling later resumes incrementally
   /// instead of a full resync).
+  ///
+  /// Device-feedback round #3: like [enable], a failed [_settingsStore]
+  /// write must surface as an error state rather than let the exception
+  /// propagate out of `settings_screen.dart`'s `unawaited(...)` call site
+  /// unnoticed.
   Future<void> disable() async {
-    await _settingsStore.setEnabled(false);
-    _state = _state.copyWith(enabled: false, status: SyncStatus.idle);
+    debugPrint('[sync-settings] disable() called');
+    try {
+      await _settingsStore.setEnabled(false);
+    } catch (error) {
+      debugPrint(
+        '[sync-settings] disable(): settings store write failed: $error',
+      );
+      _state = _state.copyWith(
+        status: SyncStatus.error,
+        errorMessage: error.toString(),
+      );
+      _emit();
+      return;
+    }
+    _state = _state.copyWith(
+      enabled: false,
+      status: SyncStatus.idle,
+      clearErrorMessage: true,
+    );
     _emit();
     await _localChangesSubscription?.cancel();
     _localChangesSubscription = null;

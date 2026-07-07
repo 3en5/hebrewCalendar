@@ -452,3 +452,47 @@
   סביב ה-*producer* (`start()`) לא מספיק אם ה-*consumer* עלול להירשם
   אחרי שהפליטה כבר קרתה — צריך לתקן את הממשק בין השניים (broadcast סטרים
   יחיד -> "שדר-נוכחי-ואז-עתידי" per-subscriber).
+
+- **2026-07-07 · סבב משוב מכשיר #3, `GoogleSignIn.instance.initialize()`
+  חייב guard תהליכי (process-wide), לא memoization per-instance:** התסמין
+  היה מתג הפעלת סנכרון גוגל שלא הגיב ללחיצה כלל (לא דיאלוג, לא שגיאה,
+  נשאר כבוי). השורש המאומת: ה-API של `google_sign_in` v7 (ראה הלקח למעלה
+  מ-M2b) מחייב `await GoogleSignIn.instance.initialize()` פעם אחת לפני כל
+  שימוש אחר בסינגלטון — אחרת undefined behavior (זורק בפועל). הקריאה
+  היחידה לכך באפליקציה הייתה `FirebaseAuthRepository
+  ._ensureGoogleSignInInitialized`, שמופעלת **רק** מתוך `signInWithGoogle()`
+  — כלומר רק כשמתבצעת כניסה אינטראקטיבית. אבל משתמש שחוזר לאפליקציה עם
+  session קיים של FirebaseAuth (שחזור session רגיל — הרוב המכריע של
+  ההרצות בפועל) אף פעם לא עובר דרך `signInWithGoogle()` באותה הרצה:
+  `AuthGate` קופץ ישר מ-`authStateChanges()`'s הערך המשוחזר ל-
+  `CalendarShellScreen`, בלי לגעת בכלל בזרימת הכניסה. כתוצאה,
+  `GoogleSignIn.instance` נשאר לא-מאותחל לאורך כל ה-session — וכש-
+  `GoogleSyncTriggerService.enable()` (לחיצה על המתג) קורא בסופו של דבר
+  ל-`GoogleCalendarApiImpl.requestAccess()` -> `_currentAccount()` ->
+  `GoogleSignIn.instance.attemptLightweightAuthentication()`, זו הפעם
+  הראשונה שהסינגלטון נוגע בכלל ב-session הזה — והוא זורק. `enable()` הישן
+  לא עטף שום קריאה ב-try/catch, אז החריגה יצאה דרך `settings_screen.dart`'s
+  `unawaited(_onEnabledChanged(...))` ונבלעה בשקט ע"י ה-`runZonedGuarded`
+  הגלובלי (`main.dart`, M7) — לוג בלבד, לא קורס, אבל גם לא מגיע לשום UI:
+  בדיוק כמו הלקח על `unawaited(future...)` שמזין state שה-UI צופה בו
+  (סבב משוב מכשיר #1, תיקון #2 למעלה) — רק כאן הבעיה לא הייתה ב-`Stream`
+  אלא בכל exception שיכולה לצאת מ-method שנקרא מ-`unawaited`. **התיקון:**
+  `lib/core/auth/google_sign_in_gate.dart`'s `GoogleSignInGate` — guard
+  **סטטי, לא per-instance**: memoization על מחלקה, לא על שדה של
+  `FirebaseAuthRepository`/`GoogleCalendarApiImpl`, כי בדיוק ה-instance
+  שהיה אחראי לאתחל (repository של מסך הכניסה) לעולם לא נבנה/נקרא בהרצה של
+  session משוחזר — אין "instance קודם" שכבר אתחל. כל מקום שנוגע ב-
+  `GoogleSignIn.instance` (auth repository, `GoogleCalendarApiImpl`,
+  `background_sync_bootstrap.dart`) מנתב עכשיו דרך אותו guard משותף.
+  **לקח כללי:** כשסינגלטון חיצוני (לא רק `GoogleSignIn` — כל API עם חוזה
+  "אתחל פעם אחת לפני שימוש") מאותחל היסטורית רק מתוך זרימה ספציפית אחת
+  (למשל: כניסה אינטראקטיבית), אסור להניח שהזרימה ההיא בהכרח רצה ב-session
+  הנוכחי — session משוחזר/רקע/isolate נפרד יכולים לדלג עליה לגמרי. Guard
+  אידמפוטנטי סביב האתחול חייב להיות משותף (סטטי) לכל קוראי הסינגלטון, לא
+  memoized בתוך instance אחד שספציפית עלול לא להיבנות בנתיב הזה. לקח נלווה:
+  `enable()`/`disable()`-סגנון methods שנקראים מ-widget דרך
+  `unawaited(...)` **חייבים** תמיד try/catch מלא סביב כל await בתוכם —
+  "יש runZonedGuarded גלובלי אז זה לא יקריס" נכון אך לא מספיק: התוצאה היא
+  UI שקט לגמרי, לא קריסה, אבל גם לא פידבק — בדיוק כמו שכבר תועד עבור
+  `Stream`ים (סבב #1), הכלל הזה חל באותה מידה על כל `Future` ש-widget
+  מפעיל דרך `unawaited`.

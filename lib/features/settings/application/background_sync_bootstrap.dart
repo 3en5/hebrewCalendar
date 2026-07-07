@@ -24,6 +24,7 @@ import 'package:flutter/widgets.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:workmanager/workmanager.dart';
 
+import '../../../core/auth/google_sign_in_gate.dart';
 import '../../../data/firestore_event_repository.dart';
 import '../../../data/sync/firestore_sync_settings_store.dart';
 import '../../../data/sync/google_calendar_api_impl.dart';
@@ -104,14 +105,14 @@ Future<void> _ensureFirebaseInitialized() async {
 /// `calendar.events` scope is still granted — never prompts (task brief
 /// M5b §2: "NEVER prompts UI from background; promptIfNecessary: false for
 /// authorization headers"). A fresh isolate means `GoogleSignIn.instance`
-/// has not been initialized yet, so that always happens here first (unlike
-/// `features/auth/data/auth_repository.dart`'s memoized
-/// `_ensureGoogleSignInInitialized`, which guards repeat calls *within one
-/// long-lived foreground instance* — not needed here since this whole
-/// function runs at most once per isolate).
+/// has not been initialized yet, so [GoogleSignInGate.ensure] always runs
+/// its initializer here (this whole function runs at most once per
+/// isolate) — routed through the same process-wide guard as every other
+/// `GoogleSignIn.instance` call site (device-feedback round #3) purely for
+/// consistency, not because this isolate needs cross-call-site memoization.
 Future<bool> _attemptSilentGoogleAuth() async {
   final GoogleSignIn googleSignIn = GoogleSignIn.instance;
-  await googleSignIn.initialize();
+  await GoogleSignInGate.ensure(googleSignIn.initialize);
   final GoogleSignInAccount? account =
       await (googleSignIn.attemptLightweightAuthentication() ??
           Future<GoogleSignInAccount?>.value());

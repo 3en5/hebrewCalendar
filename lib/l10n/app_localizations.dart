@@ -514,6 +514,12 @@ abstract class AppLocalizations {
   /// **'לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.'**
   String get settingsGoogleSyncAccessDeniedMessage;
 
+  /// Snackbar shown when enabling or disabling Google Calendar sync fails for a real reason (not a plain user cancel/decline) — e.g. the Google account session could not be restored (device-feedback round #3). {details} is the underlying error text, always shown, never swallowed.
+  ///
+  /// In he, this message translates to:
+  /// **'אירעה שגיאה: {details}'**
+  String settingsGoogleSyncActionFailedMessage(String details);
+
   /// Read-only line on the settings screen showing whether periodic background sync (M5b, via WorkManager) is currently active — the status itself comes from settingsBackgroundSyncStatusActive/settingsBackgroundSyncStatusOff. There is no separate toggle: background sync follows the main Google Calendar sync switch automatically.
   ///
   /// In he, this message translates to:

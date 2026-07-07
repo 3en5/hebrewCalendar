@@ -1,9 +1,87 @@
 # יומן התקדמות — HebrewCalendar
 
-**שלב נוכחי: סבב משוב מכשיר #2 הושלם — השורש האמיתי של ספינר ההגדרות
-האינסופי (שחזר לאחר תיקון #2 של סבב #1) אותר ותוקן. v1.0 עדיין ממתין
-לפריסת Security Rules + הגשה ל-Store.** M6 (שיתוף והעשרה) נדחה בהחלטת
-משתמש — ראה WISHLIST.md. (ראה אבני דרך ב-ARCHITECTURE.md §9)
+**שלב נוכחי: סבב משוב מכשיר #3 הושלם — טוגל הפעלת סנכרון Google שלא הגיב
+ללחיצה תוקן. v1.0 עדיין ממתין לפריסת Security Rules + הגשה ל-Store.** M6
+(שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
+ב-ARCHITECTURE.md §9)
+
+## 2026-07-07 — סבב משוב מכשיר #3 — טוגל הסנכרון לא הגיב ללחיצה
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 359 טסטים עוברים (348
+  קיימים + 11 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500
+  שורות עוברת.
+- **דיווח:** סעיף הסנכרון בהגדרות מוצג כראוי (תוקן בסבב #2), אבל לחיצה על
+  מתג ההפעלה לא עשתה כלום — לא דיאלוג, לא שגיאה, המתג נשאר כבוי.
+- **השורש המאומת:** `google_sign_in` v7 מחייב `await GoogleSignIn.instance
+  .initialize()` פעם אחת לפני כל שימוש אחר בסינגלטון (ראה LESSONS.md, M2b).
+  הקריאה היחידה לכך באפליקציה הייתה `FirebaseAuthRepository
+  ._ensureGoogleSignInInitialized`, שמופעלת **רק** מתוך `signInWithGoogle()`
+  — כלומר רק בזרימת הכניסה האינטראקטיבית. משתמש שחוזר לאפליקציה עם session
+  קיים של FirebaseAuth (השחזור הרגיל, לא כניסה מחדש) אף פעם לא עובר דרך
+  `signInWithGoogle()` באותה הרצה — `AuthGate` קופץ ישר מ-`authStateChanges()`
+  ל-`CalendarShellScreen`. כך ש-`GoogleSignIn.instance` נשאר לא-מאותחל
+  לאורך כל ה-session. לחיצה על המתג קוראת ל-`GoogleSyncTriggerService.enable()`
+  ← `GoogleCalendarApiImpl.requestAccess()` ← `_currentAccount()` ←
+  `GoogleSignIn.instance.attemptLightweightAuthentication()` — קריאה
+  לסינגלטון לפני `initialize()` היא undefined behavior לפי ה-API (זורקת
+  בפועל). `enable()` הישן לא עטף שום דבר ב-try/catch, כך שהחריגה יצאה דרך
+  `settings_screen.dart`'s `unawaited(_onEnabledChanged(...))` ונבלעה בשקט
+  ע"י ה-`runZonedGuarded` הגלובלי של `main.dart` (לוג בלבד, לא קורס) — בדיוק
+  התסמין המדווח.
+- **התיקון (כל השכבות):**
+  1. `lib/core/auth/google_sign_in_gate.dart` (קובץ חדש): `GoogleSignInGate`
+     — guard סטטי, תהליכי (process-wide), אידמפוטנטי סביב ה-initializer
+     המוזרק (בד"כ tear-off של `GoogleSignIn.instance.initialize`) — בטוח
+     לקריאה חוזרת מכל מקום; הראשון שקורא לו מבצע את האתחול בפועל, כל השאר
+     ממתינים לאותה Future. מוזרק כ-callback (לא `GoogleSignIn` ישירות) כדי
+     שהאידמפוטנטיות עצמה תיבדק ביחידה בלי לגעת בפלאגין האמיתי.
+  2. כל מקום שנוגע ב-`GoogleSignIn.instance` מנותב עכשיו דרך ה-guard
+     המשותף: `FirebaseAuthRepository._ensureGoogleSignInInitialized`
+     (הוחלף), `GoogleCalendarApiImpl._currentAccount()` (הנקודה היחידה
+     שנוגעת ב-`GoogleSignIn` בקובץ, גם עבור `requestAccess()` וגם
+     `_authHeaders()`), ו-`background_sync_bootstrap.dart`'s
+     `_attemptSilentGoogleAuth()` (לעקביות, גם אם ה-isolate הנפרד ממילא
+     לא צריך זכרון חוצה-instance).
+  3. `GoogleCalendarApiImpl.requestAccess()`: חוזה חדש ומתועד — `false`
+     = דחייה שקטה (אין חשבון חתום/המשתמש ביטל את דיאלוג ההסכמה,
+     `GoogleSignInExceptionCode.canceled`), **כל** כישלון אחר (כולל
+     `GoogleSignIn.instance` לא-מאותחל) נזרק (`rethrow`), לא נבלע ל-`false`.
+  4. `GoogleSyncTriggerService.enable()`/`disable()`: עטופים כעת ב-
+     try/catch מלא — כל חריגה הופכת ל-`SyncStatus.error`+`errorMessage`
+     גלוי (לא נבלעת). דחייה שקטה (false בלי חריגה) נשארת idle בלי הודעת
+     שגיאה. שדה חדש `GoogleSyncSettingsState.authorizing` — true רק במהלך
+     בקשת ההרשאה האסינכרונית; `GoogleSyncSection` מנטרל את המתג ומציג
+     ספינר קטן לצידו כל עוד `authorizing` — כדי שלחיצה שנייה במהלך הבקשה
+     לא תפתח בקשה כפולה.
+  5. `settings_screen.dart`'s `_onEnabledChanged`: אחרי `enable()`/`disable()`
+     (ששניהם עכשיו תמיד נפתרים, אף פעם לא זורקים), קורא את `service.state` —
+     `status == error` מציג סנאקבר עם הטקסט האמיתי של השגיאה (מחרוזת ARB
+     חדשה `settingsGoogleSyncActionFailedMessage` עם placeholder `{details}`);
+     דחייה שקטה ממשיכה להציג את ההודעה הגנרית הקיימת
+     (`settingsGoogleSyncAccessDeniedMessage`, ללא שינוי התנהגות לטסט הקיים).
+  6. אבחון: `debugPrint` עם קידומת `'[sync-settings]'` בכל שלב של
+     `enable()`/`disable()`/`requestAccess()`/האתחול — תואם לסגנון הקיים.
+- **טסטים חדשים (11):** `test/core/auth/google_sign_in_gate_test.dart`
+  (3 — אידמפוטנטיות, קריאות מקבילות ממתינות לאותה Future, איפוס בין
+  process-lifetimes מדומים), `test/features/settings/application/
+  google_sync_trigger_service_enable_test.dart` (קובץ חדש, פוצל מ-
+  `google_sync_trigger_service_test.dart` כדי לא לחרוג מ-500 שורות — 6
+  טסטים: כישלון אמיתי → error+הודעה, דחייה שקטה → idle בלי הודעה, `authorizing`
+  נכון במהלך הבקשה בהצלחה/בכישלון, שגיאה קודמת מתנקה בהצלחה הבאה, כישלון
+  כתיבת store ב-`disable()` נחשף), `test/features/settings/presentation/
+  settings_screen_enable_failure_test.dart` (קובץ חדש, 2 טסטי widget: כישלון
+  אמיתי → סנאקבר עם הטקסט האמיתי + המתג נשאר כבוי, מצב "עסוק" מנטרל את המתג
+  ומציג ספינר קטן במהלך הבקשה).
+- **אומת אמפירית:** נבדק מול קוד המקור המותקן בפועל של `google_sign_in`
+  7.2.0 (`GoogleSignIn.initialize`'s doc: "must be called exactly once...
+  before any other methods... undefined behavior" אחרת) ו-
+  `GoogleSignInAuthorizationClient.authorizationHeaders`'s מימוש בפועל
+  (כבר עוטף `authorizeScopes` פנימית כש-`promptIfNecessary: true` — כך
+  שההחלטה הקיימת מ-M5a להשתמש ב-`authorizationHeaders` ולא לקרוא
+  ל-`authorizeScopes` ישירות עדיין נכונה, אין צורך לשנות אותה).
+- **דורש פעולת משתמש:** בדיקה חוזרת על מכשיר אמיתי (לא ניתן לאמת חזותית
+  בסביבת הסוכן — אין Android SDK/emulator); פריסת ה-Security Rules בפועל
+  עדיין ממתינה (לא קשור לתיקון הזה).
 
 ## 2026-07-06 — סבב משוב מכשיר #2 — ספינר ההגדרות (השורש האמיתי)
 

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../core/auth/google_sign_in_gate.dart';
 import '../../../domain/auth/app_user.dart';
 import '../../../domain/auth/auth_repository.dart';
 
@@ -32,7 +33,6 @@ class FirebaseAuthRepository implements AuthRepository {
   final fb_auth.FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
   final FirebaseFirestore _firestore;
-  Future<void>? _googleSignInInitialization;
 
   @override
   Stream<AppUser?> authStateChanges() =>
@@ -78,9 +78,15 @@ class FirebaseAuthRepository implements AuthRepository {
     await _googleSignIn.signOut();
   }
 
-  Future<void> _ensureGoogleSignInInitialized() {
-    return _googleSignInInitialization ??= _googleSignIn.initialize();
-  }
+  /// Delegates to the process-wide [GoogleSignInGate] (device-feedback
+  /// round #3 — see its doc) rather than memoizing per-instance: a
+  /// **restored** FirebaseAuth session never constructs/calls this method
+  /// at all (`AuthGate` skips straight past `SignInScreen`), so a
+  /// per-instance guard here would never run for that session, and any
+  /// other code touching `GoogleSignIn.instance` later (e.g. the settings
+  /// screen's enable-sync switch) would find it still uninitialized.
+  Future<void> _ensureGoogleSignInInitialized() =>
+      GoogleSignInGate.ensure(_googleSignIn.initialize);
 
   /// Creates or merges the `users/{uid}` profile document on sign-in
   /// (task brief M2b §2 — "via the repository, not from widgets"). The

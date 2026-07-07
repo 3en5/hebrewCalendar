@@ -12,6 +12,7 @@ class GoogleSyncSettingsState {
     this.lastSyncedAt,
     this.errorMessage,
     this.initialLoadFailed = false,
+    this.authorizing = false,
   });
 
   final bool enabled;
@@ -28,6 +29,14 @@ class GoogleSyncSettingsState {
   /// never fetched).
   final bool initialLoadFailed;
 
+  /// True for the duration of `GoogleSyncTriggerService.enable()`'s async
+  /// Google authorization request (real-device report #3: the enable
+  /// toggle appeared inert on tap). The settings screen disables the
+  /// switch and shows a small progress indicator while this is true, so a
+  /// second tap during the in-flight request can't fire a second
+  /// authorization attempt.
+  final bool authorizing;
+
   GoogleSyncSettingsState copyWith({
     bool? enabled,
     SyncStatus? status,
@@ -36,6 +45,7 @@ class GoogleSyncSettingsState {
     String? errorMessage,
     bool clearErrorMessage = false,
     bool? initialLoadFailed,
+    bool? authorizing,
   }) => GoogleSyncSettingsState(
     enabled: enabled ?? this.enabled,
     status: status ?? this.status,
@@ -46,5 +56,6 @@ class GoogleSyncSettingsState {
         ? null
         : (errorMessage ?? this.errorMessage),
     initialLoadFailed: initialLoadFailed ?? this.initialLoadFailed,
+    authorizing: authorizing ?? this.authorizing,
   );
 }

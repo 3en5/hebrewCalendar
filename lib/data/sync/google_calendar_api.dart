@@ -11,6 +11,14 @@ abstract class GoogleCalendarApi {
   /// user for incremental authorization if it is not already (ARCHITECTURE.md
   /// §5 — requested when sync is first enabled, not at sign-in). Returns
   /// whether access is granted.
+  ///
+  /// Device-feedback round #3's contract: returning `false` means a *quiet*
+  /// decline (no signed-in account, or the user dismissed the consent
+  /// dialog) — nothing to show the user. Any other failure (network,
+  /// authorization plumbing, an unusable Google Sign-In state) must be
+  /// *thrown*, not swallowed into `false` — `GoogleSyncTriggerService.enable`
+  /// relies on this distinction to only surface a real error message for
+  /// genuine failures, never for a plain cancel.
   Future<bool> requestAccess();
 
   /// Lists events changed since [syncToken] (ARCHITECTURE.md §5 incremental

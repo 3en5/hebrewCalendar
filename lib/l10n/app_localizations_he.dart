@@ -230,6 +230,11 @@ class AppLocalizationsHe extends AppLocalizations {
       'לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.';
 
   @override
+  String settingsGoogleSyncActionFailedMessage(String details) {
+    return 'אירעה שגיאה: $details';
+  }
+
+  @override
   String settingsBackgroundSyncStatus(String status) {
     return 'סנכרון ברקע: $status';
   }

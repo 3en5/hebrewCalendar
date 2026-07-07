@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/dimens.dart';
+import '../../../domain/sync/sync_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/demo_mode_provider.dart';
 import '../application/app_version_provider.dart';
@@ -188,6 +189,14 @@ class _RealGoogleSyncSectionState
     );
   }
 
+  /// Device-feedback round #3: `service.enable()`/`service.disable()` now
+  /// always resolve (never throw — see `google_sync_trigger_service.dart`),
+  /// so this callback can reliably tell a quiet decline/cancel apart from a
+  /// genuine failure by reading `service.state` right after: a real failure
+  /// sets `status == SyncStatus.error` with an `errorMessage`, which gets
+  /// its own snackbar with the actual error text (never swallowed); a plain
+  /// decline/cancel leaves `status` at `idle` and shows the existing
+  /// generic "access denied" message instead, matching prior behavior.
   Future<void> _onEnabledChanged(
     BuildContext context,
     GoogleSyncTriggerService service,
@@ -196,12 +205,50 @@ class _RealGoogleSyncSectionState
   ) async {
     if (!enabled) {
       await service.disable();
+      if (context.mounted) {
+        _showErrorSnackBarIfAny(context, service, l10n);
+      }
       return;
     }
     final bool granted = await service.enable();
-    if (!granted && context.mounted) {
+    if (granted || !context.mounted) {
+      return;
+    }
+    final GoogleSyncSettingsState afterEnable = service.state;
+    if (afterEnable.status == SyncStatus.error &&
+        afterEnable.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.settingsGoogleSyncActionFailedMessage(
+              afterEnable.errorMessage!,
+            ),
+          ),
+        ),
+      );
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.settingsGoogleSyncAccessDeniedMessage)),
+      );
+    }
+  }
+
+  void _showErrorSnackBarIfAny(
+    BuildContext context,
+    GoogleSyncTriggerService service,
+    AppLocalizations l10n,
+  ) {
+    if (!context.mounted) {
+      return;
+    }
+    final GoogleSyncSettingsState state = service.state;
+    if (state.status == SyncStatus.error && state.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.settingsGoogleSyncActionFailedMessage(state.errorMessage!),
+          ),
+        ),
       );
     }
   }

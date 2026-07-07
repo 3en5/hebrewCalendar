@@ -295,6 +295,15 @@
   "@settingsGoogleSyncAccessDeniedMessage": {
     "description": "Snackbar shown when the user denies the Google Calendar access request while enabling sync (M5a)."
   },
+  "settingsGoogleSyncActionFailedMessage": "אירעה שגיאה: {details}",
+  "@settingsGoogleSyncActionFailedMessage": {
+    "description": "Snackbar shown when enabling or disabling Google Calendar sync fails for a real reason (not a plain user cancel/decline) — e.g. the Google account session could not be restored (device-feedback round #3). {details} is the underlying error text, always shown, never swallowed.",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
   "settingsBackgroundSyncStatus": "סנכרון ברקע: {status}",
   "@settingsBackgroundSyncStatus": {
     "description": "Read-only line on the settings screen showing whether periodic background sync (M5b, via WorkManager) is currently active — the status itself comes from settingsBackgroundSyncStatusActive/settingsBackgroundSyncStatusOff. There is no separate toggle: background sync follows the main Google Calendar sync switch automatically.",
