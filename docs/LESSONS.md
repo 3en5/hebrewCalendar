@@ -496,3 +496,13 @@
   UI שקט לגמרי, לא קריסה, אבל גם לא פידבק — בדיוק כמו שכבר תועד עבור
   `Stream`ים (סבב #1), הכלל הזה חל באותה מידה על כל `Future` ש-widget
   מפעיל דרך `unawaited`.
+
+- **2026-07-07 · סבב מכשיר #4, `attemptLightweightAuthentication()` יכול
+  להחזיר null גם למשתמש מחובר:** במכשיר אמיתי (Samsung), השחזור השקט של
+  google_sign_in v7 החזיר null למרות שהמשתמש מחובר דרך Firebase — וכל
+  סנכרון foreground נפל על "No signed-in Google account available".
+  הפתרון: כשהשחזור השקט מחזיר null ו-`allowInteractiveAuth` דלוק (מסלולי
+  foreground בלבד — ה-isolate של הרקע בונה את ה-API עם false), נופלים
+  חזרה ל-`authenticate()` האינטראקטיבי; ביטול משתמש נשאר null שקט, כל
+  כשל אחר מופץ למעלה. לקח כללי: אסור להניח ששחזור שקט מצליח — תמיד
+  לתכנן fallback אינטראקטיבי למסלולים שבהם המשתמש נוכח.

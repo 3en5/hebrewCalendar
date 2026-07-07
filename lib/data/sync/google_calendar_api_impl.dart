@@ -214,13 +214,39 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
   /// undefined behavior per the v7 API contract, see docs/LESSONS.md).
   Future<GoogleSignInAccount?> _currentAccount() async {
     await GoogleSignInGate.ensure(_googleSignIn.initialize);
-    final GoogleSignInAccount? account =
+    GoogleSignInAccount? account =
         await (_googleSignIn.attemptLightweightAuthentication() ??
             Future<GoogleSignInAccount?>.value());
     debugPrint(
       '[sync-settings] attemptLightweightAuthentication() -> '
       'account=${account?.id}',
     );
+    // Device-feedback round #4: on some devices the lightweight (silent)
+    // restore returns null even though the user IS signed in — which made
+    // every foreground sync fail with "No signed-in Google account
+    // available". When interactive auth is allowed (foreground flows; the
+    // background isolate constructs this class with
+    // allowInteractiveAuth=false), fall back to the interactive
+    // authenticate() flow: the user is present to approve it. A user cancel
+    // stays a quiet null (callers treat it as a quiet decline); any other
+    // failure propagates to the caller's error surface.
+    if (account == null && allowInteractiveAuth) {
+      try {
+        account = await _googleSignIn.authenticate();
+        debugPrint(
+          '[sync-settings] interactive authenticate() -> '
+          'account=${account.id}',
+        );
+      } on GoogleSignInException catch (exception) {
+        debugPrint(
+          '[sync-settings] interactive authenticate() failed: '
+          '${exception.code}',
+        );
+        if (exception.code != GoogleSignInExceptionCode.canceled) {
+          rethrow;
+        }
+      }
+    }
     return account;
   }
 
