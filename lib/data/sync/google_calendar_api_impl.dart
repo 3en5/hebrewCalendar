@@ -19,6 +19,7 @@
 /// default profile/email scopes).
 library;
 
+import 'dart:async' show TimeoutException;
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show debugPrint;
@@ -128,19 +129,32 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
     final List<RemoteEventSnapshot> events = <RemoteEventSnapshot>[];
     String? pageToken;
     String? nextSyncToken;
+    // Device-feedback round #6: an unbounded first sync (no syncToken) walks
+    // the user's ENTIRE Google Calendar history page by page — minutes of
+    // requests where a single dropped connection killed the whole run. Bound
+    // the initial import to the past year (the export window already only
+    // covers 24 months forward); incremental syncs via syncToken keep these
+    // bounds automatically.
+    final String? initialTimeMin = syncToken == null
+        ? DateTime.now()
+              .toUtc()
+              .subtract(const Duration(days: 365))
+              .toIso8601String()
+        : null;
     do {
       final Uri uri = Uri.parse(_kEventsUrl).replace(
         queryParameters: <String, String>{
           'singleEvents': 'true',
           'showDeleted': 'true',
           'maxResults': '250',
+          if (initialTimeMin != null) 'timeMin': initialTimeMin,
           if (syncToken != null) 'syncToken': syncToken,
           if (pageToken != null) 'pageToken': pageToken,
         },
       );
-      final http.Response response = await _httpClient.get(
-        uri,
-        headers: await _authHeaders(),
+      final http.Response response = await _requestWithRetry(
+        () async => _httpClient.get(uri, headers: await _authHeaders()),
+        label: 'listChangedEvents',
       );
       if (response.statusCode == 410) {
         throw const GoogleSyncTokenExpiredException();
@@ -163,9 +177,12 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
 
   @override
   Future<RemoteEventSnapshot> getEvent(String googleEventId) async {
-    final http.Response response = await _httpClient.get(
-      Uri.parse('$_kEventsUrl/$googleEventId'),
-      headers: await _authHeaders(),
+    final http.Response response = await _requestWithRetry(
+      () async => _httpClient.get(
+        Uri.parse('$_kEventsUrl/$googleEventId'),
+        headers: await _authHeaders(),
+      ),
+      label: 'getEvent',
     );
     _throwIfError(response);
     return _snapshotFromJson(jsonDecode(response.body) as Map<String, dynamic>);
@@ -173,10 +190,15 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
 
   @override
   Future<RemoteEventSnapshot> insertEvent(GoogleEventWrite event) async {
-    final http.Response response = await _httpClient.post(
-      Uri.parse(_kEventsUrl),
-      headers: await _authHeaders(),
-      body: jsonEncode(_toJson(event)),
+    // Insert retries are safe against duplicates: the sync planner dedups by
+    // extendedProperties before creating when local state is unknown (M5a).
+    final http.Response response = await _requestWithRetry(
+      () async => _httpClient.post(
+        Uri.parse(_kEventsUrl),
+        headers: await _authHeaders(),
+        body: jsonEncode(_toJson(event)),
+      ),
+      label: 'insertEvent',
     );
     _throwIfError(response);
     return _snapshotFromJson(jsonDecode(response.body) as Map<String, dynamic>);
@@ -188,15 +210,17 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
     required String? etag,
     required GoogleEventWrite event,
   }) async {
-    final Map<String, String> headers = await _authHeaders();
-    if (etag != null) {
-      headers['If-Match'] = etag;
-    }
-    final http.Response response = await _httpClient.patch(
-      Uri.parse('$_kEventsUrl/$googleEventId'),
-      headers: headers,
-      body: jsonEncode(_toJson(event)),
-    );
+    final http.Response response = await _requestWithRetry(() async {
+      final Map<String, String> headers = await _authHeaders();
+      if (etag != null) {
+        headers['If-Match'] = etag;
+      }
+      return _httpClient.patch(
+        Uri.parse('$_kEventsUrl/$googleEventId'),
+        headers: headers,
+        body: jsonEncode(_toJson(event)),
+      );
+    }, label: 'patchEvent');
     if (response.statusCode == 412) {
       throw GoogleEtagMismatchException(googleEventId);
     }
@@ -209,14 +233,16 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
     required String googleEventId,
     String? etag,
   }) async {
-    final Map<String, String> headers = await _authHeaders();
-    if (etag != null) {
-      headers['If-Match'] = etag;
-    }
-    final http.Response response = await _httpClient.delete(
-      Uri.parse('$_kEventsUrl/$googleEventId'),
-      headers: headers,
-    );
+    final http.Response response = await _requestWithRetry(() async {
+      final Map<String, String> headers = await _authHeaders();
+      if (etag != null) {
+        headers['If-Match'] = etag;
+      }
+      return _httpClient.delete(
+        Uri.parse('$_kEventsUrl/$googleEventId'),
+        headers: headers,
+      );
+    }, label: 'deleteEvent');
     // 404/410 (already gone) and 412 (someone else already changed/deleted
     // it) are all "fine, it's not there the way we thought" for a delete —
     // ARCHITECTURE.md §5 deletions are idempotent, not worth retrying.
@@ -226,6 +252,42 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       return;
     }
     _throwIfError(response);
+  }
+
+  static const Duration _kRequestTimeout = Duration(seconds: 30);
+  static const int _kMaxRequestAttempts = 3;
+
+  /// Device-feedback round #6: a single transient network failure
+  /// ("ClientException: Software caused connection abort") mid-pagination
+  /// killed an entire (minutes-long) first sync. Every REST call now gets a
+  /// per-request timeout and up to [_kMaxRequestAttempts] attempts with a
+  /// short backoff; only transport-level failures are retried — HTTP error
+  /// statuses still surface immediately via each caller's `_throwIfError`.
+  Future<http.Response> _requestWithRetry(
+    Future<http.Response> Function() send, {
+    required String label,
+  }) async {
+    Object lastError = StateError('unreachable');
+    StackTrace lastStackTrace = StackTrace.current;
+    for (int attempt = 1; attempt <= _kMaxRequestAttempts; attempt++) {
+      try {
+        return await send().timeout(_kRequestTimeout);
+      } on http.ClientException catch (error, stackTrace) {
+        lastError = error;
+        lastStackTrace = stackTrace;
+      } on TimeoutException catch (error, stackTrace) {
+        lastError = error;
+        lastStackTrace = stackTrace;
+      }
+      debugPrint(
+        '[sync-settings] $label attempt $attempt/$_kMaxRequestAttempts '
+        'failed: $lastError',
+      );
+      if (attempt < _kMaxRequestAttempts) {
+        await Future<void>.delayed(Duration(seconds: 2 * attempt));
+      }
+    }
+    return Error.throwWithStackTrace(lastError, lastStackTrace);
   }
 
   /// The single choke point through which every method in this class
