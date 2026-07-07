@@ -2,8 +2,10 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/dimens.dart';
+import '../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../l10n/app_localizations.dart';
@@ -78,9 +80,29 @@ class CalendarShellScreen extends ConsumerWidget {
       });
     }
 
+    final String? gregorianSubtitle = _gregorianSubtitle(state, engine);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_title(state, engine, l10n)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(_title(state, engine, l10n)),
+            // Device feedback: the day cells show the secondary Gregorian
+            // day number, but the app bar showed no Gregorian context at
+            // all — add the Gregorian month/year range the displayed Hebrew
+            // month spans (e.g. "יוני–יולי 2026").
+            if (gregorianSubtitle != null)
+              Text(
+                gregorianSubtitle,
+                style: TextStyle(
+                  fontSize: captionRem,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.today),
@@ -150,6 +172,35 @@ class CalendarShellScreen extends ConsumerWidget {
     // app bar, matching Google Calendar's own top bar.
     return '${engine.monthName(state.focusedDate.month)} '
         '${hebrewYearNumeral(state.focusedDate.year)}';
+  }
+
+  /// The Gregorian month/year range the focused Hebrew month spans, in the
+  /// app locale (e.g. "יוני 2026", "יוני–יולי 2026", "דצמבר 2026–ינואר 2027").
+  /// Null for the agenda view, whose title is not month-scoped.
+  String? _gregorianSubtitle(CalendarViewState state, HebrewDateEngine engine) {
+    if (state.viewType == CalendarViewType.agenda) {
+      return null;
+    }
+    final HebrewDate focused = state.focusedDate;
+    final DateTime first = engine.toGregorian(
+      HebrewDate(year: focused.year, month: focused.month, day: 1),
+    );
+    final DateTime last = engine.toGregorian(
+      HebrewDate(
+        year: focused.year,
+        month: focused.month,
+        day: engine.daysInMonth(focused.year, focused.month),
+      ),
+    );
+    final DateFormat monthFormat = DateFormat.MMMM('he');
+    if (first.year == last.year) {
+      return first.month == last.month
+          ? '${monthFormat.format(first)} ${first.year}'
+          : '${monthFormat.format(first)}–${monthFormat.format(last)} '
+                '${first.year}';
+    }
+    return '${monthFormat.format(first)} ${first.year}–'
+        '${monthFormat.format(last)} ${last.year}';
   }
 
   Future<void> _confirmSignOut(

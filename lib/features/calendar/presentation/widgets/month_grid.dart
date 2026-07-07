@@ -93,6 +93,12 @@ class MonthGrid extends ConsumerWidget {
                   final bool inDisplayedMonth =
                       cellDate.year == displayedMonth.year &&
                       cellDate.month == displayedMonth.month;
+                  // Device feedback: adjacent-month days (previously shown
+                  // dimmed) cluttered the month view — render empty cells so
+                  // only the displayed Hebrew month's days appear.
+                  if (!inDisplayedMonth) {
+                    return const SizedBox.shrink();
+                  }
                   final DateTime gregorianDate = engine.toGregorian(cellDate);
                   final List<EventOccurrence> dayOccurrences = inDisplayedMonth
                       ? (occurrencesByDay[cellDate.day] ??
