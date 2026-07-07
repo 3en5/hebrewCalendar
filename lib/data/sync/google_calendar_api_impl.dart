@@ -47,6 +47,16 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
   final GoogleSignIn _googleSignIn;
   final http.Client _httpClient;
 
+  /// The account obtained by the last successful [requestAccess] (the "enable
+  /// sync" action). Device-feedback round #5: on some devices
+  /// `attemptLightweightAuthentication()` returns null even for a signed-in
+  /// user, so after an interactive authorization we keep the account here and
+  /// reuse it for the sync REST calls in the same session — otherwise every
+  /// `_authHeaders()` call would silently fail ("No signed-in Google account
+  /// available") right after the user enabled sync. NOT persisted across app
+  /// restarts: a new session re-authorizes via [requestAccess].
+  GoogleSignInAccount? _cachedAccount;
+
   /// Whether [_authHeaders] may prompt the user for the `calendar.events`
   /// scope (`promptIfNecessary: true`) if it isn't already silently
   /// available. Must be `false` for any instance used from a WorkManager
@@ -70,10 +80,18 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
   /// show the user a real error message for the latter.
   @override
   Future<bool> requestAccess() async {
-    final GoogleSignInAccount? account = await _currentAccount();
+    // The ONE place interactive Google auth is allowed: the user pressed the
+    // "enable sync" toggle, so a foreground consent flow is expected. Every
+    // other path (the sync REST calls below) is silent-only, so an automatic
+    // or repeated sync can never pop a dialog — device-feedback round #5: the
+    // previous build popped the account picker inside every REST call, which
+    // looped the sign-in window open/closed during each sync pass.
+    final GoogleSignInAccount? account = await _currentAccount(
+      interactive: true,
+    );
     if (account == null) {
       debugPrint(
-        '[sync-settings] requestAccess(): no signed-in Google account, '
+        '[sync-settings] requestAccess(): no Google account (user canceled), '
         'declining quietly',
       );
       return false;
@@ -85,6 +103,11 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
         '[sync-settings] requestAccess(): authorizeScopes -> '
         'granted=${headers != null}',
       );
+      if (headers != null) {
+        // Reuse this authorized account for the sync run that follows enabling,
+        // since silent restore is unreliable on some devices.
+        _cachedAccount = account;
+      }
       return headers != null;
     } on GoogleSignInException catch (error) {
       if (error.code == GoogleSignInExceptionCode.canceled) {
@@ -212,7 +235,22 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
   /// flow, so without this guard, calling `attemptLightweightAuthentication`
   /// here first would be the first-ever use of the singleton this process —
   /// undefined behavior per the v7 API contract, see docs/LESSONS.md).
-  Future<GoogleSignInAccount?> _currentAccount() async {
+  /// Resolves the Google account to authorize Calendar requests against.
+  ///
+  /// [interactive] must be `true` ONLY for an explicit, user-initiated action
+  /// (enabling sync). Sync REST calls pass the default `false`, so an
+  /// automatic or repeated sync is guaranteed never to pop a sign-in dialog
+  /// (device-feedback round #5 — the account picker was looping mid-sync).
+  ///
+  /// Resolution order: the [_cachedAccount] from this session's last
+  /// authorization, then a silent lightweight restore, then — only when
+  /// [interactive] and [allowInteractiveAuth] — a single interactive prompt.
+  Future<GoogleSignInAccount?> _currentAccount({
+    bool interactive = false,
+  }) async {
+    if (_cachedAccount != null) {
+      return _cachedAccount;
+    }
     await GoogleSignInGate.ensure(_googleSignIn.initialize);
     GoogleSignInAccount? account =
         await (_googleSignIn.attemptLightweightAuthentication() ??
@@ -221,16 +259,7 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       '[sync-settings] attemptLightweightAuthentication() -> '
       'account=${account?.id}',
     );
-    // Device-feedback round #4: on some devices the lightweight (silent)
-    // restore returns null even though the user IS signed in — which made
-    // every foreground sync fail with "No signed-in Google account
-    // available". When interactive auth is allowed (foreground flows; the
-    // background isolate constructs this class with
-    // allowInteractiveAuth=false), fall back to the interactive
-    // authenticate() flow: the user is present to approve it. A user cancel
-    // stays a quiet null (callers treat it as a quiet decline); any other
-    // failure propagates to the caller's error surface.
-    if (account == null && allowInteractiveAuth) {
+    if (account == null && interactive && allowInteractiveAuth) {
       try {
         account = await _googleSignIn.authenticate();
         debugPrint(
@@ -247,6 +276,7 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
         }
       }
     }
+    _cachedAccount ??= account;
     return account;
   }
 
