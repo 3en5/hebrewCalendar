@@ -77,18 +77,32 @@ class DayCell extends StatelessWidget {
                   width: rem(2.0),
                   height: rem(2.0),
                   alignment: Alignment.center,
+                  // Inner padding keeps scaled-down text off the circle edge.
+                  padding: EdgeInsetsDirectional.symmetric(
+                    horizontal: spacingXs / 2,
+                  ),
                   decoration: isToday
                       ? BoxDecoration(
                           color: colorScheme.primary,
                           shape: BoxShape.circle,
                         )
                       : null,
-                  child: Text(
-                    hebrewDayNumeral(hebrewDay),
-                    style: TextStyle(
-                      fontSize: bodyLargeRem,
-                      fontWeight: FontWeight.w600,
-                      color: hebrewDayColor,
+                  // The container width is fixed (today-circle geometry) but a
+                  // gematria numeral can be 1-3 glyphs wide (א׳ vs י״ב); without
+                  // this inner FittedBox the Text line-breaks at the fixed width
+                  // and the second line is clipped — on device only one letter
+                  // of a two-letter numeral was visible.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      hebrewDayNumeral(hebrewDay),
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        fontSize: bodyRem,
+                        fontWeight: FontWeight.w600,
+                        color: hebrewDayColor,
+                      ),
                     ),
                   ),
                 ),
