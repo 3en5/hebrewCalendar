@@ -45,6 +45,17 @@ jobs:
       HAS_GS_SECRET: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
       APP_ID: il.co.natanor.kalfapp.hebrewcalendar
     steps:
+      # The debug APK build (Gradle caches + NDK install) can exhaust the
+      # runner's disk; drop preinstalled toolchains this job never uses.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/boost /opt/hostedtoolcache/CodeQL \
+            /usr/local/lib/node_modules /usr/share/swift
+          sudo docker image prune --all --force > /dev/null || true
+          df -h /
+
       - name: Checkout
         uses: actions/checkout@v4
 
