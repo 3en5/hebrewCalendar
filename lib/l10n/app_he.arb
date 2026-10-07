@@ -1,0 +1,429 @@
+{
+  "@@locale": "he",
+  "appTitle": "יומן עברי",
+  "@appTitle": {
+    "description": "The application title, shown in the app bar and OS task switcher."
+  },
+  "commonCancel": "ביטול",
+  "@commonCancel": {
+    "description": "Generic cancel button label, used in confirmation dialogs."
+  },
+  "addEventTooltip": "הוספת אירוע",
+  "@addEventTooltip": {
+    "description": "Tooltip for the floating action button that opens the event editor to create a new event."
+  },
+  "eventEditorTitleNew": "אירוע חדש",
+  "@eventEditorTitleNew": {
+    "description": "App bar title for the event editor screen in create mode."
+  },
+  "eventEditorTitleEdit": "עריכת אירוע",
+  "@eventEditorTitleEdit": {
+    "description": "App bar title for the event editor screen in edit mode."
+  },
+  "eventSave": "שמירה",
+  "@eventSave": {
+    "description": "Tooltip/label for the save action in the event editor."
+  },
+  "eventFieldTitleLabel": "כותרת",
+  "@eventFieldTitleLabel": {
+    "description": "Label for the event title text field."
+  },
+  "eventFieldDescriptionLabel": "תיאור",
+  "@eventFieldDescriptionLabel": {
+    "description": "Label for the event description text field."
+  },
+  "eventFieldLocationLabel": "מיקום",
+  "@eventFieldLocationLabel": {
+    "description": "Label for the event location text field."
+  },
+  "eventAllDayLabel": "כל היום",
+  "@eventAllDayLabel": {
+    "description": "Label for the all-day switch in the event editor, and the time label shown for an all-day event."
+  },
+  "eventHebrewDateLabel": "תאריך עברי",
+  "@eventHebrewDateLabel": {
+    "description": "Label for the Hebrew date field/picker in the event editor."
+  },
+  "eventStartTimeLabel": "שעת התחלה",
+  "@eventStartTimeLabel": {
+    "description": "Label for the event start time field."
+  },
+  "eventEndTimeLabel": "שעת סיום",
+  "@eventEndTimeLabel": {
+    "description": "Label for the event end time field."
+  },
+  "eventNoTimeSet": "בחירת שעה",
+  "@eventNoTimeSet": {
+    "description": "Placeholder shown for a start/end time field before a time has been picked."
+  },
+  "eventRemindersLabel": "תזכורת",
+  "@eventRemindersLabel": {
+    "description": "Section heading above the reminder selector in the event editor."
+  },
+  "eventReminderNone": "ללא תזכורת",
+  "@eventReminderNone": {
+    "description": "Reminder chip label meaning no reminder is set."
+  },
+  "eventReminderAtEventTime": "בזמן האירוע",
+  "@eventReminderAtEventTime": {
+    "description": "Reminder chip label meaning the reminder fires exactly at the event's start time (0 minutes before, M4)."
+  },
+  "eventReminderMinutesBefore": "{minutes} דקות לפני",
+  "@eventReminderMinutesBefore": {
+    "description": "Reminder chip label for a fixed number of minutes before the event, e.g. '10 דקות לפני'.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "eventReminderOneDayBefore": "יום לפני",
+  "@eventReminderOneDayBefore": {
+    "description": "Reminder chip label meaning the reminder fires one day before the event (M4)."
+  },
+  "eventValidationTitleRequired": "יש להזין כותרת",
+  "@eventValidationTitleRequired": {
+    "description": "Inline validation error when the event title is empty."
+  },
+  "eventValidationTitleTooLong": "הכותרת ארוכה מדי",
+  "@eventValidationTitleTooLong": {
+    "description": "Inline validation error when the event title exceeds the maximum length."
+  },
+  "eventValidationDescriptionTooLong": "התיאור ארוך מדי",
+  "@eventValidationDescriptionTooLong": {
+    "description": "Inline validation error when the event description exceeds the maximum length."
+  },
+  "eventValidationLocationTooLong": "המיקום ארוך מדי",
+  "@eventValidationLocationTooLong": {
+    "description": "Inline validation error when the event location exceeds the maximum length."
+  },
+  "eventValidationEndBeforeStart": "שעת הסיום חייבת להיות אחרי שעת ההתחלה",
+  "@eventValidationEndBeforeStart": {
+    "description": "Inline validation error when the event end time is not after the start time."
+  },
+  "eventEditAction": "עריכה",
+  "@eventEditAction": {
+    "description": "Tooltip/label for the edit action on an event in the day events sheet."
+  },
+  "eventDeleteAction": "מחיקה",
+  "@eventDeleteAction": {
+    "description": "Tooltip/label for the delete action on an event, and the confirm button in the delete confirmation dialog."
+  },
+  "eventDeleteConfirmTitle": "מחיקת אירוע",
+  "@eventDeleteConfirmTitle": {
+    "description": "Title of the confirmation dialog shown before deleting an event."
+  },
+  "eventDeleteConfirmMessage": "האם למחוק אירוע זה? לא ניתן לבטל פעולה זו.",
+  "@eventDeleteConfirmMessage": {
+    "description": "Body text of the confirmation dialog shown before deleting an event."
+  },
+  "eventDeleteRecurringChoiceMessage": "אירוע זה הוא חלק מסדרה חוזרת. איך למחוק?",
+  "@eventDeleteRecurringChoiceMessage": {
+    "description": "Body text of the choice dialog shown before deleting an occurrence of a recurring event, offering 'this occurrence only' or 'the whole series'."
+  },
+  "eventDeleteThisOccurrenceOnly": "מופע זה בלבד",
+  "@eventDeleteThisOccurrenceOnly": {
+    "description": "Button label to delete only the single occurrence being viewed from a recurring event's series (adds it to the recurrence exceptions)."
+  },
+  "eventDeleteWholeSeries": "כל הסדרה",
+  "@eventDeleteWholeSeries": {
+    "description": "Button label to delete an entire recurring event series."
+  },
+  "eventRecurrenceLabel": "חזרתיות",
+  "@eventRecurrenceLabel": {
+    "description": "Section heading above the recurrence type selector in the event editor."
+  },
+  "recurrenceTypeNone": "ללא חזרה",
+  "@recurrenceTypeNone": {
+    "description": "Recurrence type chip label: the event does not repeat."
+  },
+  "recurrenceTypeYearly": "כל שנה (עברי)",
+  "@recurrenceTypeYearly": {
+    "description": "Recurrence type chip label: repeats every Hebrew year on the same Hebrew month/day."
+  },
+  "recurrenceTypeMonthly": "כל חודש (עברי)",
+  "@recurrenceTypeMonthly": {
+    "description": "Recurrence type chip label: repeats every Hebrew month on the same day."
+  },
+  "recurrenceTypeWeekly": "כל שבוע",
+  "@recurrenceTypeWeekly": {
+    "description": "Recurrence type chip label: repeats every week."
+  },
+  "recurrenceTypeDaily": "כל יום",
+  "@recurrenceTypeDaily": {
+    "description": "Recurrence type chip label: repeats every day."
+  },
+  "recurrenceUntilLabel": "עד תאריך",
+  "@recurrenceUntilLabel": {
+    "description": "Label for the optional 'repeat until' Hebrew date field shown for a recurring event."
+  },
+  "recurrenceUntilNone": "ללא תאריך סיום",
+  "@recurrenceUntilNone": {
+    "description": "Placeholder shown for the 'repeat until' field when no end date is set (the series repeats indefinitely)."
+  },
+  "recurrenceUntilClearTooltip": "הסרת תאריך סיום",
+  "@recurrenceUntilClearTooltip": {
+    "description": "Tooltip for the button that clears the 'repeat until' date, making the series repeat indefinitely again."
+  },
+  "hebrewDatePickerYearLabel": "שנה",
+  "@hebrewDatePickerYearLabel": {
+    "description": "Label for the year dropdown in the Hebrew date picker sheet."
+  },
+  "hebrewDatePickerMonthLabel": "חודש",
+  "@hebrewDatePickerMonthLabel": {
+    "description": "Label for the month dropdown in the Hebrew date picker sheet."
+  },
+  "hebrewDatePickerDayLabel": "יום",
+  "@hebrewDatePickerDayLabel": {
+    "description": "Label for the day dropdown in the Hebrew date picker sheet."
+  },
+  "hebrewDatePickerConfirm": "אישור",
+  "@hebrewDatePickerConfirm": {
+    "description": "Confirm button label in the Hebrew date picker sheet."
+  },
+  "signInWithGoogleButton": "כניסה עם Google",
+  "@signInWithGoogleButton": {
+    "description": "Label for the Google sign-in button on the sign-in screen."
+  },
+  "signInErrorMessage": "אירעה שגיאה בכניסה. נסה שוב.",
+  "@signInErrorMessage": {
+    "description": "Snackbar message shown when Google sign-in fails for a reason other than user cancellation."
+  },
+  "signInDemoModeButton": "כניסה במצב הדגמה",
+  "@signInDemoModeButton": {
+    "description": "Secondary button on the sign-in screen (M5c, Google Play review requirement) that enters the full calendar UI with sample data and no authentication at all."
+  },
+  "signInReturnToSignInAction": "התחבר",
+  "@signInReturnToSignInAction": {
+    "description": "Overflow menu label shown instead of signOutAction while in demo mode — returns to the sign-in screen and clears demo state (M5c)."
+  },
+  "signOutAction": "התנתקות",
+  "@signOutAction": {
+    "description": "Label for the sign-out overflow menu item, and the confirm button in the sign-out confirmation dialog."
+  },
+  "signOutConfirmTitle": "התנתקות",
+  "@signOutConfirmTitle": {
+    "description": "Title of the confirmation dialog shown before signing out."
+  },
+  "signOutConfirmMessage": "האם להתנתק מהחשבון?",
+  "@signOutConfirmMessage": {
+    "description": "Body text of the confirmation dialog shown before signing out."
+  },
+  "calendarViewMonth": "חודש",
+  "@calendarViewMonth": {
+    "description": "Calendar view switcher option/current-view label: month view."
+  },
+  "calendarViewWeek": "שבוע",
+  "@calendarViewWeek": {
+    "description": "Calendar view switcher option/current-view label: week view."
+  },
+  "calendarViewDay": "יום",
+  "@calendarViewDay": {
+    "description": "Calendar view switcher option/current-view label: day view."
+  },
+  "calendarViewAgenda": "אג'נדה",
+  "@calendarViewAgenda": {
+    "description": "Calendar view switcher option/current-view label: agenda view. Also shown as the app bar title while the agenda view is active."
+  },
+  "calendarViewSwitcherTooltip": "בחירת תצוגה",
+  "@calendarViewSwitcherTooltip": {
+    "description": "Tooltip for the app bar's view switcher (month/week/day/agenda) button."
+  },
+  "calendarTodayTooltip": "היום",
+  "@calendarTodayTooltip": {
+    "description": "Tooltip for the app bar's 'today' button, which refocuses the calendar on today without changing the selected view."
+  },
+  "agendaEmptyState": "אין אירועים קרובים",
+  "@agendaEmptyState": {
+    "description": "Empty-state message shown in the agenda view when there are no upcoming occurrences in the loaded window."
+  },
+  "notificationsChannelName": "תזכורות",
+  "@notificationsChannelName": {
+    "description": "Android notification channel name (M4) for event reminders, shown to the user in the system notification settings."
+  },
+  "notificationsPermissionDeniedMessage": "בלי הרשאת התראות, תזכורות לאירועים לא יוצגו. ניתן להפעיל בהגדרות המכשיר.",
+  "@notificationsPermissionDeniedMessage": {
+    "description": "Snackbar rationale shown once (M4) when the user denies the OS notification permission, explaining reminders won't show without it."
+  },
+  "settingsTooltip": "הגדרות",
+  "@settingsTooltip": {
+    "description": "Tooltip for the app bar's gear icon that opens the settings screen (M5a)."
+  },
+  "settingsScreenTitle": "הגדרות",
+  "@settingsScreenTitle": {
+    "description": "App bar title for the settings screen (M5a)."
+  },
+  "settingsGoogleSyncSectionTitle": "סנכרון עם יומן Google",
+  "@settingsGoogleSyncSectionTitle": {
+    "description": "Section heading for the Google Calendar sync settings (M5a)."
+  },
+  "settingsGoogleSyncEnableLabel": "סנכרון עם Google Calendar",
+  "@settingsGoogleSyncEnableLabel": {
+    "description": "Label for the switch that enables/disables Google Calendar sync (M5a)."
+  },
+  "settingsGoogleSyncLastSyncedAt": "סונכרן לאחרונה: {time}",
+  "@settingsGoogleSyncLastSyncedAt": {
+    "description": "Shows when Google Calendar sync last completed successfully (M5a).",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsGoogleSyncNeverSynced": "טרם בוצע סנכרון",
+  "@settingsGoogleSyncNeverSynced": {
+    "description": "Shown instead of a last-sync time before Google Calendar sync has ever completed (M5a)."
+  },
+  "settingsGoogleSyncNowButton": "סנכרן עכשיו",
+  "@settingsGoogleSyncNowButton": {
+    "description": "Manual sync-now button label on the settings screen (M5a)."
+  },
+  "settingsGoogleSyncSyncingLabel": "מסנכרן...",
+  "@settingsGoogleSyncSyncingLabel": {
+    "description": "Shown while a Google Calendar sync pass is in progress (M5a)."
+  },
+  "settingsGoogleSyncErrorPrefix": "שגיאת סנכרון: {message}",
+  "@settingsGoogleSyncErrorPrefix": {
+    "description": "Prefix shown before the error detail when the last Google Calendar sync pass failed (M5a).",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsGoogleSyncAccessDeniedMessage": "לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.",
+  "@settingsGoogleSyncAccessDeniedMessage": {
+    "description": "Snackbar shown when the user denies the Google Calendar access request while enabling sync (M5a)."
+  },
+  "settingsGoogleSyncActionFailedMessage": "אירעה שגיאה: {details}",
+  "@settingsGoogleSyncActionFailedMessage": {
+    "description": "Snackbar shown when enabling or disabling Google Calendar sync fails for a real reason (not a plain user cancel/decline) — e.g. the Google account session could not be restored (device-feedback round #3). {details} is the underlying error text, always shown, never swallowed.",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsBackgroundSyncStatus": "סנכרון ברקע: {status}",
+  "@settingsBackgroundSyncStatus": {
+    "description": "Read-only line on the settings screen showing whether periodic background sync (M5b, via WorkManager) is currently active — the status itself comes from settingsBackgroundSyncStatusActive/settingsBackgroundSyncStatusOff. There is no separate toggle: background sync follows the main Google Calendar sync switch automatically.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsBackgroundSyncStatusActive": "פעיל (כל 6 שעות)",
+  "@settingsBackgroundSyncStatusActive": {
+    "description": "Background sync status value (M5b) when Google Calendar sync is enabled: the periodic WorkManager task runs roughly every 6 hours."
+  },
+  "settingsBackgroundSyncStatusOff": "כבוי",
+  "@settingsBackgroundSyncStatusOff": {
+    "description": "Background sync status value (M5b) when Google Calendar sync is disabled, so no periodic background task is registered."
+  },
+  "settingsGoogleSyncLoadFailedMessage": "לא ניתן היה לטעון את הגדרות הסנכרון. בדוק את החיבור לאינטרנט ונסה שוב.",
+  "@settingsGoogleSyncLoadFailedMessage": {
+    "description": "Error message shown instead of the Google Calendar sync section when its initial settings failed to load or timed out (real-device report: previously an endless spinner instead of this message)."
+  },
+  "settingsGoogleSyncRetryButton": "נסה שוב",
+  "@settingsGoogleSyncRetryButton": {
+    "description": "Retry button label shown alongside settingsGoogleSyncLoadFailedMessage."
+  },
+  "settingsGoogleSyncWatchdogMessage": "תקלה בטעינה",
+  "@settingsGoogleSyncWatchdogMessage": {
+    "description": "Shown instead of settingsGoogleSyncLoadFailedMessage when the settings screen's own local loading watchdog (not GoogleSyncTriggerService.start()'s timeout) is what ended the spinner — a last-resort fallback in case every provider layer misbehaves (real-device report #2, round 2)."
+  },
+  "settingsGoogleSyncDisabledDemoMessage": "דורש התחברות עם Google",
+  "@settingsGoogleSyncDisabledDemoMessage": {
+    "description": "Shown instead of the Google Calendar sync switch/controls while in demo mode (no signed-in account to sync with)."
+  },
+  "settingsBackupSectionTitle": "גיבוי ושחזור",
+  "@settingsBackupSectionTitle": {
+    "description": "Section heading for the local-file backup/restore settings (M7)."
+  },
+  "settingsBackupDescription": "ייצוא כל האירועים לקובץ, ושחזור מקובץ קיים. הנתונים חיים גם ב-Google, אך זהו גיבוי ידני נוסף שנשמר אצלך.",
+  "@settingsBackupDescription": {
+    "description": "Explanatory text under the backup section heading (M7)."
+  },
+  "settingsBackupExportButton": "ייצוא גיבוי",
+  "@settingsBackupExportButton": {
+    "description": "Button label that exports every event to a JSON file the user saves directly (M7)."
+  },
+  "settingsBackupShareTooltip": "שיתוף קובץ הגיבוי",
+  "@settingsBackupShareTooltip": {
+    "description": "Tooltip for the icon button that shares the backup file via the OS share sheet instead of saving it directly (M7)."
+  },
+  "settingsBackupImportButton": "שחזור מגיבוי",
+  "@settingsBackupImportButton": {
+    "description": "Button label that starts the restore-from-backup-file flow (M7)."
+  },
+  "settingsBackupImportConfirmTitle": "שחזור מגיבוי",
+  "@settingsBackupImportConfirmTitle": {
+    "description": "Title of the confirmation dialog shown before restoring from a backup file (M7)."
+  },
+  "settingsBackupImportConfirmMessage": "אירועים מהקובץ ישולבו עם האירועים הקיימים: אירוע עם מזהה זהה יוחלף, ואירועים חדשים יתווספו. שום אירוע קיים לא יימחק. להמשיך?",
+  "@settingsBackupImportConfirmMessage": {
+    "description": "Body text of the confirmation dialog before restoring from a backup file, explaining the merge-by-id semantics (M7)."
+  },
+  "settingsBackupImportConfirmButton": "שחזור",
+  "@settingsBackupImportConfirmButton": {
+    "description": "Confirm button label in the restore-from-backup confirmation dialog (M7)."
+  },
+  "settingsBackupExportSuccessMessage": "הגיבוי נשמר בהצלחה",
+  "@settingsBackupExportSuccessMessage": {
+    "description": "Snackbar shown after a backup file was saved/shared successfully (M7)."
+  },
+  "settingsBackupExportErrorMessage": "אירעה שגיאה בייצוא הגיבוי",
+  "@settingsBackupExportErrorMessage": {
+    "description": "Snackbar shown when exporting/sharing the backup file fails (M7)."
+  },
+  "settingsBackupImportSuccessMessage": "השחזור הושלם: {created} אירועים חדשים, {updated} עודכנו",
+  "@settingsBackupImportSuccessMessage": {
+    "description": "Snackbar shown after a successful restore, summarizing how many events were created vs. overwritten (M7).",
+    "placeholders": {
+      "created": {
+        "type": "int"
+      },
+      "updated": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsBackupImportErrorMessage": "אירעה שגיאה בשחזור הגיבוי",
+  "@settingsBackupImportErrorMessage": {
+    "description": "Snackbar shown when restoring from a backup file fails (M7)."
+  },
+  "settingsBackupImportUnsupportedVersionMessage": "קובץ הגיבוי נוצר בגרסה חדשה יותר של האפליקציה ואינו נתמך כאן",
+  "@settingsBackupImportUnsupportedVersionMessage": {
+    "description": "Snackbar shown when the backup file's format version is newer than this build of the app understands (M7)."
+  },
+  "settingsVersionLabel": "גרסה {version}",
+  "@settingsVersionLabel": {
+    "description": "Footer text on the settings screen showing the installed app version (M7).",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAboutTooltip": "אודות",
+  "@settingsAboutTooltip": {
+    "description": "Label for the settings screen list item that opens the About screen (M5c)."
+  },
+  "aboutScreenTitle": "אודות",
+  "@aboutScreenTitle": {
+    "description": "App bar title for the About screen (M5c)."
+  },
+  "aboutTagline": "יומן עברי",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name on the About screen (M5c)."
+  },
+  "aboutDeveloperCredit": "מבית kalit",
+  "@aboutDeveloperCredit": {
+    "description": "Modest developer/maker credit on the About screen (M5c) — the first place kalit branding appears in the app."
+  },
+  "aboutLicensesButton": "רישיונות קוד פתוח",
+  "@aboutLicensesButton": {
+    "description": "Button on the About screen that opens Flutter's built-in open-source licenses page (M5c)."
+  }
+}

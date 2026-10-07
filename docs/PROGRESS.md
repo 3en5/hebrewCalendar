@@ -1,0 +1,736 @@
+# יומן התקדמות — HebrewCalendar
+
+**שלב נוכחי: סבב משוב מכשיר #3 הושלם — טוגל הפעלת סנכרון Google שלא הגיב
+ללחיצה תוקן. v1.0 עדיין ממתין לפריסת Security Rules + הגשה ל-Store.** M6
+(שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
+ב-ARCHITECTURE.md §9)
+
+## 2026-10-07 — שינוי מזהה האפליקציה (applicationId)
+
+- **החלטת משתמש:** מזהה האפליקציה שונה מ-`com.hebrewcalendar.hebrew_calendar`
+  ל-`il.co.natanor.kalfapp.hebrewcalendar`, לפי המוסכמה של אפליקציות המשתמש
+  ב-Play (כמו PowerWatch). השינוי נעשה לפני ההעלאה הראשונה ל-Play, כי אחריה
+  המזהה קבוע.
+- שונו: `applicationId` ו-`namespace` ב-`android/app/build.gradle.kts`, החבילה
+  והנתיב של `MainActivity.kt`, ה-`package_name` ב-`google-services.json`
+  הזמני של `ci.yml`, `docs/RELEASE.md`, ו-fixtures של `PackageInfo` בטסטים.
+  שם חבילת ה-Dart (`hebrew_calendar`) לא השתנה, כי הוא פנימי בלבד.
+- **פעולה נדרשת מהמשתמש ב-Firebase:**
+  1. להוסיף אפליקציית Android חדשה בשם `il.co.natanor.kalfapp.hebrewcalendar`.
+  2. לרשום בה את ה-SHA-1 של `android/debug.keystore` ושל מפתח השחרור.
+  3. להוריד `google-services.json` חדש ולעדכן את ה-secret `GOOGLE_SERVICES_JSON`.
+
+  בלי זה, ההתחברות עם Google תיכשל.
+- `ci.yml`: אם ה-secret `GOOGLE_SERVICES_JSON` לא מכיל client למזהה הנוכחי,
+  ה-build עובר ל-placeholder עם אזהרה, במקום להיכשל. ה-APK שנבנה כך לא יאפשר
+  התחברות עם Google, עד שה-secret יעודכן.
+- נוסף `docs/SPEC_2026-10.md`: אפיון מוצר מסשן 2026-10-07, לעיון בלבד.
+  התוכנית המחייבת נשארת `ARCHITECTURE.md`.
+
+## 2026-07-07 — סבב משוב מכשיר #3 — טוגל הסנכרון לא הגיב ללחיצה
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 359 טסטים עוברים (348
+  קיימים + 11 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500
+  שורות עוברת.
+- **דיווח:** סעיף הסנכרון בהגדרות מוצג כראוי (תוקן בסבב #2), אבל לחיצה על
+  מתג ההפעלה לא עשתה כלום — לא דיאלוג, לא שגיאה, המתג נשאר כבוי.
+- **השורש המאומת:** `google_sign_in` v7 מחייב `await GoogleSignIn.instance
+  .initialize()` פעם אחת לפני כל שימוש אחר בסינגלטון (ראה LESSONS.md, M2b).
+  הקריאה היחידה לכך באפליקציה הייתה `FirebaseAuthRepository
+  ._ensureGoogleSignInInitialized`, שמופעלת **רק** מתוך `signInWithGoogle()`
+  — כלומר רק בזרימת הכניסה האינטראקטיבית. משתמש שחוזר לאפליקציה עם session
+  קיים של FirebaseAuth (השחזור הרגיל, לא כניסה מחדש) אף פעם לא עובר דרך
+  `signInWithGoogle()` באותה הרצה — `AuthGate` קופץ ישר מ-`authStateChanges()`
+  ל-`CalendarShellScreen`. כך ש-`GoogleSignIn.instance` נשאר לא-מאותחל
+  לאורך כל ה-session. לחיצה על המתג קוראת ל-`GoogleSyncTriggerService.enable()`
+  ← `GoogleCalendarApiImpl.requestAccess()` ← `_currentAccount()` ←
+  `GoogleSignIn.instance.attemptLightweightAuthentication()` — קריאה
+  לסינגלטון לפני `initialize()` היא undefined behavior לפי ה-API (זורקת
+  בפועל). `enable()` הישן לא עטף שום דבר ב-try/catch, כך שהחריגה יצאה דרך
+  `settings_screen.dart`'s `unawaited(_onEnabledChanged(...))` ונבלעה בשקט
+  ע"י ה-`runZonedGuarded` הגלובלי של `main.dart` (לוג בלבד, לא קורס) — בדיוק
+  התסמין המדווח.
+- **התיקון (כל השכבות):**
+  1. `lib/core/auth/google_sign_in_gate.dart` (קובץ חדש): `GoogleSignInGate`
+     — guard סטטי, תהליכי (process-wide), אידמפוטנטי סביב ה-initializer
+     המוזרק (בד"כ tear-off של `GoogleSignIn.instance.initialize`) — בטוח
+     לקריאה חוזרת מכל מקום; הראשון שקורא לו מבצע את האתחול בפועל, כל השאר
+     ממתינים לאותה Future. מוזרק כ-callback (לא `GoogleSignIn` ישירות) כדי
+     שהאידמפוטנטיות עצמה תיבדק ביחידה בלי לגעת בפלאגין האמיתי.
+  2. כל מקום שנוגע ב-`GoogleSignIn.instance` מנותב עכשיו דרך ה-guard
+     המשותף: `FirebaseAuthRepository._ensureGoogleSignInInitialized`
+     (הוחלף), `GoogleCalendarApiImpl._currentAccount()` (הנקודה היחידה
+     שנוגעת ב-`GoogleSignIn` בקובץ, גם עבור `requestAccess()` וגם
+     `_authHeaders()`), ו-`background_sync_bootstrap.dart`'s
+     `_attemptSilentGoogleAuth()` (לעקביות, גם אם ה-isolate הנפרד ממילא
+     לא צריך זכרון חוצה-instance).
+  3. `GoogleCalendarApiImpl.requestAccess()`: חוזה חדש ומתועד — `false`
+     = דחייה שקטה (אין חשבון חתום/המשתמש ביטל את דיאלוג ההסכמה,
+     `GoogleSignInExceptionCode.canceled`), **כל** כישלון אחר (כולל
+     `GoogleSignIn.instance` לא-מאותחל) נזרק (`rethrow`), לא נבלע ל-`false`.
+  4. `GoogleSyncTriggerService.enable()`/`disable()`: עטופים כעת ב-
+     try/catch מלא — כל חריגה הופכת ל-`SyncStatus.error`+`errorMessage`
+     גלוי (לא נבלעת). דחייה שקטה (false בלי חריגה) נשארת idle בלי הודעת
+     שגיאה. שדה חדש `GoogleSyncSettingsState.authorizing` — true רק במהלך
+     בקשת ההרשאה האסינכרונית; `GoogleSyncSection` מנטרל את המתג ומציג
+     ספינר קטן לצידו כל עוד `authorizing` — כדי שלחיצה שנייה במהלך הבקשה
+     לא תפתח בקשה כפולה.
+  5. `settings_screen.dart`'s `_onEnabledChanged`: אחרי `enable()`/`disable()`
+     (ששניהם עכשיו תמיד נפתרים, אף פעם לא זורקים), קורא את `service.state` —
+     `status == error` מציג סנאקבר עם הטקסט האמיתי של השגיאה (מחרוזת ARB
+     חדשה `settingsGoogleSyncActionFailedMessage` עם placeholder `{details}`);
+     דחייה שקטה ממשיכה להציג את ההודעה הגנרית הקיימת
+     (`settingsGoogleSyncAccessDeniedMessage`, ללא שינוי התנהגות לטסט הקיים).
+  6. אבחון: `debugPrint` עם קידומת `'[sync-settings]'` בכל שלב של
+     `enable()`/`disable()`/`requestAccess()`/האתחול — תואם לסגנון הקיים.
+- **טסטים חדשים (11):** `test/core/auth/google_sign_in_gate_test.dart`
+  (3 — אידמפוטנטיות, קריאות מקבילות ממתינות לאותה Future, איפוס בין
+  process-lifetimes מדומים), `test/features/settings/application/
+  google_sync_trigger_service_enable_test.dart` (קובץ חדש, פוצל מ-
+  `google_sync_trigger_service_test.dart` כדי לא לחרוג מ-500 שורות — 6
+  טסטים: כישלון אמיתי → error+הודעה, דחייה שקטה → idle בלי הודעה, `authorizing`
+  נכון במהלך הבקשה בהצלחה/בכישלון, שגיאה קודמת מתנקה בהצלחה הבאה, כישלון
+  כתיבת store ב-`disable()` נחשף), `test/features/settings/presentation/
+  settings_screen_enable_failure_test.dart` (קובץ חדש, 2 טסטי widget: כישלון
+  אמיתי → סנאקבר עם הטקסט האמיתי + המתג נשאר כבוי, מצב "עסוק" מנטרל את המתג
+  ומציג ספינר קטן במהלך הבקשה).
+- **אומת אמפירית:** נבדק מול קוד המקור המותקן בפועל של `google_sign_in`
+  7.2.0 (`GoogleSignIn.initialize`'s doc: "must be called exactly once...
+  before any other methods... undefined behavior" אחרת) ו-
+  `GoogleSignInAuthorizationClient.authorizationHeaders`'s מימוש בפועל
+  (כבר עוטף `authorizeScopes` פנימית כש-`promptIfNecessary: true` — כך
+  שההחלטה הקיימת מ-M5a להשתמש ב-`authorizationHeaders` ולא לקרוא
+  ל-`authorizeScopes` ישירות עדיין נכונה, אין צורך לשנות אותה).
+- **דורש פעולת משתמש:** בדיקה חוזרת על מכשיר אמיתי (לא ניתן לאמת חזותית
+  בסביבת הסוכן — אין Android SDK/emulator); פריסת ה-Security Rules בפועל
+  עדיין ממתינה (לא קשור לתיקון הזה).
+
+## 2026-07-06 — סבב משוב מכשיר #2 — ספינר ההגדרות (השורש האמיתי)
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 348 טסטים עוברים (343
+  קיימים + 5 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500
+  שורות עוברת.
+- **דיווח:** לאחר תיקון #2 של סבב משוב מכשיר #1 (`start()` עטוף
+  ב-`try/catch`+`.timeout`), המשתמש בדק שוב על מכשיר אמיתי — הספינר
+  **עדיין** אינסופי מעל סעיף הגיבוי, ואף פעם לא מופיע כרטיס "נסה שוב".
+- **השורש האמיתי (ראה LESSONS.md לפירוט מלא):** תיקון #2 של סבב #1 עובד
+  נכון — `start()` תמיד מגיע ל-`_emit()` תוך 10 שניות. הבאג היה **לא**
+  שם, אלא בממשק בין ה-producer (השירות) וה-consumer (מסך ההגדרות):
+  `CalendarShellScreen` שומר את `GoogleSyncTriggerService` חי מעליית
+  האפליקציה (צופה ב-`googleSyncTriggerServiceProvider`, לא ב-
+  `googleSyncStateProvider`), כך ש-`start()` רץ ופולט אירוע יחיד **מוקדם**
+  — הרבה לפני שהמשתמש בכלל פותח את מסך ההגדרות. `googleSyncStateProvider`
+  (`StreamProvider.autoDispose`) מתחיל להאזין ל-`service.states` (broadcast
+  `StreamController` פשוט) רק כשמסך ההגדרות נפתח בפועל — ו-broadcast
+  streams לא משדרים אירועים היסטוריים למאזין חדש. מסך ההגדרות תמיד "מפספס"
+  את האירוע היחיד שכבר נפלט, ונשאר תקוע ב-`AsyncValue.loading()` לצמיתות,
+  ללא קשר לאיכות ה-timeout הפנימי.
+- **התיקון (כל השכבות):**
+  1. `GoogleSyncTriggerService.watchState()` חדש (`google_sync_trigger_service.dart`)
+     — בונה broadcast stream טרי לכל קריאה, שמשדר סינכרונית את `state`
+     הנוכחי ל-`onListen` לפני שהוא מעביר עדכונים עתידיים; `googleSyncStateProvider`
+     (`google_sync_providers.dart`) קורא לה במקום לחשוף את `states` הגולמי.
+  2. `googleSyncTriggerServiceProvider` עוטף גם את **בניית** התלויות
+     (לא רק את `start()` הפנימי) ב-`try/catch` — `_UnavailableGoogleCalendarApi`
+     placeholder + פרמטר `constructionError` חדש ב-`GoogleSyncTriggerService`
+     שגורם ל-`start()` לדלג ישר לשגיאה בלי לגעת בתלויות (אמיתיות או
+     placeholder).
+  3. `settings_screen.dart`'s `_RealGoogleSyncSection` הפך ל-`ConsumerStatefulWidget`
+     עם Timer watchdog מקומי (12 שניות, מבוטל ב-`dispose`) שכופה את כרטיס
+     השגיאה גם אם שכבת ה-provider כולה משתבשת בעתיד; ענף השגיאה של
+     `.when` מעביר עכשיו את `error.toString()` בפועל כ-`errorMessage`
+     (במקום כרטיס גנרי בלי פירוט).
+  4. אבחון: `debugPrint` עם קידומת `'[sync-settings]'` בכל שלב אסינכרוני
+     (בניית provider, התחלת/סיום/כישלון טעינת store, `start()`) לאיתור
+     תקלות עתידיות במכשיר אמיתי דרך `adb logcat`.
+  5. מחרוזת ARB חדשה: `settingsGoogleSyncWatchdogMessage` ("תקלה בטעינה")
+     — מוצגת ספציפית כשה-watchdog של ה-widget (לא `start()`) הוא זה
+     שסיים את הספינר.
+- **אומת אמפירית (לא רק היסק):** נבדק ישירות ש-`GoogleCalendarApiImpl()`'s
+  קונסטרוקטור (הנוגע ב-`GoogleSignIn.instance` בלי לקרוא לו) לא זורק/תקוע
+  תחת `flutter test` — מסך ההגדרות מרנדר תקין **בלי** override ל-
+  `googleCalendarApiProvider` כלל, כלומר רינדור הסעיף מעולם לא היה תלוי
+  ב-Google auth בפועל (שלא כמו ההשערה הראשונית של המשימה).
+- **טסטים:** `test/features/settings/application/google_sync_trigger_service_test.dart`
+  (2 חדשים: `watchState()` משדר מחדש למאזין מאוחר, `constructionError`
+  מדלג ישר לשגיאה בלי לגעת בתלויות), `test/features/settings/presentation/settings_screen_test.dart`
+  (`group` חדש, 3 טסטים: רינדור בלי override ל-`googleCalendarApiProvider`,
+  provider שזורק סינכרונית -> כרטיס שגיאה עם הטקסט האמיתי לא קריסה,
+  `googleSyncStateProvider` שמוחלף ב-`Stream.empty()` -> ה-watchdog
+  המקומי של ה-widget מציל אחרי 12 שניות).
+- **דורש פעולת משתמש:** בדיקה חוזרת על מכשיר אמיתי (לא ניתן לאמת חזותית
+  בסביבת הסוכן — אין Android SDK/emulator); פריסת ה-Security Rules
+  בפועל עדיין ממתינה (ראה `firebase/README.md`, לא קשור לתיקון הזה).
+
+## 2026-07-06 — סבב משוב מכשיר #1 (5 תיקונים מבדיקה ראשונה על מכשיר אמיתי)
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 343 טסטים עוברים (334 קיימים
+  + 9 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות עוברת.
+- **תיקון #1 — עורך האירועים חתוך, בלי גלילה:** `event_editor_screen.dart`'s
+  `body` כבר היה `ListView` (הגלילה עצמה עבדה), אבל כפתור השמירה ב-App Bar
+  כבר היה תמיד נגיש; הבעיה האמיתית: ריפוד תחתון קבוע (`spacingMd` בלבד) לא
+  התחשב במקלדת — השדה האחרון (בורר "עד תאריך") יכול היה להישאר מוסתר
+  מאחוריה בלי אפשרות לגלול מספיק כדי לחשוף אותו. תוקן: הריפוד התחתון גדל
+  לפי `MediaQuery.of(context).viewInsets.bottom` + `resizeToAvoidBottomInset:
+  true` מפורש. טסט widget חדש ב-360x640 מאמת שהשדה האחרון נגיש בגלילה
+  ולחיץ. תוך כדי כתיבת הטסט התגלה overflow קטן (0.75px) נפרד ב-
+  `hebrew_date_picker_sheet.dart`'s שלוש הרשימות הנפתחות במסך צר — תוקן
+  עם `isExpanded: true` (ללא זה, `DropdownButtonFormField` מתאים את עצמו
+  לרוחב האינטרינזי של הפריט הרחב ביותר, לא לשטח שה-`Expanded` מסביבו נותן).
+- **תיקון #2 — ספינר אינסופי בהגדרות (החשוב ביותר, ראה LESSONS.md):** שורש
+  הבעיה **לא** היה מה שהמשימה שיערה כסביר (חוסר-התאמה ב-whitelist של
+  `firestore.rules`'s `isValidUserDoc`) — הרשימה כבר כללה את כל שדות
+  הסנכרון מ-M5a/M5b. השורש האמיתי: `google_sync_trigger_service.dart`'s
+  `start()` קרא ל-`_settingsStore.load()` (קריאת Firestore) בלי `try/catch`
+  ובלי timeout; `google_sync_providers.dart` קורא ל-`start()` דרך
+  `unawaited(...)`, כך שכל כישלון (permission-denied כי ה-Rules האמיתיות
+  טרם פורסמו בפועל, או timeout רשת) נבלע בשקט בלי לקרוס (בזכות
+  `runZonedGuarded`), אבל **`_emit()` אף פעם לא נקרא** — ה-`StreamProvider`
+  שהמסך צופה בו נשאר ב-`AsyncValue.loading()` לצמיתות. תוקן: `start()` עוטף
+  את כל הקריאה ב-`try/catch`+`.timeout(_startTimeout)` (ניתן להזרקה,
+  ברירת מחדל 10 שניות, `syncStartTimeoutProvider` לדריסה בטסטים) — בכל
+  מקרה מגיע ל-`_emit()` אחד; `GoogleSyncSettingsState.initialLoadFailed`
+  חדש; `GoogleSyncSection` מציג כרטיס שגיאה+כפתור "נסה שוב" (`retryLoad()`)
+  במקום הפקדים הרגילים. **`firestore.rules` עצמו לא השתנה** (כבר תקין) —
+  ראה `firebase/README.md` להבהרה ותזכורת לפרוס בפועל.
+- **תיקון #3 — overflow בגריד החודש ("BOTTOM OVERFLOWED BY 20 PIXELS"):**
+  שורש: `SliverGridDelegateWithFixedCrossAxisCount` בלי `childAspectRatio`
+  מפורש (ברירת מחדל 1.0, תא ריבועי) אילץ גובה תא = רוחב תא — על מסך צר
+  (360dp / 7 עמודות) זה ~50dp, פחות ממה ש-`DayCell`'s תוכן צריך. תוקן בשתי
+  שכבות: `LayoutBuilder` ב-`month_grid.dart` מחשב `childAspectRatio` מהגובה
+  הזמין בפועל (לא ריבוע קבוע), ו-`FittedBox(scaleDown)` ב-`day_cell.dart`
+  כרשת ביטחון נגד overflow תחת `textScaleFactor` גדול. טסט widget חדש
+  ב-360x640 + textScale 1.3 מאמת `tester.takeException()` ריק.
+- **תיקון #4 — מסך "אודות":** נוסף פריט "אודות" בהגדרות שפותח
+  `AboutScreen` חדש (שם/תגית/גרסה מותקנת דרך `appVersionProvider`/קרדיט
+  "מבית kalit" — הופעה ראשונה וצנועה של המיתוג — וכפתור ל-`showLicensePage`
+  המובנה של Flutter), כולו דרך ARB.
+- **תיקון #5 — מצב הדגמה (דרישת Google Play review):** מסך הכניסה קיבל
+  כפתור משני "כניסה במצב הדגמה" (`demoModeProvider`, `NotifierProvider<bool>`
+  לא-autoDispose); `AuthGate` מציג `CalendarShellScreen` במצב הדגמה בלי
+  אימות בכלל; `eventRepositoryProvider` זורע `InMemoryEventRepository` עם
+  שלושה אירועי דמו עבריים אמיתיים (`lib/domain/event/demo_events.dart`'s
+  `buildDemoEvents` — יום הולדת חוזר-שנתי, פגישה עם שעה, אירוע יום שלם).
+  ב-`CalendarShellScreen`: `reminderSyncServiceProvider`/
+  `googleSyncTriggerServiceProvider` כלל לא נצפים במצב הדגמה (בלי בקשת
+  הרשאת התראות, בלי קריאות Google/Firestore), ותפריט ה-overflow מציג
+  "התחבר" (מנקה את מצב הדגמה) במקום "התנתקות". ב-`SettingsScreen`: סעיף
+  הסנכרון מוצג עם `demoModeDisabled: true` (הודעה קבועה "דורש התחברות עם
+  Google", בלי לצפות כלל ב-`googleSyncStateProvider`/
+  `googleSyncTriggerServiceProvider`); ייצוא/שחזור גיבוי ממשיכים לעבוד
+  (עובדים ישירות מול ה-repository הנוכחי, לא מודעים למצב הדגמה).
+- **טסטים:** `test/features/event_editor/presentation/event_editor_screen_test.dart`
+  (טסט 360x640), `test/features/calendar/presentation/month_view_body_test.dart`
+  (טסט 360x640 + textScale 1.3), `test/features/settings/application/google_sync_trigger_service_test.dart`
+  (2 טסטים חדשים עם `FakeHangingSyncSettingsStore`), `test/features/settings/presentation/settings_screen_test.dart`
+  (טסט ספינר-לא-אינסופי + טסט מסך אודות), `test/features/auth/presentation/demo_mode_test.dart`
+  (קובץ חדש, 3 טסטים — כפתור דמו/תפריט overflow/הגדרות מנוטרלות).
+- **דורש פעולת משתמש:** פריסת ה-Security Rules בפועל (עדיין לא בוצעה —
+  ראה `firebase/README.md`, הערה חדשה שמבהירה שזה לא שינוי-תוכן אלא תזכורת
+  דחופה); בדיקה ידנית חוזרת על מכשיר אמיתי של חמשת התיקונים (לא ניתן לאמת
+  חזותית בסביבת הסוכן — אין Android SDK/emulator).
+
+## 2026-07-06 — M7 הושלם (גיבוי/שחזור, הכנת שחרור, ליטוש) — v1.0 feature-complete
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 334 טסטים עוברים (303 קיימים
+  + 31 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות עוברת.
+- תלויות חדשות: `share_plus: ^12.0.2`, `file_picker: ^11.0.2`,
+  `package_info_plus: ^9.0.1`.
+- **גיבוי/שחזור מקומי (ARCHITECTURE.md §7 מפורט):**
+  `lib/domain/backup/backup_codec.dart` (קידוד/פענוח JSON טהור, `DateTime`
+  כ-ISO 8601 במקום `Timestamp`, `BackupFormatVersionError` לגרסה עתידית),
+  `lib/data/backup/backup_service.dart` (`abstract class BackupService` +
+  `FileBackupService` — `exportToFile`/`shareBackup` דרך `file_picker`/
+  `share_plus`, `importFromFile` -> `restoreEvents` עם סמנטיקת merge-by-id:
+  אירוע עם `id` תואם נדרס, כל השאר נוצרים עם `id` חדש, שום דבר לא נמחק),
+  `lib/features/settings/presentation/widgets/backup_section.dart` (סעיף
+  "גיבוי ושחזור" בהגדרות: ייצוא/שיתוף/שחזור עם דיאלוג אישור, התקדמות,
+  סנאקברים עבריים). **סטייה קטנה:** אין הצפנת קובץ הגיבוי (הניסוח המקורי
+  ב-ARCHITECTURE.md §7 הזכיר "JSON מוצפן") — תקציר המשימה בפועל לא דרש
+  הצפנה; נרשם ל-WISHLIST.md כהרחבה עתידית, ו-ARCHITECTURE.md §7 עודכן
+  לשקף את המימוש בפועל.
+- **הכנת שחרור:** `android/app/build.gradle.kts` — `signingConfigs.release`
+  אמיתי הנקרא מ-`android/key.properties` (גיטיגנור) כשהוא קיים, עם נפילה
+  חזרה ל-debug signing כשאינו (כך ש-`flutter run --release`/CI הרגיל ממשיכים
+  לעבוד ללא שינוי); `isMinifyEnabled`/`isShrinkResources` מופעלים לשחרור עם
+  `android/app/proguard-rules.pro` (keep rules ל-`flutter_local_notifications`/
+  `workmanager`/Firebase/`google_sign_in`). `.github/workflows/release.yml`
+  (`workflow_dispatch` ידני בלבד — לא רץ על push/PR): מוודא שחמשת ה-secrets
+  קיימים (`KEYSTORE_BASE64`/`KEYSTORE_PASSWORD`/`KEY_ALIAS`/`KEY_PASSWORD`/
+  `GOOGLE_SERVICES_JSON`), מפענח את ה-keystore, כותב `key.properties`,
+  מחשב `versionName`/`versionCode` מ-`pubspec.yaml` (`versionCode` = מספר
+  ה-build ב-pubspec + `GITHUB_RUN_NUMBER`, כדי שיעלה בכל הרצה בלי לערוך
+  ידנית), מריץ `flutter build appbundle --release`, ומעלה את ה-`.aab`
+  כ-artifact. `docs/RELEASE.md` (עברית) — הליך מלא: יצירת keystore
+  (`keytool`), רישום SHA-1 ב-Firebase, הוספת ה-secrets, הרצת ה-workflow,
+  העלאה ל-Play Console, ואזהרת OAuth scope verification (`calendar.events`
+  הוא sensitive scope — חובה verification של Google לפני הפצה ציבורית).
+- **ליטוש:** גרסת אפליקציה בהגדרות (`package_info_plus`,
+  `app_version_provider.dart`, "גרסה X.Y.Z" בתחתית מסך ההגדרות); error
+  boundary גלובלי ב-`main.dart` (`FlutterError.onError` +
+  `runZonedGuarded`, לוג ל-`debugPrint` — Crashlytics נדחה ל-WISHLIST
+  במפורש, ראה שם); ביקורת דיאלוגי אישור לפעולות הרסניות — מחיקת אירוע/סדרה
+  והתנתקות כבר היו קיימים (M2b/M3a), נוסף דיאלוג אישור לשחזור מגיבוי שמסביר
+  את סמנטיקת ה-merge (החדש היחיד שהיה חסר). אייקון אפליקציה מותאם אישית לא
+  מומש (אין כלי יצירת תמונות בסביבת הסוכן) — נרשם ל-WISHLIST.md.
+- **טסטים:** `test/domain/backup/backup_codec_test.dart` (round-trip לכל
+  צורת שדה — זמנים, תזכורות מרובות, כל סוגי החזרתיות, מצבי סנכרון גוגל
+  לא-ברירת-מחדל, וגרסת פורמט עתידית/ישנה), `test/data/backup/backup_service_test.dart`
+  (`buildBackupJson`/`restoreEvents` מול `InMemoryEventRepository` — יצירה/
+  עדכון לפי merge-by-id, סימון dirty, אי-מחיקה, round-trip מלא דרך הקודק),
+  `test/features/settings/presentation/widgets/backup_section_test.dart`
+  (טסטי widget עם `FakeBackupService` — ייצוא/שיתוף/שחזור, דיאלוג אישור,
+  הודעות הצלחה/כישלון/גרסה-לא-נתמכת). `settings_screen_test.dart` הקיים
+  קיבל override ל-`backupServiceProvider` ו-`PackageInfo.setMockInitialValues`
+  (סעיף הגרסה החדש קורא ל-`PackageInfo.fromPlatform()`).
+- **דורש פעולת משתמש:** יצירת keystore שחרור אמיתי + הרצת
+  `.github/workflows/release.yml` בפועל (לא ניתן להריץ `flutter build
+  appbundle` בסביבת הסוכן — אין Android SDK, ראה LESSONS.md); בדיקה ידנית
+  על מכשיר אמיתי של יצוא/שיתוף/שחזור גיבוי (הפלאגינים `file_picker`/
+  `share_plus` לא ניתנים להרצה בסביבת הסוכן); OAuth scope verification
+  (`calendar.events`) לפני הפצה ציבורית (`docs/RELEASE.md` §7) — יכול לקחת
+  ימים-שבועות, לתכנן מראש.
+
+## 2026-07-06 — M5b הושלם (סנכרון תקופתי ברקע דרך WorkManager) — M5 הושלם במלואו
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 303 טסטים עוברים (288 קיימים
+  + 15 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות עוברת.
+- תלות חדשה: `workmanager: ^0.9.0+3`.
+- **שכבת החלטה טהורה (RULES.md §7 — "כל החלטה מתועדת ונבדקת ביחידה")**:
+  `lib/features/settings/application/background_sync_runner.dart`
+  (`BackgroundSyncRunner`/`BackgroundSyncOutcome`) — Riverpod/workmanager/
+  Firebase-free, כל תלות מוזרקת (בדיקת חתימה שקטה, `SyncSettingsStore`,
+  `engineFactory`, שעון). מריץ מעבר סנכרון יחיד עם timeout קשיח (4 דקות
+  ברירת מחדל) וממפה את התוצאה ל-`success`/`permanentSkip`/`retry` — הקונטרקט
+  ש-WorkManager צריך (`Future<bool>`: `true`=הצלחה/דילוג קבוע,
+  `false`=דילוג זמני שכדאי לנסות שוב). נבדק ביחידה במלואו
+  (`test/features/settings/application/background_sync_runner_test.dart`,
+  7 טסטים): לא מחובר/מנוטרל -> דילוג קבוע בלי לבנות engine כלל; מסלול
+  מוצלח; כשל בלתי-מזוהה -> retry; כשל 403 (הרשאה בוטלה) -> דילוג קבוע
+  (**הסנכרון נשאר מופעל** — החלטה מתועדת: שגיאה מוצגת במקום כיבוי שקט);
+  timeout -> retry; ריצה מקבילית -> דילוג קבוע.
+- **גבול פלאגין דק** (task brief §2): `background_sync_scheduler.dart`
+  (`BackgroundSyncScheduler` מופשט + `WorkmanagerBackgroundSyncScheduler` —
+  `registerPeriodicTask`/`cancelByUniqueName`, אילוצי `NetworkType.connected`+
+  `requiresBatteryNotLow`, `existingWorkPolicy: keep`, תדירות 6 שעות, ללא
+  wakelocks) ו-`background_sync_bootstrap.dart` (`callbackDispatcher`,
+  `@pragma('vm:entry-point')`, נרשם ב-`main.dart` דרך `Workmanager().initialize`
+  — אנדרואיד בלבד, `kIsWeb`/`Platform.isAndroid`) הם שני הקבצים היחידים
+  שנוגעים ב-`package:workmanager`. `callbackDispatcher` רץ ב-isolate/מנוע
+  Flutter נפרד: מאתחל Firebase (guard כפול-init), בודק
+  `FirebaseAuth.instance.currentUser` (עמיד חוצה-isolate), מאמת גוגל בשקט
+  (`GoogleSignIn.instance.attemptLightweightAuthentication`+
+  `authorizationHeaders(..., promptIfNecessary: false)` — **לעולם לא**
+  מציג UI), ובונה `SyncEngine`/`FirestoreEventRepository`/
+  `FirestoreSyncSettingsStore` חדשים לאותו `uid`. לא ניתן להרצה בפועל
+  בסביבת הפיתוח הזו (אין Android SDK/emulator) — כל לוגיקת ההחלטה נבדקת
+  ביחידה דרך `BackgroundSyncRunner` בלבד, כנדרש במשימה.
+- **רישום/ביטול**: `google_sync_trigger_service.dart` קיבל תלות
+  `BackgroundSyncScheduler` (ברירת מחדל `NoopBackgroundSyncScheduler` —
+  בלי לשבור טסטים קיימים): `enable()`/`start()` (כשמופעל) רושמים,
+  `disable()`/`stop()` (כשהיה מופעל) מבטלים. `google_sync_providers.dart`
+  קיבל `backgroundSyncSchedulerProvider` (`WorkmanagerBackgroundSyncScheduler`
+  כברירת מחדל, נדרס ב-`FakeBackgroundSyncScheduler` בטסט שמרנדר את מסך
+  ההגדרות דרך ה-provider tree האמיתי — אותו דפוס כמו
+  `notificationSchedulerProvider`/`googleCalendarApiProvider`, ראה
+  LESSONS.md).
+- **תיקוני אמינות (task brief §4, "small, in scope")**: `sync_engine.dart`
+  קיבל מנעול in-flight (`_inFlight` — מונע שתי ריצות בו-זמנית *באותו
+  isolate/מופע*, לא הגנה חוצת-isolate — תועד במפורש בקוד וב-LESSONS.md
+  למה זה מספיק) וסיווג כשל-קבוע-מול-זמני (`SyncRunResult.permanent`:
+  HTTP 401/403 או `StateError` של היעדר חשבון/הרשאה -> קבוע; כל השאר,
+  כולל שגיאות רשת -> זמני, ברירת מחדל בטוחה). `SyncSettingsStore` קיבל
+  `lastErrorMessage`/`saveLastError` (Firestore: `googleLastSyncError`) —
+  נמחק בהצלחה, נשמר בכישלון — כך שכישלון ריצת-רקע (בלי מאזין חי) עדיין
+  מופיע במסך ההגדרות בפעם הבאה שהוא נטען (`google_sync_trigger_service.dart`'s
+  `start()`). `GoogleCalendarApiImpl` קיבל `allowInteractiveAuth` (ברירת
+  מחדל `true`, `false` ברקע) כדי ש-`promptIfNecessary` לא יהיה קבוע `true`.
+- **הגדרות UI**: שורת קריאה-בלבד תחת סעיף הסנכרון — "סנכרון ברקע: פעיל
+  (כל 6 שעות)" / "כבוי", נגזרת מאותו דגל מופעל/מנוטרל, בלי מתג נפרד
+  (task brief §3). תדירות ניתנת-להגדרה נרשמה ב-WISHLIST.md.
+- **Firestore**: `firestore.rules` עודכן לוולידציית `googleLastSyncError`
+  ב-`users/{uid}`. **טרם פורסם** — ראה `firebase/README.md`.
+- **טסטים**: מעבר ל-7 הטסטים החדשים ל-`BackgroundSyncRunner`, נוספו
+  4 טסטים ל-`test/data/sync/sync_engine_test.dart` (מנעול in-flight,
+  סיווג 403 כקבוע, כשל בלתי-מזוהה כזמני, ניקוי שגיאה בהצלחה) ו-4 טסטים
+  ל-`google_sync_trigger_service_test.dart` (רישום/ביטול, רישום-מחדש
+  ב-`start`, ביטול-על-תנאי ב-`stop`, וחשיפת שגיאה שמורה). מסך ההגדרות
+  (`settings_screen_test.dart`) קיבל override ל-`backgroundSyncSchedulerProvider`
+  בשלושת הטסטים הקיימים, ואסרציה נוספת על שורת "סנכרון ברקע".
+- **דורש פעולת משתמש:** פריסת ה-Security Rules המעודכנות (`googleLastSyncError`);
+  בדיקה ידנית אמיתית של ריצת רקע על מכשיר/emulator אנדרואיד אמיתי לא בוצעה
+  כאן (אין Android SDK/emulator בסביבת הסוכן — ראה LESSONS.md) — מומלץ
+  לבדוק ידנית: הפעלת סנכרון והמתנה ~6 שעות (או שינוי זמני לתדירות קצרה
+  לבדיקה) לוודא שה-task אכן רץ, סנכרון בזמן שהאפליקציה סגורה, ושחזור אחרי
+  שינוי הרשאת גוגל (403) לא מכבה את הסנכרון אלא מציג שגיאה בהגדרות.
+
+## 2026-07-06 — M5a הושלם (מנוע סנכרון Google Calendar, טריגרים בפורגראונד)
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 288 טסטים עוברים (221 קיימים
+  + 67 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות
+  עוברת, כיסוי `lib/domain` בפועל 95.75% (מעל סף ה-90%).
+- תלות חדשה: `http: ^1.5.0` (נוספה במפורש כתלות ישירה — הייתה כבר תלות עקיפה
+  דרך חבילות אחרות). **לא** נוספו `googleapis`/`googleapis_auth`/
+  `extension_google_sign_in_as_googleapis_auth` שהוצעו בברירת המחדל במשימה —
+  ראה `docs/LESSONS.md` להסבר המלא (`google_sign_in` v7 חושף כבר bearer
+  headers ישירות, וה-client המחולל של `googleapis` לא חשף שליטה נוחה בכותרת
+  `If-Match` הנדרשת לזיהוי קונפליקטים; המימוש קורא ל-Calendar v3 REST ישירות
+  דרך `package:http`).
+- **תכנון (RULES.md §2 — מנוע מונוליתי היה חורג מ-500 שורות):** פיצול קפדני
+  domain/data/features, ARCHITECTURE.md §5 מתעד את כולו בפירוט:
+  - **`lib/domain/sync/`** (טהור לגמרי): `sync_state.dart` (`GoogleSyncState`,
+    `SyncStatus`), `remote_event_snapshot.dart`, `sync_action.dart` (sealed
+    class), `export_candidate.dart`, `occurrence_key.dart`,
+    `sync_settings_store.dart`, `sync_run_result.dart`, ו-**`sync_planner.dart`**
+    — הליבה: `planExportActions`/`planImportActions`/`resolveConflict`,
+    שם חי כל היגיון פתרון הקונפליקטים (last-write-wins, זיהוי echo של יצוא
+    עצמי, מחיקה דו-כיוונית) — נבדק ביחידה במלואו
+    (`test/domain/sync/sync_planner_export_test.dart`+`sync_planner_import_test.dart`,
+    פוצל מקובץ אחד שחרג מ-500 שורות).
+  - **`lib/data/sync/`**: `google_calendar_api.dart` (ממשק מופשט + DTOs
+    עצמאיים, לא googleapis) עם `google_calendar_api_impl.dart` (מימוש REST
+    אמיתי), `event_sync_mapper.dart`, `sync_import_pass.dart`/
+    `sync_export_pass.dart` (חצי-משיכה/חצי-דחיפה, כל אחד קורא ל-
+    `sync_planner.dart`), `sync_engine.dart` (`SyncEngine.runSync` —
+    האורקסטרטור), ו-`firestore_sync_settings_store.dart`/
+    `in_memory_sync_settings_store.dart`.
+  - **`Event`** קיבל `source` (`EventSource.app`/`google`), `googleSync`
+    (`GoogleSyncState` — מיפוי יחיד לאירוע לא-חוזר), `googleInstanceSync`
+    (מפת `GoogleSyncState` לפי מפתח מופע, לאירועים חוזרים — ARCHITECTURE.md §4
+    מתעד את ההבחנה). `EventRepository` קיבל `getAllForSync`/
+    `getByGoogleEventId`/`updateSyncState` (לא מסמן dirty מחדש)/
+    `takePendingGoogleDeletions`/`upsertFromGoogle`/`applyRemoteDelete`;
+    `create`/`update` הרגילים ממשיכים לסמן `googleSync.dirty=true` בכל עריכה
+    (repository hook, לא UI — RULES.md §6), ו-`delete` מתעד
+    `PendingGoogleDeletion` כשיש מצב סנכרון קיים (ב-Firestore: עמיד תחת
+    `users/{uid}/pendingGoogleDeletions`, לא רק בזיכרון — M5a הוא
+    foreground-only, ראה LESSONS.md למגבלה).
+  - **`lib/features/settings/`**: מסך הגדרות ראשון של האפליקציה (כפתור גיר
+    ב-App Bar של `CalendarShellScreen`) עם סעיף "סנכרון עם יומן Google":
+    מתג הפעלה (מבקש scope `calendar.events` כ-incremental authorization רק
+    כשמפעילים, לא בכניסה), זמן סנכרון אחרון, כפתור "סנכרן עכשיו" עם
+    אינדיקציית התקדמות, הצגת שגיאה בעברית. `google_sync_trigger_service.dart`
+    (בדומה ל-`reminder_sync_service.dart`, ללא Riverpod): טריגר פתיחה
+    (מתוגבל לפעם ב-5 דקות) וטריגר עריכה מקומית (debounce 30 שניות, האזנה
+    ל-`watchOccurrencesInRange` רחב). `google_sync_providers.dart` מחווט
+    ל-Riverpod; `CalendarShellScreen` צופה ב-provider כדי שהטריגרים יעבדו כל
+    עוד המסך מוצג (לא רק כשההגדרות פתוחות), ומבוטל בהתנתקות.
+- **חלון יצוא מתגלגל**: ~24 חודשים, מורחב דרך `recurrence_expander.dart`'s
+  `occurrencesForEventInRange` — אותו קוד הרחבה שמזין את תצוגות היומן, כדי
+  שהמופעים שהמשתמש רואה יהיו בדיוק אלה שמיוצאים (כולל מדיניות מיפוי אדר/יום
+  30). דה-דופ ע"י `extendedProperties` (`hebcalEventId`/`hebcalOccurrence`):
+  בסנכרון מלא, `SyncImportPass` בונה lookup מכל אירוע גוגל שנושא את
+  הסימונים שלנו, ו-`SyncExportPass` מאמץ מיפוי קיים במקום ליצור כפול כשמצב
+  הידוע המקומי ריק.
+- **Firestore**: `firestore.rules` עודכן לוולידציית `source`/`googleSync`/
+  `googleInstanceSync` ב-`events/{eventId}`, `googleSyncEnabled`/
+  `googleSyncToken`/`googleLastSyncedAt` ב-`users/{uid}`, ואוסף-משנה חדש
+  `users/{uid}/pendingGoogleDeletions/{eventId}`. **טרם פורסם** — ראה
+  `firebase/README.md`.
+- **טסטים**: `test/domain/sync/sync_planner_export_test.dart`+
+  `sync_planner_import_test.dart` (17 טסטים — הליבה: create/update/skip,
+  מחיקת מופעים stale, שילוב אמיתי עם `recurrence_expander.dart` למיפוי אדר/
+  יום 30/סדרה שבועית; last-write-wins, echo, מחיקה דו-כיוונית, פתרון
+  קונפליקט אחרי 412), `test/data/sync/sync_engine_test.dart` (9 טסטים עם
+  `FakeGoogleCalendarApi`+`InMemoryEventRepository`: מנוטרל, סנכרון ראשון/
+  תוספתי, 410, 412, דה-דופ, מחיקה דו-כיוונית, אירוע חוזר), `test/features/
+  settings/application/google_sync_trigger_service_test.dart` (10 טסטים:
+  הפעלה/כיבוי, טריגרים, debounce, שגיאה), `test/features/settings/
+  presentation/settings_screen_test.dart` (3 טסטי widget), ותוספות ל-
+  `event_test.dart`/`event_firestore_mapper_test.dart`/
+  `in_memory_event_repository_sync_test.dart` (קובץ חדש, פוצל מ-
+  `in_memory_event_repository_test.dart` שחרג מ-500 שורות). 8 טסטי ה-widget
+  הקיימים שמרנדרים את `CalendarShellScreen` קיבלו override נוסף ל-
+  `googleCalendarApiProvider`/`syncSettingsStoreProvider` (אותו דפוס בדיוק
+  כמו `notificationSchedulerProvider` ב-M4 — ראה LESSONS.md).
+- **דורש פעולת משתמש:** פריסת ה-Security Rules המעודכנות (ראה למעלה); בדיקה
+  ידנית אמיתית מול Google Calendar אמיתי לא בוצעה כאן (אין רשת ל-Google APIs
+  בסביבת הסוכן — כל הלוגיקה אומתה ביחידה עם `FakeGoogleCalendarApi`); מומלץ
+  לבדוק ידנית: הפעלת סנכרון, בקשת ההרשאה בפועל, יצוא/יבוא אמיתי, טיפול
+  ב-410/412 אמיתיים.
+
+## 2026-07-06 — M4 הושלם (תזכורות/התראות מקומיות)
+
+- מומש בפיקוח: `flutter analyze` נקי (0 issues), 221 טסטים עוברים (192 קיימים
+  + 29 חדשים), `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות
+  עוברת, כיסוי `lib/domain` בפועל 96.7% (מעל סף ה-90%).
+- תלויות חדשות: `flutter_local_notifications: ^20.1.0`, `timezone: ^0.10.1`,
+  `flutter_timezone: ^5.1.0`, `shared_preferences: ^2.5.3`.
+- הפרדה תלת-שכבתית (ARCHITECTURE.md §6 מפורט): **מתכנן טהור**
+  (`lib/domain/notifications/reminder_planner.dart`, `planReminders`) — נבדק
+  ביחידה במלואו (דילוג עבר/אופק, כלל 09:00 ליום שלם, תקרת 60 הקרובים,
+  יציבות/ייחודיות `stableId`, פירמוט גוף בעברית); **מתאם פלאגין דק**
+  (`lib/data/notifications/local_notification_scheduler.dart`,
+  `LocalNotificationScheduler`) — לא נבדק ביחידה ישירות (רק מיפוי לפלאגין),
+  כל קריאה עטופה כדי שלעולם לא תקריס; **אורקסטרטור**
+  (`lib/features/notifications/application/reminder_sync_service.dart`,
+  `ReminderSyncService`) — Riverpod-free, נבדק עם fakes
+  (`InMemoryEventRepository`+`FakeNotificationScheduler`).
+- `stableId` נגזר מ-hash FNV-1a דטרמיניסטי על event id + תאריך מופע +
+  minutesBefore — במפורש **לא** מ-`Object.hash`/`hashCode` (לא מובטחים יציבים
+  בין הרצות אפליקציה; ראה LESSONS.md).
+- תזמון מבוסס-diff (`lib/domain/notifications/scheduled_notification_diff.dart`,
+  טהור ונבדק בנפרד): מבטל רק מזהים שכבר לא בתוכנית, מתזמן רק חדשים/שהשתנו.
+  מפת "מה מתוזמן" נשמרת ב-`shared_preferences`.
+  `zonedSchedule` עם `exactAllowWhileIdle` ונפילה חזרה ל-`inexactAllowWhileIdle`
+  כשאין הרשאת exact alarm; אזור זמן דרך `flutter_timezone`.
+- `CalendarShellScreen` מפעיל את `reminderSyncServiceProvider` (autoDispose —
+  מבוטל בהתנתקות: subscription+כל תזכורת מתוזמנת) ומבקש הרשאת התראות פעם
+  אחת בלבד (דגל ב-`shared_preferences`), עם snackbar עברי אם נדחתה.
+- עורך האירועים: `ReminderSelector` הורחב מ-ללא/10/30/60 דקות (M2a) ל-ללא/
+  בזמן האירוע/10/30/60 דקות/יום לפני. עדיין single-select — ריבוי תזכורות
+  לאירוע אחד נרשם ל-WISHLIST.md (הסכימה כבר תומכת, רק ה-UI לא).
+- אנדרואיד: `AndroidManifest.xml` קיבל `POST_NOTIFICATIONS`+
+  `RECEIVE_BOOT_COMPLETED`+`SCHEDULE_EXACT_ALARM` (לא `USE_EXACT_ALARM`) +
+  `ScheduledNotificationReceiver`/`ScheduledNotificationBootReceiver`.
+- **החלטת סטייה קטנה:** כל 8 טסטי ה-widget הקיימים שמרנדרים את
+  `CalendarShellScreen` (auth_gate/agenda/calendar_shell/day_view/
+  month_view_body/month_view_events/month_view_recurring/week_view) קיבלו
+  override נוסף ל-`notificationSchedulerProvider` עם `FakeNotificationScheduler`
+  חדש (`test/test_support/fake_notification_scheduler.dart`) — כדי שלא ייגעו
+  בפלאגין אמיתי (שהיה זורק `MissingPluginException` בסביבת טסטים) ולמנוע
+  Timer/subscription תלויים שלא ינוקו בזמן. `event_editor_screen_test.dart`
+  לא נגע (לא מרנדר את `CalendarShellScreen`).
+- **דורש פעולת משתמש:** לא ניתן לאמת בפועל תזמון/הצגת התראות על מכשיר/emulator
+  אמיתי בסביבת הפיתוח הזו (אין Android SDK/emulator — ראה LESSONS.md, M2b);
+  כל הלוגיקה אומתה ביחידה עם fakes/plugin עטוף. מומלץ לבדוק ידנית על מכשיר:
+  יצירת אירוע עם תזכורת, קבלת הודעה בזמן הנכון, שרידות אחרי אתחול מכשיר,
+  ונפילה חזרה ל-inexact כשההרשאה נדחית.
+
+## 2026-07-06 — M3b הושלם (תצוגות שבוע/יום/אג'נדה + בורר תצוגה) — M3 הושלם במלואו
+
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues), 192
+  טסטים עוברים (175 קיימים + 17 חדשים), `dart format --set-exit-if-changed`
+  נקי, בדיקת 500 שורות עוברת.
+- **Repository:** `EventRepository` קיבל `watchOccurrencesInRange(from, to)`
+  — טווח תאריכים עברי שרירותי, לא בהכרח חודש שלם — לצד `watchEventsForHebrewMonth`
+  הקיים, שעכשיו מאציל אליו (חודש = הטווח `[1, daysInMonth]`) בשני המימושים
+  (`InMemoryEventRepository`, `FirestoreEventRepository`) במקום לשכפל לוגיקה.
+  ב-`recurrence_expander.dart` חולצה `occurrencesForEventInRange` (הרחבת
+  `RecurrenceRule` למופעים עבור טווח שרירותי, לא רק חודש) ו-`occurrencesInHebrewMonth`
+  הפכה לעטיפה דקה סביבה — כך שדף ה-Firestore, ה-repository בזיכרון, וה-domain
+  layer כולם משתפים בדיוק את אותה נקודת הרחבה יחידה. ב-Firestore, ה-merge של
+  שתי השאילתות (לא-חוזרים לפי `gregorianStart`, וכל החוזרים מורחבים בצד לקוח)
+  הוכלל מ"חודש" ל"טווח" בלי לשכפל את לוגיקת ה-`StreamController` הידני.
+- **`HebrewDateEngine`** קיבל `addDays`/`startOfWeek` (אריתמטיקת ימים
+  מנורמלת ל-UTC כמו ב-`recurrence_expander.dart`, כדי להימנע מבאג יום-קיץ —
+  ראה LESSONS.md) לצורך דפדוף תצוגות שבוע/יום.
+- **Application:** `calendar_view_provider.dart` (מחליף את
+  `displayed_month_provider.dart` שהוסר) מחזיק `CalendarViewType`
+  (חודש/שבוע/יום/אג'נדה) + `focusedDate` משותף לכל התצוגות ולבורר התצוגה;
+  `range_events_provider.dart` (`StreamProvider.autoDispose.family` על טווח
+  תאריכים) משמש תצוגות שבוע/יום/אג'נדה במקום `month_events_provider.dart`
+  (שנשאר לתצוגת החודש בלבד).
+- **Presentation:** `MonthViewScreen` פוצל ל-`CalendarShellScreen` (App Bar
+  + FAB משותפים, גוף מתחלף) ו-`MonthViewBody` (הגריד עצמו, ללא Scaffold
+  משלו). נוספו `WeekViewScreen`/`DayViewScreen`/`AgendaViewScreen` וקבוצת
+  widgets משותפים: `HourGrid` (גריד 24 שעות גולל, אלגוריתם חלוקה שווה
+  לאשכולות אירועים חופפים), `EventBlock`, `CalendarDayHeader` (מצב
+  `compact`/`full`), `AllDayEventsRow`, `DayOccurrences` (צורת קלט משותפת).
+  דפדוף בין עמודים (חודש/שבוע/יום) עובר דרך `PagedFocusSync` משותף — עיגון
+  קבוע + `PageController`, שמתעדכן רק כשהמיקוד משתנה *מחוץ* לתצוגה עצמה
+  (כפתור "היום", מעבר בין תצוגות), כדי למנוע לולאת עדכונים.
+- **החלטת סטייה:** הוסרו כפתורי החץ הקודם/הבא הישנים של תצוגת החודש ולא
+  נוספו חלופה לתצוגות האחרות — הניווט הוא בהחלקה בלבד (+ כפתור "היום"),
+  התואם בדיוק את אפליקציית Google Calendar לאנדרואיד עצמה (שגם היא ללא
+  כפתורי חץ), ומייתר את הצורך שהמסך המשותף "יגיע" לתוך ה-`PageController`
+  הפנימי של איזו תצוגה שמוצגת כרגע.
+- **FAB:** במקום הלוגיקה הישנה ("היום אם בחודש המוצג, אחרת ה-1 בחודש"), ה-FAB
+  יוצר תמיד אירוע על `focusedDate` הנוכחי — עמוד תצוגת החודש שומר את יום
+  החודש המדויק דרך ניווח חודשים (`addMonths` כבר שומר על יום-בחודש, מהודק
+  לפי אורך החודש), כך שההתנהגות בפועל דומה מאוד לישנה בלי טיפול מיוחד.
+- **טסטים:** `test/domain/hebrew_date/hebrew_date_engine_test.dart` קיבל
+  קבוצות ל-`addDays`/`startOfWeek`; `recurrence_expander_shared_test.dart`
+  קיבל טסטים ל-`occurrencesForEventInRange` (טווח שחוצה גבול חודש, וזהות
+  עם `occurrencesInHebrewMonth`); `in_memory_event_repository_test.dart`
+  קיבל קבוצת `watchOccurrencesInRange` (טווח חוצה חודשים, הרחבת חזרתיות עם
+  חריגים, האצלה מ-`watchEventsForHebrewMonth`). טסטי widget חדשים:
+  `calendar_shell_screen_test.dart` (בורר תצוגה, כפתור "היום"),
+  `week_view_screen_test.dart` (בלוק אירוע תחת יום השבוע הנכון — נבדק
+  גיאומטרית, לא רק טקסט), `day_view_screen_test.dart` (רק אירועי היום
+  הממוקד), `agenda_view_screen_test.dart` (קיבוץ לפי תאריך + מצב ריק).
+  `month_view_screen_test.dart` שונה שם ל-`month_view_body_test.dart`
+  ותוכנו הותאם ל-`calendar_view_provider`; `month_view_events_test.dart`/
+  `month_view_recurring_test.dart`/`auth_gate_test.dart` הותאמו לאותו שינוי
+  ול-`CalendarShellScreen`.
+
+## 2026-07-06 — M3a הושלם (מנוע חזרתיות עבריים)
+
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues), 175
+  טסטים עוברים (132 קיימים + 43 חדשים), `dart format --set-exit-if-changed`
+  נקי, בדיקת 500 שורות עוברת, כיסוי `lib/domain` בפועל 96.0% (מעל סף ה-90%).
+- נוצר `lib/domain/event/recurrence_expander.dart`: פונקציות טהורות
+  `occurrencesInRange`/`occurrencesInHebrewMonth` שמרחיבות `RecurrenceRule`
+  למופעים קונקרטיים, ללא תלות ב-Flutter/Firebase (רק ב-`HebrewDateEngine`
+  הפנימי לדומיין). שתי מדיניות תועדו הן בקוד והן ב-`ARCHITECTURE.md` §4:
+  מיפוי אדר (`hebrewYearly` — בסיס אדר/אדר א׳ חוזר באדר א׳ בשנה מעוברת,
+  בסיס אדר ב׳ חוזר באדר ב׳ בשנה מעוברת, שניהם חוזרים לאדר רגיל בשנה לא
+  מעוברת) ומדיניות יום 30 (`hebrewYearly`/`hebrewMonthly` — יום 30 נופל על
+  29 בחודש קצר, בלי כפילות). `weekly`/`daily` מחושבים באריתמטיקת ימים
+  לועזיים דרך `HebrewDateEngine`, מנורמלת ל-UTC כדי להימנע מבאג "יום קיץ"
+  ב-`DateTime` מקומי (ראה LESSONS.md).
+- נוצר `lib/domain/event/event_occurrence.dart`: `EventOccurrence` (זוג
+  `Event`+תאריך מופע קונקרטי) ו-`compareEventOccurrences` (סדר כרונולוגי
+  משותף ל-repositories). `EventRepository.watchEventsForHebrewMonth` שונה
+  מ-`Stream<List<Event>>` ל-`Stream<List<EventOccurrence>>` בכל המימושים
+  וקריאות ה-UI (providers, `MonthGrid`, `DayEventsSheet`).
+- `InMemoryEventRepository`/`FirestoreEventRepository` משתמשות באותה לוגיקת
+  הרחבה (`occurrencesInHebrewMonth`). ב-Firestore: שתי שאילתות ממוזגות
+  ידנית (event לא-חוזר לפי טווח `gregorianStart`+`isRecurring==false`, וכל
+  האירועים החוזרים של המשתמש `isRecurring==true` ללא סינון תאריך, מורחבים
+  בצד הלקוח לחודש המבוקש) — שילוב ידני עם `StreamController.broadcast`
+  שממתין לפליטה ראשונה משני המקורות לפני שהוא פולט תוצאה ממוזגת.
+- `lib/data/event_firestore_mapper.dart`: נוסף שדה `isRecurring` (bool,
+  נגזר מ-`recurrence.type`, write-only — לא נקרא בחזרה, ה-`recurrence`
+  המלא הוא מקור האמת). `firebase/firestore.rules` עודכן לוולידציית מבנה
+  `recurrence` (type/until/exceptions) ו-`isRecurring`; `firestore.indexes.json`
+  קיבל שני אינדקסים מורכבים חדשים (`ownerUid`+`isRecurring`,
+  `ownerUid`+`isRecurring`+`gregorianStart`). **הרולז/אינדקסים המעודכנים
+  טרם פורסמו** — ראה `firebase/README.md`.
+- עורך האירועים (`event_editor_screen.dart`) קיבל בורר חזרתיות
+  (`RecurrenceTypeSelector` — צ'יפים ללא חזרה/כל שנה/כל חודש/כל שבוע/כל
+  יום) ושדה "עד תאריך" אופציונלי (`RecurrenceUntilField`, שמשתמש מחדש
+  ב-`HebrewDatePickerSheet` הקיים). עריכת אירוע חוזר קיימת עורכת את הסדרה
+  כולה (משנה את מסמך הבסיס; המופעים מחושבים מחדש אוטומטית).
+- `DayEventsSheet`: מחיקת מופע חוזר פותחת דיאלוג עם שלוש אפשרויות —
+  ביטול / "מופע זה בלבד" (מוסיף את תאריך המופע ל-`recurrence.exceptions`
+  ומעדכן את האירוע) / "כל הסדרה" (מוחק את האירוע). אירוע לא-חוזר ממשיך
+  להשתמש בדיאלוג אישור בודד כמו קודם.
+- טסטים: `test/domain/event/recurrence_expander_{yearly,monthly,step,shared}_test.dart`
+  (פוצל מקובץ אחד שחרג מ-500 שורות) מכסים את כל סוגי החזרתיות, שתי
+  המדיניות, גבול `until` כולל, דילוג `exceptions`, ואין מופע לפני הבסיס.
+  `test/domain/event/event_occurrence_test.dart` מכסה שוויון/סדר. טסטי
+  repository/mapper/widget עודכנו לטיפוס `EventOccurrence` החדש ולשדה
+  `isRecurring`; נוסף `test/features/calendar/presentation/month_view_recurring_test.dart`
+  (מופע בחודש מאוחר יותר, מחיקת "מופע זה בלבד" משאירה מופעים אחרים).
+- **דורש פעולת משתמש:** פריסת ה-Security Rules/אינדקסים המעודכנים
+  (`firebase deploy --only firestore:rules,firestore:indexes`) — עד אז
+  Firestore האמיתי לא מכיר את `isRecurring`/מבנה ה-`recurrence` המורחב.
+
+## 2026-07-06 — M2b הושלם (חצי שני של M2, חיווט Firebase)
+
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues), 132
+  טסטים עוברים (105 קיימים + 27 חדשים), `dart format --set-exit-if-changed`
+  נקי, בדיקת 500 שורות עוברת.
+- תלויות חדשות (נבחרו ע"י `flutter pub add` — גרסאות עדכניות עקביות זו עם
+  זו): `firebase_core: ^4.11.0`, `firebase_auth: ^6.5.4`,
+  `cloud_firestore: ^6.6.0`, `google_sign_in: ^7.2.0`. **`google_sign_in`
+  7.x הוא API שנכתב מחדש** (ראה LESSONS.md) לעומת המדריכים המוכרים מגרסה 6.
+- Gradle: `com.google.gms.google-services` (4.4.2) נוסף ב-
+  `android/settings.gradle.kts` (apply false) ומוחל ב-
+  `android/app/build.gradle.kts`; `minSdk` הועלה ל-23 (`firebase_auth`
+  מצהיר על כך במפורש). אין `firebase_options.dart` — Android קורא
+  `google-services.json` באופן טבעי דרך הפלאגין.
+- נוצר `lib/domain/auth/` (`AppUser`, `AuthRepository` מופשט — טהורים,
+  ללא Firebase/Flutter) ו-`lib/features/auth/` (`FirebaseAuthRepository`,
+  `authProviders`, `SignInScreen`, `AuthGate`). שער האימות ב-`main.dart`
+  מחליף בין `SignInScreen`/`MonthViewScreen`; פעולת התנתקות עם דיאלוג אישור
+  נוספה לתפריט ה-overflow של `MonthViewScreen`. מסמך `users/{uid}`
+  נוצר/ממוזג מתוך ה-repository (לא מ-widget) בכניסה ראשונה.
+- נוצר `lib/data/firestore_event_repository.dart` (+`event_firestore_mapper.dart`
+  הטהור, הנבדק ביחידה בלי Firestore אמיתי): שאילתה לפי `ownerUid`+טווח
+  `gregorianStart` הנגזר מ-`HebrewDateEngine`; `createdAt`/`updatedAt`
+  נכתבים כ-`FieldValue.serverTimestamp()` בשרת, והאובייקט המוחזר משתמש
+  בקירוב מקומי (`DateTime.now()`) עד שהערך האמיתי מסונכרן חזרה — ראה
+  LESSONS.md לגבי ה-gotcha של השוואת `DateTime` אחרי round-trip דרך
+  `Timestamp`. persistence לא-מקוון הופעל במפורש ב-`main.dart`.
+- `eventRepositoryProvider` עבר ל-`FirestoreEventRepository` כשמחוברים
+  (לפי `currentUserProvider`), אחרת `InMemoryEventRepository` (הנשאר קבוע
+  לטסטים). כל 105 הטסטים הקיימים תוקנו עם `FakeAuthRepository`/override
+  ל-`eventRepositoryProvider` כדי לעבור את שער האימות החדש בלי לגעת ב-
+  Firebase אמיתי; נוספו טסטים לשער האימות עצמו ולממפה ה-Firestore.
+- נוצר `firebase/firestore.rules`+`firebase/firestore.indexes.json`+
+  `firebase.json`+`.firebaserc` (פרויקט `hebrewcalendar-68363`) +
+  `firebase/README.md` (עברית, הוראות פריסה). **הרולז טרם פורסמו בפועל** —
+  ראה "נותר" למטה.
+
+### נותר / דורש פעולת משתמש
+- [ ] פריסת ה-Security Rules בפועל (`firebase deploy --only
+      firestore:rules,firestore:indexes` או הדבקה ידנית בקונסולה —
+      ראה `firebase/README.md`). עד אז Firestore חוסם הכול כברירת מחדל.
+- [ ] **לא ניתן היה להריץ `flutter build apk --debug` בסביבת הפיתוח
+      הנוכחית**: אין Android SDK מותקן, ולא ניתן להתקינו/למשוך ממנו
+      תלויות Gradle (AGP, פלאגין `google-services`, ה-AAR-ים של Firebase)
+      כי `dl.google.com`/`maven.google.com` חסומים ע"י ה-proxy של הסביבה
+      (אושר: `CONNECT` מוחזר 403 policy denial). אומת כל השאר (format,
+      analyze, 132 טסטים, אורך קבצים); ה-job `build-apk` הקיים ב-CI
+      (`.github/workflows/ci.yml`, שרץ על ubuntu-latest עם Android SDK
+      מותקן מראש) אמור לתפוס כל בעיית Gradle אמיתית בפעם הראשונה שהוא ירוץ
+      עם השינויים האלה — יש לעקוב אחריו.
+- [ ] אימות Rules מול Firebase Emulator Suite (TESTING_AND_DEPLOY.md §"פירמידה")
+      לא בוצע כאן מאותה סיבת רשת; מומלץ להריץ לפני production.
+
+## 2026-07-06 — M2a הושלם (חצי ראשון של M2, ללא תלות ב-Firebase)
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues),
+  98 טסטים עוברים, `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות עוברת.
+- החלטת פיצול: M2 המקורי (אימות + CRUD) פוצל ל-M2a (מודל הדומיין + CRUD מול
+  repository בזיכרון, ללא Firebase) ו-M2b (Google Sign-In, Firestore, Security
+  Rules) — M2b ימומש לאחר שהמשתמש יספק קונפיגורציית Firebase. שום תלות ב-
+  Firebase לא נוספה בשלב זה.
+- נוצר `lib/domain/event/`: ישות טהורה `Event` (כולל `EventTimeOfDay` —
+  תחליף Flutter-free ל-`TimeOfDay`), `RecurrenceRule`/`RecurrenceType` (מבנה
+  נתונים בלבד; הרחבת חזרתיות היא M3), `event_validation.dart` (ולידטורים
+  טהורים עם שגיאות טיפוסיות שישוכפלו ב-Security Rules ב-M2b), וממשק מופשט
+  `EventRepository`.
+- נוצר `lib/data/in_memory_event_repository.dart`: המימוש היחיד עד M2b
+  ולצמיתות בטסטים; `id`/`now` ניתנים להזרקה לדטרמיניזם בטסטים. ראה
+  `docs/LESSONS.md` לגבי מלכודת timing עם broadcast stream שהתגלתה תוך כדי
+  כתיבת הטסטים ותוקנה במימוש.
+- נוצר `lib/features/event_editor/`: מסך יצירה/עריכת אירוע RTL בהשראת
+  Google Calendar — כותרת, מתג "כל היום", בורר תאריך עברי (שלוש רשימות
+  נפתחות בגימטריה, כולל אדר א׳/אדר ב׳ בשנה מעוברת), שעות התחלה/סיום דרך
+  `showTimePicker` הרגיל של Flutter (מומר מיד ל-`EventTimeOfDay` כדי
+  שה-domain יישאר Flutter-free), תיאור, מיקום, תזכורת יחידה (ללא/10/30/60
+  דקות — M2a; ריבוי תזכורות אפשרי בעתיד בלי שינוי סכימה). Riverpod:
+  `eventRepositoryProvider` (לא autoDispose — זהו מאגר נתונים, לא state של
+  מסך) ו-`eventEditorControllerProvider` (autoDispose.family לפי
+  `EventEditorArgs`). כל ה-`TextEditingController`ים מנוקים ב-`dispose`.
+- שולבה תצוגת החודש עם אירועים: FAB ליצירת אירוע (ליום הנוכחי אם הוא
+  בחודש המוצג, אחרת ל-1 בחודש), נקודת אינדיקציה בתא יום עם אירועים (לא
+  צ'יפים — תא הגריד קטן מדי עבורם), הקשה על יום עם אירועים פותחת
+  `DayEventsSheet` עם עריכה/מחיקה (כולל דיאלוג אישור).
+- הוכרעה סטייה קטנה מהניסוח המקורי: אינדיקציית האירועים בגריד היא נקודה
+  אחת ולא עד שני צ'יפים — תא היום קיים מ-M1 קטן מדי לצ'יפים קריאים; המשימה
+  אפשרה זאת במפורש ("whichever fits cell size").
+
+## 2026-07-06 — M1 הושלם
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח: `flutter analyze` נקי (0 issues),
+  52 טסטים עוברים, `dart format --set-exit-if-changed` נקי, בדיקת 500 שורות עוברת,
+  כיסוי `lib/domain` בפועל 99-100% (מעל סף ה-90% הנדרש).
+- נוספה תלות `kosher_dart` (2.0.18) — ראה `docs/LESSONS.md` לגבי כמה
+  אי-דיוקים ב-API שלה (מספור חודשים, `getGregorianMonth()` שהתנהגותו
+  בפועל שונה מהתיעוד, וכו').
+- נוצר `lib/domain/hebrew_date/`: `HebrewDate`/`HebrewMonth` (ישות טהורה
+  עם אדר/אדר א׳/אדר ב׳ מפורשים), `HebrewDateEngine` (העטיפה היחידה סביב
+  kosher_dart: המרות, שנה מעוברת, ימים בחודש, ניווט חודשים), ו-
+  `hebrew_numerals.dart` (גימטריה טהורה, כולל ט״ו/ט״ז).
+- נוצר `lib/features/calendar/`: `MonthViewScreen` (מסך בית חדש, `PageView`
+  RTL-safe לדפדוף בין חודשים), `MonthGrid`/`DayCell` (גריד חודש בסגנון
+  Google Calendar, שבוע מתחיל ביום ראשון, "היום" מודגש), ו-state דרך
+  Riverpod (`hebrewDateEngineProvider`, `displayedMonthProvider` עם
+  `autoDispose`).
+- הוסר `placeholder_home_screen.dart` (M0) ומחרוזות ה-ARB הזמניות שלו;
+  נוספו טולטיפים לניווט חודשים.
+
+## 2026-07-06 — M0 הושלם
+- מומש ע"י סוכן-משנה (Sonnet) בפיקוח, אומת ע"י המפקח: `flutter analyze` נקי,
+  10 טסטים עוברים, `dart format` נקי, בדיקת 500 שורות עוברת.
+- נוצרו: מבנה תיקיות מלא, `dimens.dart` (rem + spacing + breakpoints),
+  `app_theme.dart` (Material 3 בהיר/כהה), l10n עברית (ARB), מסך בית זמני RTL,
+  `analysis_options.yaml` מחמיר, `tool/check_file_length.sh`, CI ב-GitHub Actions.
+- הערה: יש לאמת שה-CI ירוק בריצה הראשונה ב-GitHub.
+
+## 2026-07-06 — הקמת הפרויקט
+- הריפו נוקה מהפרויקט הקודם (כולל היסטוריית git) ואותחל מחדש; הריפו נקרא כעת `hebrewcalendar`.
+- התקבלו החלטות יסוד מהמשתמש: Flutter, Firebase, סנכרון גוגל דו-כיווני מלא,
+  תוכן דתי (חגים/זמנים/פרשה) נדחה ל-WISHLIST — הליבה היא יומן על בסיס תאריך עברי
+  כולל אירועים חוזרים עבריים.
+- נוצרה מסגרת העבודה: CLAUDE.md, RULES, ARCHITECTURE, TESTING_AND_DEPLOY, INDEX, LESSONS, WISHLIST.
+- Flutter 3.32.5 הותקן בסביבת הפיתוח (`/opt/flutter`).
+
+### נותר ב-M0
+- [ ] `flutter create` + מבנה תיקיות לפי ARCHITECTURE §3
+- [ ] theme + dimens (גודל בסיס יחיד, הכל יחסי)
+- [ ] analysis_options מחמיר, סקריפט בדיקת 500 שורות
+- [ ] CI ב-GitHub Actions
+- [ ] טסט ראשון עובר

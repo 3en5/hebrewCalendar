@@ -1,0 +1,115 @@
+name: Release
+
+# Manual only (docs/RELEASE.md walks through running this): a signed release
+# App Bundle should never be produced by a plain push/PR the way the debug
+# APK in ci.yml is.
+on:
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: "3.32.5"
+
+jobs:
+  build-release-appbundle:
+    name: Build signed release App Bundle
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      HAS_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD != '' }}
+      HAS_KEY_ALIAS: ${{ secrets.KEY_ALIAS != '' }}
+      HAS_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD != '' }}
+      HAS_GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # A signed release build needs all five secrets (docs/RELEASE.md lists
+      # how to generate/register each one) — fail fast with a clear message
+      # rather than partway through the build.
+      - name: Verify required secrets are configured
+        run: |
+          missing=""
+          [ "$HAS_KEYSTORE_BASE64" = "true" ] || missing="$missing KEYSTORE_BASE64"
+          [ "$HAS_KEYSTORE_PASSWORD" = "true" ] || missing="$missing KEYSTORE_PASSWORD"
+          [ "$HAS_KEY_ALIAS" = "true" ] || missing="$missing KEY_ALIAS"
+          [ "$HAS_KEY_PASSWORD" = "true" ] || missing="$missing KEY_PASSWORD"
+          [ "$HAS_GOOGLE_SERVICES_JSON" = "true" ] || missing="$missing GOOGLE_SERVICES_JSON"
+          if [ -n "$missing" ]; then
+            echo "Missing required repository secret(s):$missing" >&2
+            echo "See docs/RELEASE.md for how to generate and add them." >&2
+            exit 1
+          fi
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Write google-services.json from secret
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
+      # android/key.properties + the decoded keystore are exactly what
+      # android/app/build.gradle.kts's `hasReleaseSigning` check looks for —
+      # the same file a developer would create locally per docs/RELEASE.md,
+      # just written from secrets instead of by hand.
+      - name: Decode release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/release.keystore
+
+      - name: Write key.properties
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          cat > android/key.properties << EOF
+          storeFile=release.keystore
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      # versionName comes straight from pubspec.yaml's `version:` (e.g.
+      # "1.2.0" out of "1.2.0+1"); versionCode is that same file's build
+      # number *offset by this workflow run's number* rather than used
+      # as-is, so every release upload gets a strictly-increasing versionCode
+      # (Play Console rejects a re-upload otherwise) without hand-editing
+      # pubspec.yaml before each run (docs/RELEASE.md).
+      - name: Compute version name/code from pubspec.yaml + run number
+        id: version
+        run: |
+          version_line=$(grep '^version:' pubspec.yaml | head -n 1 | sed -E 's/^version:[[:space:]]*//')
+          version_name="${version_line%%+*}"
+          base_build_number="${version_line##*+}"
+          version_code=$((base_build_number + GITHUB_RUN_NUMBER))
+          echo "Computed versionName=$version_name versionCode=$version_code"
+          echo "name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "code=$version_code" >> "$GITHUB_OUTPUT"
+
+      - name: Build signed release App Bundle
+        run: |
+          flutter build appbundle --release \
+            --build-name="${{ steps.version.outputs.name }}" \
+            --build-number="${{ steps.version.outputs.code }}"
+
+      - name: Upload App Bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hebrew-calendar-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      # Secrets only ever exist on this ephemeral GitHub-hosted runner, but
+      # remove them explicitly anyway rather than relying solely on the
+      # runner being torn down.
+      - name: Remove decoded secrets from the runner
+        if: always()
+        run: |
+          rm -f android/release.keystore android/key.properties android/app/google-services.json

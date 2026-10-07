@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: # manual rebuild (e.g. after adding/rotating secrets)
+
+env:
+  FLUTTER_VERSION: "3.32.5"
+
+jobs:
+  test:
+    name: Format, analyze, test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Check 500-line file limit
+        run: bash tool/check_file_length.sh
+
+  build-apk:
+    name: Build debug APK
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      HAS_GS_SECRET: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+      APP_ID: il.co.natanor.kalfapp.hebrewcalendar
+    steps:
+      # The debug APK build (Gradle caches + NDK install) can exhaust the
+      # runner's disk; drop preinstalled toolchains this job never uses.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/boost /opt/hostedtoolcache/CodeQL \
+            /usr/local/lib/node_modules /usr/share/swift
+          sudo docker image prune --all --force > /dev/null || true
+          df -h /
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # google-services.json is gitignored (RULES.md §5.4). If the repo has
+      # the GOOGLE_SERVICES_JSON secret, the APK is built with the real
+      # config (installable + Google Sign-In works, thanks to the committed
+      # deterministic debug keystore whose SHA-1 is registered in Firebase).
+      - name: Write google-services.json from secret
+        if: ${{ env.HAS_GS_SECRET == 'true' }}
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          # A secret registered for a different applicationId would fail the
+          # build in processDebugGoogleServices; fall back to the placeholder.
+          if ! grep -q "\"$APP_ID\"" android/app/google-services.json; then
+            echo "::warning::GOOGLE_SERVICES_JSON has no client for $APP_ID; using the placeholder (Google Sign-In will not work in this APK)"
+            rm android/app/google-services.json
+          fi
+
+      # Fallback: a structurally valid placeholder with fake keys, so the
+      # build still verifies Gradle wiring on forks/PRs without the secret.
+      - name: Create placeholder google-services.json
+        if: ${{ hashFiles('android/app/google-services.json') == '' }}
+        run: |
+          cat > android/app/google-services.json << 'EOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "ci-placeholder",
+              "storage_bucket": "ci-placeholder.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+                  "android_client_info": {
+                    "package_name": "${{ env.APP_ID }}"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [{ "current_key": "AIzaSyA-ci-placeholder-key-0000000000000" }],
+                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      # Downloadable from the workflow run page (Actions -> run -> Artifacts)
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hebrew-calendar-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
