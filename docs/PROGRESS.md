@@ -5,6 +5,27 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-07 — העלאה אוטומטית ל-Google Play
+
+- **החלטת משתמש:** Claude בונה ומעלה גרסאות ל-Play דרך `release.yml`, עם
+  Service Account (`GOOGLE_PLAY_KEY`, אותו של PowerWatch).
+- `release.yml` (נשאר `workflow_dispatch` בלבד):
+  - נוספו inputs: `track`, `rollout` ו-`draft`.
+  - נוסף שלב העלאה עם `r0adkll/upload-google-play`, ששולח את הערות הגרסה
+    מ-`distribution/whatsnew/`.
+  - נוסף שלב שמפנה מקום בדיסק של ה-runner, כמו ב-`ci.yml`.
+  - נוספה בדיקה שה-`google-services.json` תואם למזהה האפליקציה. כאן אין
+    fallback.
+- **production רק באישור מפורש של בעל המוצר, ב-staged rollout.**
+- **פעולות שנותרו למשתמש:**
+  1. release keystore ו-secrets (RELEASE.md §1, §3).
+  2. Create app ב-Play Console.
+  3. העלאה ראשונה ידנית (track `none`).
+  4. SHA-1 של App Signing ל-Firebase.
+  5. הרשאה ל-Service Account (RELEASE.md §6).
+  6. OAuth verification ל-`calendar.events` (RELEASE.md §7).
+  7. Security Rules.
+
 ## 2026-10-07 — שינוי מזהה האפליקציה (applicationId)
 
 - **החלטת משתמש:** מזהה האפליקציה שונה מ-`com.hebrewcalendar.hebrew_calendar`

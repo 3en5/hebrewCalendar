@@ -51,6 +51,7 @@ secret", עבור כל אחד מהבאים (נצרכים ע"י `.github/workflow
 | `KEY_ALIAS` | `hebrewcalendar` (או הכינוי שנבחר בסעיף 1) |
 | `KEY_PASSWORD` | סיסמת המפתח מסעיף 1 |
 | `GOOGLE_SERVICES_JSON` | תוכן `google-services.json` המלא (ראה סעיף 2) |
+| `GOOGLE_PLAY_KEY` | ה-JSON של ה-Service Account של Google Play. אותו מפתח של PowerWatch, אחרי שנותנים לו הרשאה לאפליקציה הזו (סעיף 6). נדרש רק להעלאה ל-Play (`track` שונה מ-`none`) |
 
 ```bash
 base64 -w0 hebrewcalendar-release.jks > keystore-base64.txt
@@ -77,20 +78,36 @@ keyPassword=<סיסמת המפתח>
 
 ## 4. הרצת workflow השחרור
 
-`.github/workflows/release.yml` הוא `workflow_dispatch` בלבד — לא רץ
-אוטומטית על push/PR (בניגוד ל-`ci.yml`).
+`.github/workflows/release.yml` הוא `workflow_dispatch` בלבד. הוא לא רץ
+אוטומטית על push או PR, בניגוד ל-`ci.yml`.
 
-1. GitHub -> טאב Actions -> "Release" -> "Run workflow" -> להריץ מה-branch
-   הרצוי (בד"כ `main`).
-2. ה-workflow: מוודא שכל חמשת הסודות קיימים, כותב `google-services.json`,
-   מפענח את ה-keystore ל-`android/release.keystore`, כותב
-   `android/key.properties` (נקרא ע"י `android/app/build.gradle.kts`'s
-   `hasReleaseSigning`), מחשב `versionName`/`versionCode` (ראה סעיף 5),
-   ומריץ `flutter build appbundle --release`.
-3. בסיום: קובץ `app-release.aab` זמין כ-artifact בעמוד ההרצה (Actions -> ההרצה
-   -> Artifacts -> `hebrew-calendar-release-aab`).
-4. ה-workflow מוחק את הקבצים המפוענחים (`release.keystore`/`key.properties`/
-   `google-services.json`) מה-runner בסיום, בהצלחה או בכישלון.
+1. GitHub ← טאב Actions ← "Release" ← "Run workflow", מה-branch הרצוי
+   (בדרך כלל `main`), ובוחרים:
+   - **track:** לאן להעלות את הגרסה.
+     - `none`: רק בונה את ה-AAB, בלי העלאה.
+     - `internal`: בדיקה פנימית.
+     - `alpha`: closed testing.
+     - `beta`: open testing.
+     - `production`: הפצה ציבורית.
+   - **rollout:** רלוונטי רק ל-`production`. זה החלק מהמשתמשים שיקבלו את
+     הגרסה, למשל `0.1` = ‏10%. ערך `1` משחרר לכולם.
+   - **draft:** מעלה את הגרסה כטיוטה, שמשחררים ידנית מה-Console. **חובה עד
+     שהגרסה הראשונה של האפליקציה עוברת review.** עד אז Google מקבלת רק
+     טיוטות.
+2. מה ה-workflow עושה:
+   - מוודא שכל הסודות קיימים. `GOOGLE_PLAY_KEY` נבדק רק כשיש העלאה.
+   - כותב את `google-services.json`, ונכשל אם הוא לא מכיל את
+     `il.co.natanor.kalfapp.hebrewcalendar`.
+   - מפענח את ה-keystore וכותב `android/key.properties`.
+   - מחשב `versionName` ו-`versionCode` (סעיף 5) ובונה App Bundle חתום.
+3. ה-AAB תמיד נשמר כ-artifact: Actions ← ההרצה ← Artifacts ←
+   `hebrew-calendar-release-aab`. כש-`track` שונה מ-`none`, הוא גם מועלה
+   ל-Play עם הערות הגרסה מ-`distribution/whatsnew/`. צריך לעדכן אותן לפני כל
+   שחרור, בעברית (`whatsnew-iw-IL`) ובאנגלית (`whatsnew-en-US`), עד 500 תווים
+   כל אחת.
+4. **production משוחרר רק אחרי אישור מפורש של בעל המוצר, בכל גרסה בנפרד.**
+5. בסיום, בהצלחה או בכישלון, ה-workflow מוחק מה-runner את הקבצים
+   המפוענחים: `release.keystore`, `key.properties` ו-`google-services.json`.
 
 ## 5. גרסאות (versionName / versionCode)
 
@@ -103,17 +120,26 @@ keyPassword=<סיסמת המפתח>
   לפני כל הרצה כדי לקבל `versionCode` עולה; מריצים "Run workflow" שוב וזה
   עולה אוטומטית.
 
-## 6. העלאה ל-Play Console
+## 6. Play Console: הגדרה חד-פעמית והעלאה ראשונה
 
-1. Play Console -> האפליקציה -> Release -> (הבחירה בהתאם למסלול, ראה
-   `docs/TESTING_AND_DEPLOY.md` §דיפלוי: **internal testing** לראשונה,
-   אח"כ **closed testing**, ורק לבסוף **production**).
-2. "Create new release" -> להעלות את `app-release.aab` שהורד מה-artifact.
-3. למלא release notes (עברית).
-4. **לפני קידום ל-production:** לבדוק crash-free rate ב-Crashlytics
-   (`docs/TESTING_AND_DEPLOY.md` §5 — Crashlytics עצמו נדחה ל-WISHLIST כרגע;
-   עד שיופעל, להסתמך על בדיקה ידנית + משוב מבודקי ה-internal/closed track).
-5. Review -> Rollout.
+1. **Create app** ב-Play Console, תחת אותו חשבון מפתח של PowerWatch.
+2. מריצים את ה-workflow עם `track = none` ומורידים את ה-AAB מה-artifact.
+3. **ההעלאה הראשונה ידנית** (ה-API של Google לא מאפשר אותה): Testing ←
+   Internal testing ← Create new release ← מעלים את ה-AAB. בהעלאה הזו
+   Google מגדירה את Play App Signing.
+4. **SHA-1 של Play App Signing:** הוא שונה מה-SHA-1 של מפתח ההעלאה. מעתיקים
+   אותו מ-Setup ← App signing ← "App signing key certificate", ומוסיפים אותו
+   לאפליקציה ב-Firebase (Add fingerprint). אחר כך מורידים `google-services.json`
+   מחדש ומעדכנים את ה-secret. בלי השלב הזה, Google Sign-In ייכשל בגרסאות
+   שמותקנות מ-Play.
+5. **Users and permissions** ← מזמינים את המייל של ה-Service Account
+   (`client_email` ב-JSON של `GOOGLE_PLAY_KEY`) עם הרשאות Release לאפליקציה
+   הזו.
+6. מכאן כל העלאה נעשית מה-workflow. מסלול השחרור הוא internal ← closed
+   (`alpha`) ← production, לפי `docs/TESTING_AND_DEPLOY.md` §דיפלוי.
+7. **בדיקה סגורה:** בחשבון מפתח אישי שנפתח אחרי 13.11.2023, Google דורשת
+   closed testing עם 12 בודקים לפחות, במשך 14 ימים רצופים, לפני הגשה
+   ל-production.
 
 ## 7. אימות OAuth scope (`calendar.events`) לפני הפצה ציבורית
 
