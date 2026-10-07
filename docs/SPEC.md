@@ -119,11 +119,19 @@ lib/
 
 Claude אחראי לבנות ולהעלות את הגרסאות, דרך GitHub Actions. המפתחות לא נמצאים בקוד ולא בסשן. הם שמורים כ-GitHub Secrets.
 
+**בסיס:** משתמשים באותו מבנה כמו בפרויקט PowerWatch (GitHub Actions + `r0adkll/upload-google-play`), באותו חשבון מפתח. שם החבילה המוצע: `il.co.natanor.kalfapp.hebrewcalendar`. השם קבוע אחרי ההעלאה הראשונה.
+
+**שיפורים לעומת PowerWatch:**
+- תג גרסה לא ישחרר ישר ל-production ב-100%. תג מעלה ל-internal או closed, והקידום ל-production נעשה ב-workflow ידני עם staged rollout.
+- `targetSdk` לפי הדרישה העדכנית של Google Play, ולא קבוע בקוד.
+- ה-build עובר רק אם `flutter analyze` והבדיקות עוברים.
+- ה-`build.gradle` לא נכשל כשאין `key.properties`, כך שבנייה מקומית ב-debug עובדת.
+
 **הגדרה חד-פעמית (רק בעל החשבון יכול לבצע):**
-1. פתיחת חשבון מפתח ב-Google Play Console. יש תשלום חד-פעמי של 25$ ואימות זהות.
+1. ~~פתיחת חשבון מפתח~~: קיים.
 2. יצירת האפליקציה ב-Console, והעלאה ידנית של ה-AAB הראשון. ה-API של Google לא מאפשר העלאה ראשונה.
-3. יצירת Service Account ב-Google Cloud, ומתן הרשאת "Release manager" לאפליקציה ב-Play Console.
-4. שמירת הסודות ב-GitHub Secrets של הריפו: קובץ ה-JSON של ה-Service Account, ה-upload keystore (ב-base64) והסיסמאות שלו.
+3. מתן הרשאה לאפליקציה החדשה ל-Service Account הקיים (זה של PowerWatch) ב-Play Console, תחת Users and permissions.
+4. שמירת הסודות ב-GitHub Secrets של הריפו הזה: ה-JSON של ה-Service Account (אותו קובץ), ו-upload keystore **חדש** לאפליקציה הזו (ב-base64) עם הסיסמאות שלו.
 5. מומלץ להפעיל Play App Signing. כך Google שומרת את מפתח החתימה הסופי, ו-keystore שאבד ניתן להחלפה.
 
 **הדרישה של Google לחשבונות אישיים חדשים:** לפני הפרסום הציבורי הראשון צריך בדיקה סגורה עם 12 בודקים לפחות, לאורך 14 ימים רצופים. כדאי לגייס בודקים מוקדם.
