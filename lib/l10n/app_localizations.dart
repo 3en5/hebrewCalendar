@@ -5,7 +5,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
-import 'app_localizations_en.dart';
 import 'app_localizations_he.dart';
 
 // ignore_for_file: type=lint
@@ -93,160 +92,589 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[
-    Locale('en'),
-    Locale('he'),
-  ];
+  static const List<Locale> supportedLocales = <Locale>[Locale('he')];
 
-  /// No description provided for @appTitle.
+  /// The application title, shown in the app bar and OS task switcher.
   ///
-  /// In en, this message translates to:
-  /// **'Hebrew Calendar'**
+  /// In he, this message translates to:
+  /// **'יומן עברי'**
   String get appTitle;
 
-  /// No description provided for @navToday.
+  /// Generic cancel button label, used in confirmation dialogs.
   ///
-  /// In en, this message translates to:
-  /// **'Today'**
-  String get navToday;
+  /// In he, this message translates to:
+  /// **'ביטול'**
+  String get commonCancel;
 
-  /// No description provided for @navCalendar.
+  /// Tooltip for the floating action button that opens the event editor to create a new event.
   ///
-  /// In en, this message translates to:
-  /// **'Calendar'**
-  String get navCalendar;
+  /// In he, this message translates to:
+  /// **'הוספת אירוע'**
+  String get addEventTooltip;
 
-  /// No description provided for @navEvents.
+  /// App bar title for the event editor screen in create mode.
   ///
-  /// In en, this message translates to:
-  /// **'Events'**
-  String get navEvents;
+  /// In he, this message translates to:
+  /// **'אירוע חדש'**
+  String get eventEditorTitleNew;
 
-  /// No description provided for @navSettings.
+  /// App bar title for the event editor screen in edit mode.
   ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get navSettings;
+  /// In he, this message translates to:
+  /// **'עריכת אירוע'**
+  String get eventEditorTitleEdit;
 
-  /// No description provided for @todayHebrewDate.
+  /// Tooltip/label for the save action in the event editor.
   ///
-  /// In en, this message translates to:
-  /// **'Hebrew date'**
-  String get todayHebrewDate;
+  /// In he, this message translates to:
+  /// **'שמירה'**
+  String get eventSave;
 
-  /// No description provided for @todayGregorianDate.
+  /// Label for the event title text field.
   ///
-  /// In en, this message translates to:
-  /// **'Gregorian date'**
-  String get todayGregorianDate;
+  /// In he, this message translates to:
+  /// **'כותרת'**
+  String get eventFieldTitleLabel;
 
-  /// No description provided for @comingSoon.
+  /// Label for the event description text field.
   ///
-  /// In en, this message translates to:
-  /// **'Coming soon'**
-  String get comingSoon;
+  /// In he, this message translates to:
+  /// **'תיאור'**
+  String get eventFieldDescriptionLabel;
 
-  /// No description provided for @settingsLanguage.
+  /// Label for the event location text field.
   ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get settingsLanguage;
+  /// In he, this message translates to:
+  /// **'מיקום'**
+  String get eventFieldLocationLabel;
 
-  /// No description provided for @settingsLanguageSystem.
+  /// Label for the all-day switch in the event editor, and the time label shown for an all-day event.
   ///
-  /// In en, this message translates to:
-  /// **'Device default'**
-  String get settingsLanguageSystem;
+  /// In he, this message translates to:
+  /// **'כל היום'**
+  String get eventAllDayLabel;
 
-  /// No description provided for @settingsLanguageHebrew.
+  /// Label for the Hebrew date field/picker in the event editor.
   ///
-  /// In en, this message translates to:
-  /// **'עברית'**
-  String get settingsLanguageHebrew;
+  /// In he, this message translates to:
+  /// **'תאריך עברי'**
+  String get eventHebrewDateLabel;
 
-  /// No description provided for @settingsLanguageEnglish.
+  /// Label for the event start time field.
   ///
-  /// In en, this message translates to:
-  /// **'English'**
-  String get settingsLanguageEnglish;
+  /// In he, this message translates to:
+  /// **'שעת התחלה'**
+  String get eventStartTimeLabel;
 
-  /// No description provided for @settingsTheme.
+  /// Label for the event end time field.
   ///
-  /// In en, this message translates to:
-  /// **'Theme'**
-  String get settingsTheme;
+  /// In he, this message translates to:
+  /// **'שעת סיום'**
+  String get eventEndTimeLabel;
 
-  /// No description provided for @settingsThemeSystem.
+  /// Placeholder shown for a start/end time field before a time has been picked.
   ///
-  /// In en, this message translates to:
-  /// **'Device default'**
-  String get settingsThemeSystem;
+  /// In he, this message translates to:
+  /// **'בחירת שעה'**
+  String get eventNoTimeSet;
 
-  /// No description provided for @settingsThemeLight.
+  /// Section heading above the reminder selector in the event editor.
   ///
-  /// In en, this message translates to:
-  /// **'Light'**
-  String get settingsThemeLight;
+  /// In he, this message translates to:
+  /// **'תזכורת'**
+  String get eventRemindersLabel;
 
-  /// No description provided for @settingsThemeDark.
+  /// Reminder chip label meaning no reminder is set.
   ///
-  /// In en, this message translates to:
-  /// **'Dark'**
-  String get settingsThemeDark;
+  /// In he, this message translates to:
+  /// **'ללא תזכורת'**
+  String get eventReminderNone;
 
-  /// No description provided for @settingsLocation.
+  /// Reminder chip label meaning the reminder fires exactly at the event's start time (0 minutes before, M4).
   ///
-  /// In en, this message translates to:
-  /// **'Calendar location'**
-  String get settingsLocation;
+  /// In he, this message translates to:
+  /// **'בזמן האירוע'**
+  String get eventReminderAtEventTime;
 
-  /// No description provided for @settingsLocationIsrael.
+  /// Reminder chip label for a fixed number of minutes before the event, e.g. '10 דקות לפני'.
   ///
-  /// In en, this message translates to:
-  /// **'Land of Israel'**
-  String get settingsLocationIsrael;
+  /// In he, this message translates to:
+  /// **'{minutes} דקות לפני'**
+  String eventReminderMinutesBefore(int minutes);
 
-  /// No description provided for @settingsLocationDiaspora.
+  /// Reminder chip label meaning the reminder fires one day before the event (M4).
   ///
-  /// In en, this message translates to:
-  /// **'Diaspora'**
-  String get settingsLocationDiaspora;
+  /// In he, this message translates to:
+  /// **'יום לפני'**
+  String get eventReminderOneDayBefore;
 
-  /// No description provided for @settingsLocationHint.
+  /// Inline validation error when the event title is empty.
   ///
-  /// In en, this message translates to:
-  /// **'Affects Yom Tov Sheni and the weekly Torah portion'**
-  String get settingsLocationHint;
+  /// In he, this message translates to:
+  /// **'יש להזין כותרת'**
+  String get eventValidationTitleRequired;
 
-  /// No description provided for @settingsZmanimOpinion.
+  /// Inline validation error when the event title exceeds the maximum length.
   ///
-  /// In en, this message translates to:
-  /// **'Zmanim opinion'**
-  String get settingsZmanimOpinion;
+  /// In he, this message translates to:
+  /// **'הכותרת ארוכה מדי'**
+  String get eventValidationTitleTooLong;
 
-  /// No description provided for @settingsZmanimGra.
+  /// Inline validation error when the event description exceeds the maximum length.
   ///
-  /// In en, this message translates to:
-  /// **'GRA'**
-  String get settingsZmanimGra;
+  /// In he, this message translates to:
+  /// **'התיאור ארוך מדי'**
+  String get eventValidationDescriptionTooLong;
 
-  /// No description provided for @settingsZmanimMga.
+  /// Inline validation error when the event location exceeds the maximum length.
   ///
-  /// In en, this message translates to:
-  /// **'Magen Avraham'**
-  String get settingsZmanimMga;
+  /// In he, this message translates to:
+  /// **'המיקום ארוך מדי'**
+  String get eventValidationLocationTooLong;
 
-  /// No description provided for @settingsCandleLighting.
+  /// Inline validation error when the event end time is not after the start time.
   ///
-  /// In en, this message translates to:
-  /// **'Candle lighting'**
-  String get settingsCandleLighting;
+  /// In he, this message translates to:
+  /// **'שעת הסיום חייבת להיות אחרי שעת ההתחלה'**
+  String get eventValidationEndBeforeStart;
 
-  /// No description provided for @settingsCandleLightingMinutes.
+  /// Tooltip/label for the edit action on an event in the day events sheet.
   ///
-  /// In en, this message translates to:
-  /// **'{minutes} minutes before sunset'**
-  String settingsCandleLightingMinutes(int minutes);
+  /// In he, this message translates to:
+  /// **'עריכה'**
+  String get eventEditAction;
+
+  /// Tooltip/label for the delete action on an event, and the confirm button in the delete confirmation dialog.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיקה'**
+  String get eventDeleteAction;
+
+  /// Title of the confirmation dialog shown before deleting an event.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיקת אירוע'**
+  String get eventDeleteConfirmTitle;
+
+  /// Body text of the confirmation dialog shown before deleting an event.
+  ///
+  /// In he, this message translates to:
+  /// **'האם למחוק אירוע זה? לא ניתן לבטל פעולה זו.'**
+  String get eventDeleteConfirmMessage;
+
+  /// Body text of the choice dialog shown before deleting an occurrence of a recurring event, offering 'this occurrence only' or 'the whole series'.
+  ///
+  /// In he, this message translates to:
+  /// **'אירוע זה הוא חלק מסדרה חוזרת. איך למחוק?'**
+  String get eventDeleteRecurringChoiceMessage;
+
+  /// Button label to delete only the single occurrence being viewed from a recurring event's series (adds it to the recurrence exceptions).
+  ///
+  /// In he, this message translates to:
+  /// **'מופע זה בלבד'**
+  String get eventDeleteThisOccurrenceOnly;
+
+  /// Button label to delete an entire recurring event series.
+  ///
+  /// In he, this message translates to:
+  /// **'כל הסדרה'**
+  String get eventDeleteWholeSeries;
+
+  /// Section heading above the recurrence type selector in the event editor.
+  ///
+  /// In he, this message translates to:
+  /// **'חזרתיות'**
+  String get eventRecurrenceLabel;
+
+  /// Recurrence type chip label: the event does not repeat.
+  ///
+  /// In he, this message translates to:
+  /// **'ללא חזרה'**
+  String get recurrenceTypeNone;
+
+  /// Recurrence type chip label: repeats every Hebrew year on the same Hebrew month/day.
+  ///
+  /// In he, this message translates to:
+  /// **'כל שנה (עברי)'**
+  String get recurrenceTypeYearly;
+
+  /// Recurrence type chip label: repeats every Hebrew month on the same day.
+  ///
+  /// In he, this message translates to:
+  /// **'כל חודש (עברי)'**
+  String get recurrenceTypeMonthly;
+
+  /// Recurrence type chip label: repeats every week.
+  ///
+  /// In he, this message translates to:
+  /// **'כל שבוע'**
+  String get recurrenceTypeWeekly;
+
+  /// Recurrence type chip label: repeats every day.
+  ///
+  /// In he, this message translates to:
+  /// **'כל יום'**
+  String get recurrenceTypeDaily;
+
+  /// Label for the optional 'repeat until' Hebrew date field shown for a recurring event.
+  ///
+  /// In he, this message translates to:
+  /// **'עד תאריך'**
+  String get recurrenceUntilLabel;
+
+  /// Placeholder shown for the 'repeat until' field when no end date is set (the series repeats indefinitely).
+  ///
+  /// In he, this message translates to:
+  /// **'ללא תאריך סיום'**
+  String get recurrenceUntilNone;
+
+  /// Tooltip for the button that clears the 'repeat until' date, making the series repeat indefinitely again.
+  ///
+  /// In he, this message translates to:
+  /// **'הסרת תאריך סיום'**
+  String get recurrenceUntilClearTooltip;
+
+  /// Label for the year dropdown in the Hebrew date picker sheet.
+  ///
+  /// In he, this message translates to:
+  /// **'שנה'**
+  String get hebrewDatePickerYearLabel;
+
+  /// Label for the month dropdown in the Hebrew date picker sheet.
+  ///
+  /// In he, this message translates to:
+  /// **'חודש'**
+  String get hebrewDatePickerMonthLabel;
+
+  /// Label for the day dropdown in the Hebrew date picker sheet.
+  ///
+  /// In he, this message translates to:
+  /// **'יום'**
+  String get hebrewDatePickerDayLabel;
+
+  /// Confirm button label in the Hebrew date picker sheet.
+  ///
+  /// In he, this message translates to:
+  /// **'אישור'**
+  String get hebrewDatePickerConfirm;
+
+  /// Label for the Google sign-in button on the sign-in screen.
+  ///
+  /// In he, this message translates to:
+  /// **'כניסה עם Google'**
+  String get signInWithGoogleButton;
+
+  /// Snackbar message shown when Google sign-in fails for a reason other than user cancellation.
+  ///
+  /// In he, this message translates to:
+  /// **'אירעה שגיאה בכניסה. נסה שוב.'**
+  String get signInErrorMessage;
+
+  /// Secondary button on the sign-in screen (M5c, Google Play review requirement) that enters the full calendar UI with sample data and no authentication at all.
+  ///
+  /// In he, this message translates to:
+  /// **'כניסה במצב הדגמה'**
+  String get signInDemoModeButton;
+
+  /// Overflow menu label shown instead of signOutAction while in demo mode — returns to the sign-in screen and clears demo state (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'התחבר'**
+  String get signInReturnToSignInAction;
+
+  /// Label for the sign-out overflow menu item, and the confirm button in the sign-out confirmation dialog.
+  ///
+  /// In he, this message translates to:
+  /// **'התנתקות'**
+  String get signOutAction;
+
+  /// Title of the confirmation dialog shown before signing out.
+  ///
+  /// In he, this message translates to:
+  /// **'התנתקות'**
+  String get signOutConfirmTitle;
+
+  /// Body text of the confirmation dialog shown before signing out.
+  ///
+  /// In he, this message translates to:
+  /// **'האם להתנתק מהחשבון?'**
+  String get signOutConfirmMessage;
+
+  /// Calendar view switcher option/current-view label: month view.
+  ///
+  /// In he, this message translates to:
+  /// **'חודש'**
+  String get calendarViewMonth;
+
+  /// Calendar view switcher option/current-view label: week view.
+  ///
+  /// In he, this message translates to:
+  /// **'שבוע'**
+  String get calendarViewWeek;
+
+  /// Calendar view switcher option/current-view label: day view.
+  ///
+  /// In he, this message translates to:
+  /// **'יום'**
+  String get calendarViewDay;
+
+  /// Calendar view switcher option/current-view label: agenda view. Also shown as the app bar title while the agenda view is active.
+  ///
+  /// In he, this message translates to:
+  /// **'אג\'נדה'**
+  String get calendarViewAgenda;
+
+  /// Tooltip for the app bar's view switcher (month/week/day/agenda) button.
+  ///
+  /// In he, this message translates to:
+  /// **'בחירת תצוגה'**
+  String get calendarViewSwitcherTooltip;
+
+  /// Tooltip for the app bar's 'today' button, which refocuses the calendar on today without changing the selected view.
+  ///
+  /// In he, this message translates to:
+  /// **'היום'**
+  String get calendarTodayTooltip;
+
+  /// Empty-state message shown in the agenda view when there are no upcoming occurrences in the loaded window.
+  ///
+  /// In he, this message translates to:
+  /// **'אין אירועים קרובים'**
+  String get agendaEmptyState;
+
+  /// Android notification channel name (M4) for event reminders, shown to the user in the system notification settings.
+  ///
+  /// In he, this message translates to:
+  /// **'תזכורות'**
+  String get notificationsChannelName;
+
+  /// Snackbar rationale shown once (M4) when the user denies the OS notification permission, explaining reminders won't show without it.
+  ///
+  /// In he, this message translates to:
+  /// **'בלי הרשאת התראות, תזכורות לאירועים לא יוצגו. ניתן להפעיל בהגדרות המכשיר.'**
+  String get notificationsPermissionDeniedMessage;
+
+  /// Tooltip for the app bar's gear icon that opens the settings screen (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'הגדרות'**
+  String get settingsTooltip;
+
+  /// App bar title for the settings screen (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'הגדרות'**
+  String get settingsScreenTitle;
+
+  /// Section heading for the Google Calendar sync settings (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון עם יומן Google'**
+  String get settingsGoogleSyncSectionTitle;
+
+  /// Label for the switch that enables/disables Google Calendar sync (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון עם Google Calendar'**
+  String get settingsGoogleSyncEnableLabel;
+
+  /// Shows when Google Calendar sync last completed successfully (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'סונכרן לאחרונה: {time}'**
+  String settingsGoogleSyncLastSyncedAt(String time);
+
+  /// Shown instead of a last-sync time before Google Calendar sync has ever completed (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'טרם בוצע סנכרון'**
+  String get settingsGoogleSyncNeverSynced;
+
+  /// Manual sync-now button label on the settings screen (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרן עכשיו'**
+  String get settingsGoogleSyncNowButton;
+
+  /// Shown while a Google Calendar sync pass is in progress (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'מסנכרן...'**
+  String get settingsGoogleSyncSyncingLabel;
+
+  /// Prefix shown before the error detail when the last Google Calendar sync pass failed (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'שגיאת סנכרון: {message}'**
+  String settingsGoogleSyncErrorPrefix(String message);
+
+  /// Snackbar shown when the user denies the Google Calendar access request while enabling sync (M5a).
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.'**
+  String get settingsGoogleSyncAccessDeniedMessage;
+
+  /// Snackbar shown when enabling or disabling Google Calendar sync fails for a real reason (not a plain user cancel/decline) — e.g. the Google account session could not be restored (device-feedback round #3). {details} is the underlying error text, always shown, never swallowed.
+  ///
+  /// In he, this message translates to:
+  /// **'אירעה שגיאה: {details}'**
+  String settingsGoogleSyncActionFailedMessage(String details);
+
+  /// Read-only line on the settings screen showing whether periodic background sync (M5b, via WorkManager) is currently active — the status itself comes from settingsBackgroundSyncStatusActive/settingsBackgroundSyncStatusOff. There is no separate toggle: background sync follows the main Google Calendar sync switch automatically.
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון ברקע: {status}'**
+  String settingsBackgroundSyncStatus(String status);
+
+  /// Background sync status value (M5b) when Google Calendar sync is enabled: the periodic WorkManager task runs roughly every 6 hours.
+  ///
+  /// In he, this message translates to:
+  /// **'פעיל (כל 6 שעות)'**
+  String get settingsBackgroundSyncStatusActive;
+
+  /// Background sync status value (M5b) when Google Calendar sync is disabled, so no periodic background task is registered.
+  ///
+  /// In he, this message translates to:
+  /// **'כבוי'**
+  String get settingsBackgroundSyncStatusOff;
+
+  /// Error message shown instead of the Google Calendar sync section when its initial settings failed to load or timed out (real-device report: previously an endless spinner instead of this message).
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן היה לטעון את הגדרות הסנכרון. בדוק את החיבור לאינטרנט ונסה שוב.'**
+  String get settingsGoogleSyncLoadFailedMessage;
+
+  /// Retry button label shown alongside settingsGoogleSyncLoadFailedMessage.
+  ///
+  /// In he, this message translates to:
+  /// **'נסה שוב'**
+  String get settingsGoogleSyncRetryButton;
+
+  /// Shown instead of settingsGoogleSyncLoadFailedMessage when the settings screen's own local loading watchdog (not GoogleSyncTriggerService.start()'s timeout) is what ended the spinner — a last-resort fallback in case every provider layer misbehaves (real-device report #2, round 2).
+  ///
+  /// In he, this message translates to:
+  /// **'תקלה בטעינה'**
+  String get settingsGoogleSyncWatchdogMessage;
+
+  /// Shown instead of the Google Calendar sync switch/controls while in demo mode (no signed-in account to sync with).
+  ///
+  /// In he, this message translates to:
+  /// **'דורש התחברות עם Google'**
+  String get settingsGoogleSyncDisabledDemoMessage;
+
+  /// Section heading for the local-file backup/restore settings (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'גיבוי ושחזור'**
+  String get settingsBackupSectionTitle;
+
+  /// Explanatory text under the backup section heading (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'ייצוא כל האירועים לקובץ, ושחזור מקובץ קיים. הנתונים חיים גם ב-Google, אך זהו גיבוי ידני נוסף שנשמר אצלך.'**
+  String get settingsBackupDescription;
+
+  /// Button label that exports every event to a JSON file the user saves directly (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'ייצוא גיבוי'**
+  String get settingsBackupExportButton;
+
+  /// Tooltip for the icon button that shares the backup file via the OS share sheet instead of saving it directly (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'שיתוף קובץ הגיבוי'**
+  String get settingsBackupShareTooltip;
+
+  /// Button label that starts the restore-from-backup-file flow (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'שחזור מגיבוי'**
+  String get settingsBackupImportButton;
+
+  /// Title of the confirmation dialog shown before restoring from a backup file (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'שחזור מגיבוי'**
+  String get settingsBackupImportConfirmTitle;
+
+  /// Body text of the confirmation dialog before restoring from a backup file, explaining the merge-by-id semantics (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'אירועים מהקובץ ישולבו עם האירועים הקיימים: אירוע עם מזהה זהה יוחלף, ואירועים חדשים יתווספו. שום אירוע קיים לא יימחק. להמשיך?'**
+  String get settingsBackupImportConfirmMessage;
+
+  /// Confirm button label in the restore-from-backup confirmation dialog (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'שחזור'**
+  String get settingsBackupImportConfirmButton;
+
+  /// Snackbar shown after a backup file was saved/shared successfully (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'הגיבוי נשמר בהצלחה'**
+  String get settingsBackupExportSuccessMessage;
+
+  /// Snackbar shown when exporting/sharing the backup file fails (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'אירעה שגיאה בייצוא הגיבוי'**
+  String get settingsBackupExportErrorMessage;
+
+  /// Snackbar shown after a successful restore, summarizing how many events were created vs. overwritten (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'השחזור הושלם: {created} אירועים חדשים, {updated} עודכנו'**
+  String settingsBackupImportSuccessMessage(int created, int updated);
+
+  /// Snackbar shown when restoring from a backup file fails (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'אירעה שגיאה בשחזור הגיבוי'**
+  String get settingsBackupImportErrorMessage;
+
+  /// Snackbar shown when the backup file's format version is newer than this build of the app understands (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'קובץ הגיבוי נוצר בגרסה חדשה יותר של האפליקציה ואינו נתמך כאן'**
+  String get settingsBackupImportUnsupportedVersionMessage;
+
+  /// Footer text on the settings screen showing the installed app version (M7).
+  ///
+  /// In he, this message translates to:
+  /// **'גרסה {version}'**
+  String settingsVersionLabel(String version);
+
+  /// Label for the settings screen list item that opens the About screen (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'אודות'**
+  String get settingsAboutTooltip;
+
+  /// App bar title for the About screen (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'אודות'**
+  String get aboutScreenTitle;
+
+  /// Short tagline shown under the app name on the About screen (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'יומן עברי'**
+  String get aboutTagline;
+
+  /// Modest developer/maker credit on the About screen (M5c) — the first place kalit branding appears in the app.
+  ///
+  /// In he, this message translates to:
+  /// **'מבית kalit'**
+  String get aboutDeveloperCredit;
+
+  /// Button on the About screen that opens Flutter's built-in open-source licenses page (M5c).
+  ///
+  /// In he, this message translates to:
+  /// **'רישיונות קוד פתוח'**
+  String get aboutLicensesButton;
 }
 
 class _AppLocalizationsDelegate
@@ -260,7 +688,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'he'].contains(locale.languageCode);
+      <String>['he'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -269,8 +697,6 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en':
-      return AppLocalizationsEn();
     case 'he':
       return AppLocalizationsHe();
   }

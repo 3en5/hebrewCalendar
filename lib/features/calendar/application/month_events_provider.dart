@@ -1,0 +1,21 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show StreamProviderFamily;
+
+import '../../../domain/event/event_occurrence.dart';
+import '../../../domain/hebrew_date/hebrew_date.dart';
+import '../../event_editor/application/event_repository_provider.dart';
+
+/// Streams the event occurrences (see [EventOccurrence] — recurring events
+/// are expanded, M3a) for the Hebrew month identified by [month].
+///
+/// Only `month.year`/`month.month` are used — `month.day` is ignored.
+///
+/// `autoDispose.family`: a fresh, focused subscription per month page
+/// actually on screen, closed once that page scrolls out of view
+/// (RULES.md §6.2 — no unbounded/global collection listeners).
+final StreamProviderFamily<List<EventOccurrence>, HebrewDate>
+monthEventsProvider = StreamProvider.autoDispose
+    .family<List<EventOccurrence>, HebrewDate>((Ref ref, HebrewDate month) {
+      final repository = ref.watch(eventRepositoryProvider);
+      return repository.watchEventsForHebrewMonth(month.year, month.month);
+    });

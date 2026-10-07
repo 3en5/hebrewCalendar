@@ -1,17 +1,16 @@
-# לוח עברי
+# hebrew_calendar
 
-אפליקציית Flutter (בשלב ראשון ל-Android) ללוח שנה עברי: תאריכים, חגים, זמני היום, פרשת השבוע ואירועים חוזרים לפי תאריך עברי.
+A new Flutter project.
 
-- [אפיון](docs/SPEC.md)
-- [שחרור גרסאות](docs/RELEASING.md)
+## Getting Started
 
-## פיתוח
+This project is a starting point for a Flutter application.
 
-```bash
-flutter pub get
-flutter analyze
-flutter test
-flutter run
-```
+A few resources to get you started if this is your first Flutter project:
 
-גרסת Flutter: 3.47.6 (stable).
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.

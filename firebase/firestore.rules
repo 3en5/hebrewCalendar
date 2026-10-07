@@ -1,0 +1,154 @@
+rules_version = '2';
+
+// Security rules for HebrewCalendar (ARCHITECTURE.md §4/§8, RULES.md §5).
+//
+// Everything is deny-by-default: only `users/{uid}` and `events/{eventId}`
+// have explicit rules, and a catch-all at the bottom denies every other
+// path (RULES.md §5.2 — no open rule, not even "temporarily").
+//
+// Length limits mirror `lib/domain/event/event_validation.dart`
+// (kEventTitleMaxLength=200, kEventDescriptionMaxLength=2000,
+// kEventLocationMaxLength=500) — client-side validation is never trusted
+// alone (RULES.md §5.5).
+//
+// Participant-based sharing (`participantUids`) is M6 scope — until then,
+// only the event's own `ownerUid` may read/write it.
+//
+// M3a (Hebrew recurring events): `recurrence` (type/until/exceptions) and
+// the derived `isRecurring` bool (see `lib/data/event_firestore_mapper.dart`
+// doc comment — it's recomputed from `recurrence.type` on every write, used
+// to query "this user's recurring events" without inspecting every event's
+// full recurrence map) are validated the same way as every other field:
+// never trusted from the client alone.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // users/{uid} — profile document created/merged by the app on sign-in
+    // (see lib/features/auth/data/auth_repository.dart). Only the owning
+    // uid may read or write it, and only a fixed field whitelist is
+    // accepted.
+    //
+    // M5a: `googleSyncEnabled`/`googleSyncToken`/`googleLastSyncedAt` are the
+    // Google Calendar sync feature's own settings (`lib/domain/sync/
+    // sync_settings_store.dart`), merged in by `FirestoreSyncSettingsStore` —
+    // not written on sign-in, but on the same document, so the whitelist and
+    // per-field type checks include them too. M5b adds `googleLastSyncError`
+    // (the most recent failed pass's message, foreground or background —
+    // cleared to null on the next successful pass).
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidUserDoc(request.resource.data);
+      allow update: if isOwner(uid) && isValidUserDoc(request.resource.data);
+      allow delete: if false;
+
+      function isValidUserDoc(data) {
+        return data.keys().hasOnly([
+            'displayName', 'email', 'photoUrl', 'createdAt',
+            'googleSyncEnabled', 'googleSyncToken', 'googleLastSyncedAt',
+            'googleLastSyncError'
+          ])
+          && data.createdAt is timestamp
+          && (!('displayName' in data) || data.displayName == null || data.displayName is string)
+          && (!('email' in data) || data.email == null || data.email is string)
+          && (!('photoUrl' in data) || data.photoUrl == null || data.photoUrl is string)
+          && (!('googleSyncEnabled' in data) || data.googleSyncEnabled is bool)
+          && (!('googleSyncToken' in data) || data.googleSyncToken == null || data.googleSyncToken is string)
+          && (!('googleLastSyncedAt' in data) || data.googleLastSyncedAt == null || data.googleLastSyncedAt is timestamp)
+          && (!('googleLastSyncError' in data) || data.googleLastSyncError == null || data.googleLastSyncError is string);
+      }
+    }
+
+    // users/{uid}/pendingGoogleDeletions/{eventId} — M5a: a durable queue of
+    // local deletions still awaiting remote Google Calendar cleanup
+    // (`lib/data/firestore_event_sync_support.dart`). Only the owning uid's
+    // own sync engine ever reads/writes this.
+    match /users/{uid}/pendingGoogleDeletions/{eventId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // events/{eventId} — root collection (not nested under users/{uid}) so
+    // a future shared event can be read by its participants too (M6);
+    // until then only `ownerUid` may touch it.
+    match /events/{eventId} {
+      allow read: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && isValidEvent(request.resource.data);
+
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && isValidEvent(request.resource.data);
+
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+
+      function isValidEvent(data) {
+        return data.ownerUid is string
+          && data.calendarId is string
+          && data.title is string
+          && data.title.size() > 0
+          && data.title.size() <= 200
+          && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+          && (!('location' in data) || (data.location is string && data.location.size() <= 500))
+          && data.hebrewDate is map
+          && data.hebrewDate.year is int
+          && data.hebrewDate.month is string
+          && data.hebrewDate.day is int
+          && data.hebrewDate.day >= 1
+          && data.hebrewDate.day <= 30
+          && data.gregorianStart is timestamp
+          && data.gregorianEnd is timestamp
+          && data.allDay is bool
+          && data.isRecurring is bool
+          && data.recurrence is map
+          && isValidRecurrence(data.recurrence)
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp
+          && (!('source' in data) || data.source in ['app', 'google'])
+          && (!('googleSync' in data) || isValidSyncState(data.googleSync))
+          && (!('googleInstanceSync' in data) || data.googleInstanceSync is map);
+      }
+
+      // M5a: `googleSync`/each `googleInstanceSync` entry
+      // (`lib/domain/sync/sync_state.dart`'s `GoogleSyncState`).
+      function isValidSyncState(state) {
+        return state is map
+          && (!('googleEventId' in state) || state.googleEventId == null || state.googleEventId is string)
+          && (!('etag' in state) || state.etag == null || state.etag is string)
+          && (!('lastSyncedAt' in state) || state.lastSyncedAt == null || state.lastSyncedAt is timestamp)
+          && (!('dirty' in state) || state.dirty is bool);
+      }
+
+      function isValidRecurrence(rec) {
+        return rec.type is string
+          && rec.type in ['none', 'hebrewYearly', 'hebrewMonthly', 'weekly', 'daily']
+          && (!('until' in rec) || rec.until == null || isValidHebrewDateMap(rec.until))
+          && (!('exceptions' in rec) || rec.exceptions is list);
+      }
+
+      function isValidHebrewDateMap(hd) {
+        return hd is map
+          && hd.year is int
+          && hd.month is string
+          && hd.day is int
+          && hd.day >= 1
+          && hd.day <= 30;
+      }
+    }
+
+    // Deny everything else explicitly (Firestore already denies unmatched
+    // paths by default, but this documents the intent for reviewers).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

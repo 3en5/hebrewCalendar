@@ -2,42 +2,106 @@ name: CI
 
 on:
   push:
-    branches: ['**']
   pull_request:
+  workflow_dispatch: # manual rebuild (e.g. after adding/rotating secrets)
 
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+env:
+  FLUTTER_VERSION: "3.32.5"
 
 jobs:
-  check:
+  test:
+    name: Format, analyze, test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          distribution: temurin
-          java-version: '17'
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.6'
-          channel: stable
-          cache: true
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed .
 
       - name: Analyze
         run: flutter analyze
 
-      - name: Test
-        run: flutter test
+      - name: Run tests with coverage
+        run: flutter test --coverage
 
-      # Debug-signed (no key.properties in CI); proves the Android build works.
-      - name: Build App Bundle
-        run: flutter build appbundle --release
+      - name: Check 500-line file limit
+        run: bash tool/check_file_length.sh
+
+  build-apk:
+    name: Build debug APK
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      HAS_GS_SECRET: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # google-services.json is gitignored (RULES.md §5.4). If the repo has
+      # the GOOGLE_SERVICES_JSON secret, the APK is built with the real
+      # config (installable + Google Sign-In works, thanks to the committed
+      # deterministic debug keystore whose SHA-1 is registered in Firebase).
+      - name: Write google-services.json from secret
+        if: ${{ env.HAS_GS_SECRET == 'true' }}
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
+      # Fallback: a structurally valid placeholder with fake keys, so the
+      # build still verifies Gradle wiring on forks/PRs without the secret.
+      - name: Create placeholder google-services.json
+        if: ${{ env.HAS_GS_SECRET != 'true' }}
+        run: |
+          cat > android/app/google-services.json << 'EOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "ci-placeholder",
+              "storage_bucket": "ci-placeholder.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+                  "android_client_info": {
+                    "package_name": "il.co.natanor.kalfapp.hebrewcalendar"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [{ "current_key": "AIzaSyA-ci-placeholder-key-0000000000000" }],
+                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      # Downloadable from the workflow run page (Actions -> run -> Artifacts)
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hebrew-calendar-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14

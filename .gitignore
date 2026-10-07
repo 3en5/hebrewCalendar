@@ -12,36 +12,45 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ / VS Code
+# IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
-.vscode/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
-/coverage/
 
-# Symbolication / obfuscation
+# Symbolication related
 app.*.symbols
+
+# Obfuscation related
 app.*.map.json
 
-# Android Studio
+# Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
 /android/app/release
 
-# Secrets: never commit
-.env
-*.env
-*.jks
-*.keystore
+# Firebase config - never commit (RULES.md §5.4)
+**/google-services.json
+
+# Release signing (M7, docs/RELEASE.md) - never commit (RULES.md §5.4).
+# android/debug.keystore is intentionally committed (deterministic debug
+# signing, see android/app/build.gradle.kts); the *release* keystore and its
+# credentials must never be.
 android/key.properties
-play-service-account*.json
+android/release.keystore
+*.jks

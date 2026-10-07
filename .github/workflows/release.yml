@@ -1,138 +1,115 @@
-name: Release to Google Play
+name: Release
 
-# - Pushing a tag vX.Y.Z builds a signed AAB and uploads it to the internal track.
-# - Manual runs choose the track. Production is only ever released manually,
-#   with a staged rollout fraction.
-# - track "none" only builds the signed AAB as a workflow artifact (used for the
-#   first upload, which Google Play requires to be done by hand).
-
+# Manual only (docs/RELEASE.md walks through running this): a signed release
+# App Bundle should never be produced by a plain push/PR the way the debug
+# APK in ci.yml is.
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
-    inputs:
-      track:
-        description: Google Play track
-        type: choice
-        options: [none, internal, alpha, beta, production]
-        default: internal
-      rollout:
-        description: Production rollout fraction (0-1], e.g. 0.1 for 10%
-        type: string
-        default: '0.1'
-      draft:
-        description: Upload as draft (required until the app's first review is approved)
-        type: boolean
-        default: false
-
-concurrency:
-  group: release
-  cancel-in-progress: false
 
 env:
-  PACKAGE_NAME: il.co.natanor.kalfapp.hebrewcalendar
+  FLUTTER_VERSION: "3.32.5"
 
 jobs:
-  release:
+  build-release-appbundle:
+    name: Build signed release App Bundle
     runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      HAS_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD != '' }}
+      HAS_KEY_ALIAS: ${{ secrets.KEY_ALIAS != '' }}
+      HAS_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD != '' }}
+      HAS_GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.6'
-          channel: stable
-          cache: true
-
-      - name: Resolve version and release settings
-        id: cfg
-        env:
-          TRACK: ${{ inputs.track || 'internal' }}
-          ROLLOUT: ${{ inputs.rollout || '1' }}
-          DRAFT: ${{ inputs.draft || false }}
+      # A signed release build needs all five secrets (docs/RELEASE.md lists
+      # how to generate/register each one) — fail fast with a clear message
+      # rather than partway through the build.
+      - name: Verify required secrets are configured
         run: |
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            name="${GITHUB_REF_NAME#v}"
-          else
-            name="$(grep -E '^version:' pubspec.yaml | sed -E 's/version: *([^+]+).*/\1/')"
-          fi
-          # Monotonic versionCode, independent of pubspec's build number.
-          code=$((100 + GITHUB_RUN_NUMBER))
-
-          if [[ "$DRAFT" == "true" ]]; then
-            status=draft; fraction=""
-          elif [[ "$TRACK" == "production" ]] && awk "BEGIN{exit !($ROLLOUT < 1)}"; then
-            status=inProgress; fraction="$ROLLOUT"
-          else
-            status=completed; fraction=""
+          missing=""
+          [ "$HAS_KEYSTORE_BASE64" = "true" ] || missing="$missing KEYSTORE_BASE64"
+          [ "$HAS_KEYSTORE_PASSWORD" = "true" ] || missing="$missing KEYSTORE_PASSWORD"
+          [ "$HAS_KEY_ALIAS" = "true" ] || missing="$missing KEY_ALIAS"
+          [ "$HAS_KEY_PASSWORD" = "true" ] || missing="$missing KEY_PASSWORD"
+          [ "$HAS_GOOGLE_SERVICES_JSON" = "true" ] || missing="$missing GOOGLE_SERVICES_JSON"
+          if [ -n "$missing" ]; then
+            echo "Missing required repository secret(s):$missing" >&2
+            echo "See docs/RELEASE.md for how to generate and add them." >&2
+            exit 1
           fi
 
-          {
-            echo "name=$name"
-            echo "code=$code"
-            echo "track=$TRACK"
-            echo "status=$status"
-            echo "fraction=$fraction"
-          } >> "$GITHUB_OUTPUT"
-          echo "### $name ($code) → $TRACK [$status${fraction:+ $fraction}]" >> "$GITHUB_STEP_SUMMARY"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze
-        run: flutter analyze
+      - name: Write google-services.json from secret
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
 
-      - name: Test
-        run: flutter test
-
-      - name: Restore signing keystore
+      # android/key.properties + the decoded keystore are exactly what
+      # android/app/build.gradle.kts's `hasReleaseSigning` check looks for —
+      # the same file a developer would create locally per docs/RELEASE.md,
+      # just written from secrets instead of by hand.
+      - name: Decode release keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/release.keystore
+
+      - name: Write key.properties
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [[ -z "$KEYSTORE_BASE64" ]]; then
-            echo "::error::KEYSTORE_BASE64 secret is not set"; exit 1
-          fi
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
-          cat > android/key.properties <<PROPS
-          storePassword=$KEY_STORE_PASSWORD
-          keyPassword=$KEY_PASSWORD
+          cat > android/key.properties << EOF
+          storeFile=release.keystore
+          storePassword=$KEYSTORE_PASSWORD
           keyAlias=$KEY_ALIAS
-          storeFile=upload-keystore.jks
-          PROPS
+          keyPassword=$KEY_PASSWORD
+          EOF
 
-      - name: Build signed App Bundle
-        run: >
-          flutter build appbundle --release
-          --build-name=${{ steps.cfg.outputs.name }}
-          --build-number=${{ steps.cfg.outputs.code }}
+      # versionName comes straight from pubspec.yaml's `version:` (e.g.
+      # "1.2.0" out of "1.2.0+1"); versionCode is that same file's build
+      # number *offset by this workflow run's number* rather than used
+      # as-is, so every release upload gets a strictly-increasing versionCode
+      # (Play Console rejects a re-upload otherwise) without hand-editing
+      # pubspec.yaml before each run (docs/RELEASE.md).
+      - name: Compute version name/code from pubspec.yaml + run number
+        id: version
+        run: |
+          version_line=$(grep '^version:' pubspec.yaml | head -n 1 | sed -E 's/^version:[[:space:]]*//')
+          version_name="${version_line%%+*}"
+          base_build_number="${version_line##*+}"
+          version_code=$((base_build_number + GITHUB_RUN_NUMBER))
+          echo "Computed versionName=$version_name versionCode=$version_code"
+          echo "name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "code=$version_code" >> "$GITHUB_OUTPUT"
 
-      - name: Keep AAB as artifact
+      - name: Build signed release App Bundle
+        run: |
+          flutter build appbundle --release \
+            --build-name="${{ steps.version.outputs.name }}" \
+            --build-number="${{ steps.version.outputs.code }}"
+
+      - name: Upload App Bundle artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-${{ steps.cfg.outputs.name }}-${{ steps.cfg.outputs.code }}
+          name: hebrew-calendar-release-aab
           path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
 
-      - name: Upload to Google Play
-        if: steps.cfg.outputs.track != 'none'
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_KEY }}
-          packageName: ${{ env.PACKAGE_NAME }}
-          releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: ${{ steps.cfg.outputs.track }}
-          status: ${{ steps.cfg.outputs.status }}
-          userFraction: ${{ steps.cfg.outputs.fraction }}
-          releaseName: ${{ steps.cfg.outputs.name }} (${{ steps.cfg.outputs.code }})
-          whatsNewDirectory: distribution/whatsnew
-
-      - name: Remove signing material
+      # Secrets only ever exist on this ephemeral GitHub-hosted runner, but
+      # remove them explicitly anyway rather than relying solely on the
+      # runner being torn down.
+      - name: Remove decoded secrets from the runner
         if: always()
-        run: rm -f android/app/upload-keystore.jks android/key.properties
+        run: |
+          rm -f android/release.keystore android/key.properties android/app/google-services.json
