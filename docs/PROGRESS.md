@@ -21,6 +21,9 @@
   3. להוריד `google-services.json` חדש ולעדכן את ה-secret `GOOGLE_SERVICES_JSON`.
 
   בלי זה, ההתחברות עם Google תיכשל.
+- `ci.yml`: אם ה-secret `GOOGLE_SERVICES_JSON` לא מכיל client למזהה הנוכחי,
+  ה-build עובר ל-placeholder עם אזהרה, במקום להיכשל. ה-APK שנבנה כך לא יאפשר
+  התחברות עם Google, עד שה-secret יעודכן.
 - נוסף `docs/SPEC_2026-10.md`: אפיון מוצר מסשן 2026-10-07, לעיון בלבד.
   התוכנית המחייבת נשארת `ARCHITECTURE.md`.
 
