@@ -52,8 +52,15 @@ def call(s, method, url, **kw):
     return r
 
 
+def fb_headers(project):
+    # Bill/quota Firebase Management API calls to the Firebase project (where
+    # the API is enabled) instead of the service account's own project.
+    return {"x-goog-user-project": project}
+
+
 def firebase_app(s, project, package):
-    apps = call(s, "GET", f"{FIREBASE}/projects/{project}/androidApps").json()
+    apps = call(s, "GET", f"{FIREBASE}/projects/{project}/androidApps",
+                headers=fb_headers(project)).json()
     for app in apps.get("apps", []):
         if app.get("packageName") == package:
             return app["name"]
@@ -141,7 +148,8 @@ def main():
     app = firebase_app(s, project, package)
     existing = {
         normalize(c["shaHash"])
-        for c in call(s, "GET", f"{FIREBASE}/{app}/sha").json().get("certificates", [])
+        for c in call(s, "GET", f"{FIREBASE}/{app}/sha",
+                      headers=fb_headers(project)).json().get("certificates", [])
     }
 
     code = latest_version_code(s, package, track)
@@ -154,7 +162,8 @@ def main():
         if sha in existing:
             print(f"already registered: {kind} {sha}")
             continue
-        call(s, "POST", f"{FIREBASE}/{app}/sha", json={"shaHash": sha, "certType": kind})
+        call(s, "POST", f"{FIREBASE}/{app}/sha", headers=fb_headers(project),
+             json={"shaHash": sha, "certType": kind})
         existing.add(sha)
         added += 1
         print(f"added: {kind} {sha}")
