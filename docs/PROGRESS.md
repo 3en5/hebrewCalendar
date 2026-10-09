@@ -5,6 +5,15 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-09 — targetSdk/compileSdk 36
+
+- Play Console דחה גם את ה-AAB השני: העלאות חדשות חייבות targetSdk 36
+  (Android 16), והאפליקציה עמדה על 35, ברירת המחדל של Flutter 3.32.5.
+- הוגדרו במפורש `compileSdk = 36` ו-`targetSdk = 36`, ו-AGP עודכן מ-8.7.3
+  ל-8.9.1 (הגרסה הראשונה שתומכת רשמית ב-API 36). Gradle 8.12 כבר מספיק.
+- שדרוג Flutter עצמו לגרסה עדכנית נדחה. הוא יחייב תיקוני lint ו-format
+  (deprecations של `value` ב-form fields), ויטופל בנפרד.
+
 ## 2026-10-09 — minSdk הועלה ל-24
 
 - Play Console דחה את ה-AAB הראשון: ההגנה האוטומטית של Play (Automatic

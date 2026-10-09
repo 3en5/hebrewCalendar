@@ -27,7 +27,9 @@ if (hasReleaseSigning) {
 
 android {
     namespace = "il.co.natanor.kalfapp.hebrewcalendar"
-    compileSdk = flutter.compileSdkVersion
+    // Google Play requires targetSdk 36 (Android 16) for new uploads; the
+    // pinned Flutter (3.32.x) still defaults to 35, so both are set explicitly.
+    compileSdk = 36
     // Firebase plugins (firebase_core/auth, cloud_firestore, google_sign_in)
     // require NDK 27; flutter.ndkVersion is older.
     ndkVersion = "27.0.12077973"
@@ -54,7 +56,7 @@ android {
         // implementation declares minSdkVersion 23 (M2b — Firebase wiring);
         // then to 24, which Play's automatic app protection requires.
         minSdk = 24
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
