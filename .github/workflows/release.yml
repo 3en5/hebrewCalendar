@@ -85,11 +85,21 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Write google-services.json from secret
+      # Prefer the live config from Firebase (always matches the registered
+      # signing fingerprints); fall back to the GOOGLE_SERVICES_JSON secret.
+      - name: Write google-services.json
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY }}
+          FIREBASE_PROJECT: hebrewcalendar-68363
+          PACKAGE_NAME: ${{ env.APP_ID }}
         run: |
           printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          if [ "$HAS_GOOGLE_PLAY_KEY" = "true" ]; then
+            pip install --quiet google-auth requests
+            python3 tool/fetch_google_services.py android/app/google-services.json \
+              || echo "::warning::Could not fetch google-services.json from Firebase; using the secret"
+          fi
           # Unlike ci.yml there is no placeholder fallback: a release without
           # the real Firebase config would ship with Google Sign-In broken.
           if ! grep -q "\"$APP_ID\"" android/app/google-services.json; then
