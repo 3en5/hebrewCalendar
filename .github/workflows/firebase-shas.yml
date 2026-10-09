@@ -29,10 +29,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Play signs with APK Signature Scheme v3.2 incl. a post-quantum
+      # (ML-DSA) signer; apksigner needs a JDK with ML-DSA (24+) to verify it.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
 
       - name: Upload key fingerprints
         id: upload_key
