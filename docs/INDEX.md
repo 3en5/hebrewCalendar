@@ -21,7 +21,7 @@
 | `l10n.yaml` | קונפיגורציית generation של מחרוזות ה-ARB לקוד Dart |
 | `analysis_options.yaml` | קונפיגורציית linter/analyzer מחמירה (strict-casts/inference/raw-types, כללי lint נוספים) |
 | `android/settings.gradle.kts` | הצהרת פלאגינים ברמת הפרויקט, כולל `com.google.gms.google-services` (M2b — קורא את `google-services.json`) |
-| `android/app/build.gradle.kts` | קונפיגורציית מודול האפליקציה: החלת פלאגין `google-services`, `minSdk=23` (נדרש ע"י `firebase_auth`, מספיק גם ל-`flutter_local_notifications`); M7: `signingConfigs.release` אמיתי הנקרא מ-`android/key.properties` (גיטיגנור) כשקיים, נופל חזרה ל-debug signing כשלא; `isMinifyEnabled`/`isShrinkResources` לשחרור עם `proguard-rules.pro` |
+| `android/app/build.gradle.kts` | קונפיגורציית מודול האפליקציה: החלת פלאגין `google-services`, `minSdk=24` (23 נדרש ע"י `firebase_auth`, ו-24 ע"י ההגנה האוטומטית של Play); M7: `signingConfigs.release` אמיתי הנקרא מ-`android/key.properties` (גיטיגנור) כשקיים, נופל חזרה ל-debug signing כשלא; `isMinifyEnabled`/`isShrinkResources` לשחרור עם `proguard-rules.pro` |
 | `android/app/proguard-rules.pro` | M7: keep rules לשחרור מוקטן/מעורפל — `flutter_local_notifications`/`workmanager`/Firebase/`google_sign_in` |
 | `.github/workflows/release.yml` | M7: workflow ידני (`workflow_dispatch` בלבד). בונה App Bundle חתום מ-secrets ומחשב `versionName`/`versionCode` מ-`pubspec.yaml`+`GITHUB_RUN_NUMBER`. שומר את ה-`.aab` כ-artifact, ולפי `track` (none/internal/alpha/beta/production, עם `rollout` ו-`draft`) מעלה אותו ל-Google Play דרך `r0adkll/upload-google-play` עם `GOOGLE_PLAY_KEY` |
 | `distribution/whatsnew/whatsnew-iw-IL`, `whatsnew-en-US` | הערות גרסה ל-Google Play (עד 500 תווים כל אחת). `release.yml` שולח אותן בכל העלאה |

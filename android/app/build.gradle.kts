@@ -51,8 +51,9 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // Raised from flutter.minSdkVersion (21): firebase_auth's Android
-        // implementation declares minSdkVersion 23 (M2b — Firebase wiring).
-        minSdk = 23
+        // implementation declares minSdkVersion 23 (M2b — Firebase wiring);
+        // then to 24, which Play's automatic app protection requires.
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
