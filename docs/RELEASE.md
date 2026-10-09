@@ -127,7 +127,7 @@ keyPassword=<סיסמת המפתח>
 3. **ההעלאה הראשונה ידנית** (ה-API של Google לא מאפשר אותה): Testing ←
    Internal testing ← Create new release ← מעלים את ה-AAB. בהעלאה הזו
    Google מגדירה את Play App Signing.
-4. **SHA-1 של Play App Signing:** הוא שונה מה-SHA-1 של מפתח ההעלאה. מעתיקים
+4. **SHA-1 של Play App Signing:** אוטומטי. מריצים את workflow ‏**"Register signing SHAs in Firebase"** (`firebase-shas.yml`) אחרי שיש גרסה ב-track. השלבים הידניים למטה נשארים כגיבוי. דרישות: לחשבון השירות של `GOOGLE_PLAY_KEY` יש תפקיד **Firebase Admin** בפרויקט `hebrewcalendar-68363` (ניתן ב-2026-10-09), וגישה לאפליקציה ב-Play Console. ידנית: הוא שונה מה-SHA-1 של מפתח ההעלאה. מעתיקים
    אותו מ-Setup ← App signing ← "App signing key certificate", ומוסיפים אותו
    לאפליקציה ב-Firebase (Add fingerprint). אחר כך מורידים `google-services.json`
    מחדש ומעדכנים את ה-secret. בלי השלב הזה, Google Sign-In ייכשל בגרסאות

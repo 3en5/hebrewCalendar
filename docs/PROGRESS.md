@@ -5,6 +5,19 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-09 — רישום אוטומטי של טביעות אצבע ב-Firebase
+
+- **הבעיה:** בגרסה שהותקנה מ-Play, Google Sign-In לא עבד. Play חותם מחדש עם
+  מפתח Play App Signing, וה-SHA שלו לא היה רשום ב-Firebase.
+- **הפתרון:** נוספו `firebase-shas.yml` ו-`tool/register_firebase_shas.py`.
+  הם רושמים את ה-SHA של Play App Signing ושל מפתח ההעלאה, בלי צעדים ידניים.
+- **הרשאות:** הבעלים נתן ל-`powerwatch-release@sapient-fabric-462019-c3` את
+  התפקיד Firebase Admin בפרויקט `hebrewcalendar-68363`.
+- **חשבונות:** Play Console וחשבון השירות נמצאים תחת חשבון Google אחד. Firebase
+  נמצא תחת חשבון אחר (natanor.kalfa@gmail.com).
+- **ההעלאה האוטומטית הראשונה ל-Play:** הסודות כולם קיימים, `GOOGLE_PLAY_KEY`
+  נוסף. בבדיקה.
+
 ## 2026-10-09 — targetSdk/compileSdk 36
 
 - Play Console דחה גם את ה-AAB השני: העלאות חדשות חייבות targetSdk 36

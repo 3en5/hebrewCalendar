@@ -1,0 +1,53 @@
+name: Register signing SHAs in Firebase
+
+# Manual only. Adds the Play App Signing certificate (read from the APK Play
+# generated for the latest bundle on `track`) and the upload key to the
+# Firebase Android app, so Google Sign-In works in builds installed from Play.
+# See tool/register_firebase_shas.py and docs/RELEASE.md.
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: "Play track whose latest bundle to read the signing cert from"
+        type: choice
+        options: [internal, alpha, beta, production]
+        default: internal
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Upload key fingerprints
+        id: upload_key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          ks="$RUNNER_TEMP/upload.keystore"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$ks"
+          {
+            echo "shas<<EOF"
+            keytool -list -v -keystore "$ks" -alias "$KEY_ALIAS" -storepass "$KEYSTORE_PASSWORD" | grep -E '^\s*SHA(1|256):'
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          rm -f "$ks"
+
+      - name: Register fingerprints
+        env:
+          GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY }}
+          FIREBASE_PROJECT: hebrewcalendar-68363
+          PACKAGE_NAME: il.co.natanor.kalfapp.hebrewcalendar
+          TRACK: ${{ inputs.track }}
+          EXTRA_SHAS: ${{ steps.upload_key.outputs.shas }}
+        run: |
+          pip install --quiet google-auth requests
+          python3 tool/register_firebase_shas.py
