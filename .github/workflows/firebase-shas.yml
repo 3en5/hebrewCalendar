@@ -4,7 +4,16 @@ name: Register signing SHAs in Firebase
 # generated for the latest bundle on `track`) and the upload key to the
 # Firebase Android app, so Google Sign-In works in builds installed from Play.
 # See tool/register_firebase_shas.py and docs/RELEASE.md.
+#
+# The push trigger exists because workflow_dispatch only works once a workflow
+# file is on the default branch; it runs this once when the workflow or its
+# script changes on a feature branch.
 on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - .github/workflows/firebase-shas.yml
+      - tool/register_firebase_shas.py
   workflow_dispatch:
     inputs:
       track:
@@ -46,7 +55,7 @@ jobs:
           GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY }}
           FIREBASE_PROJECT: hebrewcalendar-68363
           PACKAGE_NAME: il.co.natanor.kalfapp.hebrewcalendar
-          TRACK: ${{ inputs.track }}
+          TRACK: ${{ inputs.track || 'internal' }}
           EXTRA_SHAS: ${{ steps.upload_key.outputs.shas }}
         run: |
           pip install --quiet google-auth requests
