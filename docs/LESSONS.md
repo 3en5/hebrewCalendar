@@ -547,3 +547,15 @@
 - **המטרה:** אחרי ההעלאה הראשונה הידנית, `release.yml` מעלה דרך ה-API של Play,
   ושגיאות הוולידציה מופיעות בלוג של ה-workflow. כך Claude רואה ומתקן אותן בעצמו,
   בלי צילומי מסך מהבעלים.
+
+## 2026-10-09 — קריאת תעודת Play App Signing מ-APK
+
+- APK ש-Play מייצר חתום ב-APK Signature Scheme v3.2, עם חותם היברידי
+  פוסט-קוונטי (ML-DSA). `apksigner` נכשל עם `ML-DSA KeyFactory not available`
+  על JDK 17 ו-21. נדרש JDK 24 ומעלה (ב-`firebase-shas.yml`: JDK 25).
+- `keytool -printcert -jarfile` לא מתאים: עם minSdk 24 ומעלה אין חתימת v1, והוא
+  מחזיר "Not a signed jar file".
+- קריאות ל-Firebase Management API עם service account מפרויקט אחר:
+  - נשלחת הכותרת `x-goog-user-project`, כדי שהקריאות יחויבו לפרויקט ה-Firebase.
+  - נדרש התפקיד `Service Usage Consumer`, נוסף על `Firebase Admin`, באותו
+    פרויקט.

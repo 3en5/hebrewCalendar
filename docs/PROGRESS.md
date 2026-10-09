@@ -15,8 +15,11 @@
   התפקיד Firebase Admin בפרויקט `hebrewcalendar-68363`.
 - **חשבונות:** Play Console וחשבון השירות נמצאים תחת חשבון Google אחד. Firebase
   נמצא תחת חשבון אחר (natanor.kalfa@gmail.com).
-- **ההעלאה האוטומטית הראשונה ל-Play:** הסודות כולם קיימים, `GOOGLE_PLAY_KEY`
-  נוסף. בבדיקה.
+- **ההעלאה האוטומטית הראשונה ל-Play עבדה** (release run 6, internal, draft,
+  versionCode 7).
+- `firebase-shas.yml` רשם 10 טביעות אצבע (Play App Signing ומפתח ההעלאה) ב-run 4.
+- נוסף התפקיד Service Usage Consumer ל-`powerwatch-release`, נוסף על Firebase
+  Admin.
 
 ## 2026-10-09 — targetSdk/compileSdk 36
 
