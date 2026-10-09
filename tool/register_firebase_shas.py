@@ -95,16 +95,26 @@ def play_signing_shas(s, package, version_code):
         f"{PLAY}/{package}/generatedApks/{version_code}/downloads/{download_id}:download",
         params={"alt": "media"},
     ).content
+    if not apk.startswith(b"PK"):
+        sys.exit(f"Downloaded file is not an APK (starts with {apk[:60]!r})")
     with tempfile.NamedTemporaryFile(suffix=".apk") as f:
         f.write(apk)
         f.flush()
         # The APK may be signed with v2+ schemes only (minSdk >= 24), which
-        # `keytool -printcert -jarfile` cannot read; apksigner reads all.
-        out = subprocess.run(
-            [apksigner(), "verify", "--print-certs", f.name],
-            capture_output=True, text=True, check=True,
-        ).stdout
-    return parse_apksigner(out)
+        # `keytool -printcert -jarfile` cannot read; apksigner reads all, so
+        # it goes first and keytool is the fallback.
+        r = subprocess.run([apksigner(), "verify", "--print-certs", f.name],
+                           capture_output=True, text=True)
+        shas = parse_apksigner(r.stdout)
+        if shas:
+            return shas
+        print(f"apksigner exit {r.returncode}: {r.stdout[-800:]} {r.stderr[-800:]}")
+        r = subprocess.run(["keytool", "-printcert", "-jarfile", f.name],
+                           capture_output=True, text=True)
+        shas = parse_keytool(r.stdout)
+        if shas:
+            return shas
+        sys.exit(f"keytool exit {r.returncode}: {r.stdout[-800:]} {r.stderr[-800:]}")
 
 
 def apksigner():
