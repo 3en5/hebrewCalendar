@@ -1,0 +1,25 @@
+Hebrew Calendar is a full calendar app where the Hebrew (Jewish) date is the main axis, not a small add-on in the corner.
+
+📅 Hebrew-date views
+• Month, week, day and agenda views showing the Hebrew and Gregorian dates side by side
+• Full Hebrew, right-to-left interface
+• A "Today" button to jump back to the current date
+
+🔁 Events that repeat by the Hebrew date
+• Hebrew birthdays, anniversaries, yahrzeits, or any event that recurs every year on the same Hebrew date
+• Monthly recurrence by the Hebrew date, plus weekly and daily recurrence
+• Correct handling of leap years (Adar I and Adar II) and 29-day months
+• Set an end date for a series, or delete a single occurrence
+
+🔔 Reminders
+• Phone notifications before an event, at the time you choose
+
+🔄 Google Calendar sync
+• Two-way sync: events created here appear in Google Calendar, and vice versa
+• Secure sign-in with your Google account
+
+💾 Backup and restore
+• Export all your events to a file and restore them at any time
+
+🔒 Privacy
+• Your data is stored in your own account only; other users cannot access it
