@@ -10,7 +10,7 @@ import {
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import {
-  deleteDoc, doc, getDoc, serverTimestamp, setDoc, Timestamp, updateDoc,
+  collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, Timestamp, updateDoc, where,
 } from 'firebase/firestore';
 
 let env;
@@ -134,6 +134,14 @@ describe('events/{eventId}', () => {
     await assertFails(setDoc(ref, event({ hebrewDate: { year: 5787, month: 'tishrei', day: 31 } })));
     await assertFails(setDoc(ref, event({ recurrence: { type: 'yearly', until: null, exceptions: [] } })));
     await assertFails(setDoc(ref, event({ source: 'other' })));
+  });
+
+  test('owner can list their events by ownerUid (the app\'s query shape)', async () => {
+    await seed('events/e1', event());
+    await seed('events/e2', event({ ownerUid: 'bob' }));
+    const own = query(collection(alice(), 'events'), where('ownerUid', '==', 'alice'), where('isRecurring', '==', true));
+    await assertSucceeds(getDocs(own));
+    await assertFails(getDocs(collection(alice(), 'events')));
   });
 
   test('unauthenticated access is denied', async () => {

@@ -14,7 +14,7 @@
   - איסור העברת בעלות על אירוע.
   - catch-all שחוסם כל נתיב אחר.
   - fixture שתואם לפלט של `eventToFirestoreData`.
-- כל 14 הבדיקות עוברות מקומית. `firebase/firestore.rules` עצמו לא השתנה.
+- כל 15 הבדיקות עוברות מקומית, כולל שאילתת רשימה לפי `ownerUid`. `firebase/firestore.rules` עצמו לא השתנה.
 - `firestore.yml` פורס את ה-rules וה-indexes אחרי מיזוג ל-`main`. זה סוגר את
   החסם הוותיק "v1.0 ממתין לפריסת Security Rules".
 
