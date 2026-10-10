@@ -1,0 +1,70 @@
+name: Firestore rules
+
+# Tests firebase/firestore.rules against the Firestore emulator on every
+# change, and deploys rules + indexes to the real project when the change
+# lands on main (or on a manual run). Deny-by-default rules that reject what
+# the app writes would break the app, so deploy only ever runs after tests.
+on:
+  push:
+    paths:
+      - firebase/**
+      - firebase.json
+      - .github/workflows/firestore.yml
+  pull_request:
+    paths:
+      - firebase/**
+      - firebase.json
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Rules tests (emulator)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firebase/test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: firebase/test/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+
+  deploy:
+    name: Deploy rules + indexes
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: firestore-deploy
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: firebase/test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: firebase/test/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Deploy
+        env:
+          GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY }}
+        run: |
+          creds="$RUNNER_TEMP/sa.json"
+          trap 'rm -f "$creds"' EXIT
+          printf '%s' "$GOOGLE_PLAY_KEY" > "$creds"
+          export GOOGLE_APPLICATION_CREDENTIALS="$creds"
+          cd ../..
+          npx --prefix firebase/test firebase deploy \
+            --only firestore:rules,firestore:indexes \
+            --project hebrewcalendar-68363 --non-interactive

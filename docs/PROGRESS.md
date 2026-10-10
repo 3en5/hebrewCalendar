@@ -5,6 +5,19 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-10 — בדיקות ופריסה אוטומטית של Firestore Security Rules
+
+- נוספו בדיקות כללים מול ה-emulator (`firebase/test/`), שמכסות את מה שהמסמכים
+  דורשים (RULES.md §5, TESTING_AND_DEPLOY.md):
+  - משתמש א' לא רואה ולא כותב נתונים של משתמש ב'.
+  - ולידציית שדות.
+  - איסור העברת בעלות על אירוע.
+  - catch-all שחוסם כל נתיב אחר.
+  - fixture שתואם לפלט של `eventToFirestoreData`.
+- כל 14 הבדיקות עוברות מקומית. `firebase/firestore.rules` עצמו לא השתנה.
+- `firestore.yml` פורס את ה-rules וה-indexes אחרי מיזוג ל-`main`. זה סוגר את
+  החסם הוותיק "v1.0 ממתין לפריסת Security Rules".
+
 ## 2026-10-09 — רישום אוטומטי של טביעות אצבע ב-Firebase
 
 - **הבעיה:** בגרסה שהותקנה מ-Play, Google Sign-In לא עבד. Play חותם מחדש עם

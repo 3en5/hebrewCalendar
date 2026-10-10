@@ -54,3 +54,5 @@ app.*.map.json
 android/key.properties
 android/release.keystore
 *.jks
+firebase/test/node_modules/
+firebase/test/*-debug.log
