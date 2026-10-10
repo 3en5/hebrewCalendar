@@ -1,0 +1,28 @@
+name: Play store listing
+
+# Uploads distribution/listings/ (texts per language + icon, feature graphic,
+# optional phone screenshots) to Google Play via tool/upload_play_listing.py.
+# Runs when the listing changes on main, or manually.
+on:
+  push:
+    branches: [main]
+    paths:
+      - distribution/listings/**
+      - tool/upload_play_listing.py
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: play-edit
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload listing
+        env:
+          GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY }}
+          PACKAGE_NAME: il.co.natanor.kalfapp.hebrewcalendar
+        run: |
+          pip install --quiet google-auth requests
+          python3 tool/upload_play_listing.py
