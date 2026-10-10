@@ -5,6 +5,63 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-09 — רישום אוטומטי של טביעות אצבע ב-Firebase
+
+- **הבעיה:** בגרסה שהותקנה מ-Play, Google Sign-In לא עבד. Play חותם מחדש עם
+  מפתח Play App Signing, וה-SHA שלו לא היה רשום ב-Firebase.
+- **הפתרון:** נוספו `firebase-shas.yml` ו-`tool/register_firebase_shas.py`.
+  הם רושמים את ה-SHA של Play App Signing ושל מפתח ההעלאה, בלי צעדים ידניים.
+- **הרשאות:** הבעלים נתן ל-`powerwatch-release@sapient-fabric-462019-c3` את
+  התפקיד Firebase Admin בפרויקט `hebrewcalendar-68363`.
+- **חשבונות:** Play Console וחשבון השירות נמצאים תחת חשבון Google אחד. Firebase
+  נמצא תחת חשבון אחר (natanor.kalfa@gmail.com).
+- **גרסה 8 עלתה ל-internal ב-`completed`, בלי טיוטה ובלי פעולה של הבעלים,** עם `google-services.json` שהורד מ-Firebase בזמן הבנייה.
+- **ההעלאה האוטומטית הראשונה ל-Play עבדה** (release run 6, internal, draft,
+  versionCode 7).
+- `firebase-shas.yml` רשם 10 טביעות אצבע (Play App Signing ומפתח ההעלאה) ב-run 4.
+- נוסף התפקיד Service Usage Consumer ל-`powerwatch-release`, נוסף על Firebase
+  Admin.
+
+## 2026-10-09 — targetSdk/compileSdk 36
+
+- Play Console דחה גם את ה-AAB השני: העלאות חדשות חייבות targetSdk 36
+  (Android 16), והאפליקציה עמדה על 35, ברירת המחדל של Flutter 3.32.5.
+- הוגדרו במפורש `compileSdk = 36` ו-`targetSdk = 36`, ו-AGP עודכן מ-8.7.3
+  ל-8.9.1 (הגרסה הראשונה שתומכת רשמית ב-API 36). Gradle 8.12 כבר מספיק.
+- שדרוג Flutter עצמו לגרסה עדכנית נדחה. הוא יחייב תיקוני lint ו-format
+  (deprecations של `value` ב-form fields), ויטופל בנפרד.
+
+## 2026-10-09 — minSdk הועלה ל-24
+
+- Play Console דחה את ה-AAB הראשון: ההגנה האוטומטית של Play (Automatic
+  protection) דורשת minSdk 24 ומעלה, וב-`android/app/build.gradle.kts` היה 23.
+- **החלטה:** להעלות ל-24 ולהשאיר את ההגנה מופעלת. המחיר הוא ויתור על Android
+  6.0, שנתח השימוש שלו זניח.
+- מצב השחרור: מפתח העלאה חדש נוצר, וה-secrets נוספו. ה-AAB החתום נבנה בהצלחה.
+  האפליקציה נוצרה ב-Play Console, וההעלאה הראשונה הידנית ל-Internal testing
+  בתהליך.
+
+## 2026-10-07 — העלאה אוטומטית ל-Google Play
+
+- **החלטת משתמש:** Claude בונה ומעלה גרסאות ל-Play דרך `release.yml`, עם
+  Service Account (`GOOGLE_PLAY_KEY`, אותו של PowerWatch).
+- `release.yml` (נשאר `workflow_dispatch` בלבד):
+  - נוספו inputs: `track`, `rollout` ו-`draft`.
+  - נוסף שלב העלאה עם `r0adkll/upload-google-play`, ששולח את הערות הגרסה
+    מ-`distribution/whatsnew/`.
+  - נוסף שלב שמפנה מקום בדיסק של ה-runner, כמו ב-`ci.yml`.
+  - נוספה בדיקה שה-`google-services.json` תואם למזהה האפליקציה. כאן אין
+    fallback.
+- **production רק באישור מפורש של בעל המוצר, ב-staged rollout.**
+- **פעולות שנותרו למשתמש:**
+  1. release keystore ו-secrets (RELEASE.md §1, §3).
+  2. Create app ב-Play Console.
+  3. העלאה ראשונה ידנית (track `none`).
+  4. SHA-1 של App Signing ל-Firebase.
+  5. הרשאה ל-Service Account (RELEASE.md §6).
+  6. OAuth verification ל-`calendar.events` (RELEASE.md §7).
+  7. Security Rules.
+
 ## 2026-10-07 — שינוי מזהה האפליקציה (applicationId)
 
 - **החלטת משתמש:** מזהה האפליקציה שונה מ-`com.hebrewcalendar.hebrew_calendar`

@@ -3,8 +3,28 @@ name: Release
 # Manual only (docs/RELEASE.md walks through running this): a signed release
 # App Bundle should never be produced by a plain push/PR the way the debug
 # APK in ci.yml is.
+#
+# The `track` input picks where the signed AAB goes: `none` only keeps it as a
+# workflow artifact (the very first Play upload must be done by hand in Play
+# Console); otherwise it is uploaded with the GOOGLE_PLAY_KEY service account.
+# Production is released only after explicit owner approval, as a staged
+# rollout (`rollout` < 1).
 on:
   workflow_dispatch:
+    inputs:
+      track:
+        description: "Google Play track (none = build artifact only)"
+        type: choice
+        options: [none, internal, alpha, beta, production]
+        default: internal
+      rollout:
+        description: "Production rollout fraction (0-1], e.g. 0.1 = 10%"
+        type: string
+        default: "0.1"
+      draft:
+        description: "Upload as draft (required until the app's first review is approved)"
+        type: boolean
+        default: false
 
 env:
   FLUTTER_VERSION: "3.32.5"
@@ -19,7 +39,20 @@ jobs:
       HAS_KEY_ALIAS: ${{ secrets.KEY_ALIAS != '' }}
       HAS_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD != '' }}
       HAS_GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+      HAS_GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY != '' }}
+      APP_ID: il.co.natanor.kalfapp.hebrewcalendar
+      TRACK: ${{ inputs.track }}
     steps:
+      # The release build (Gradle caches + NDK) can exhaust the runner's
+      # disk, as the debug build in ci.yml did; drop unused toolchains.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/boost /opt/hostedtoolcache/CodeQL \
+            /usr/local/lib/node_modules /usr/share/swift
+          sudo docker image prune --all --force > /dev/null || true
+          df -h /
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -34,6 +67,9 @@ jobs:
           [ "$HAS_KEY_ALIAS" = "true" ] || missing="$missing KEY_ALIAS"
           [ "$HAS_KEY_PASSWORD" = "true" ] || missing="$missing KEY_PASSWORD"
           [ "$HAS_GOOGLE_SERVICES_JSON" = "true" ] || missing="$missing GOOGLE_SERVICES_JSON"
+          if [ "$TRACK" != "none" ]; then
+            [ "$HAS_GOOGLE_PLAY_KEY" = "true" ] || missing="$missing GOOGLE_PLAY_KEY"
+          fi
           if [ -n "$missing" ]; then
             echo "Missing required repository secret(s):$missing" >&2
             echo "See docs/RELEASE.md for how to generate and add them." >&2
@@ -49,10 +85,27 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Write google-services.json from secret
+      # Prefer the live config from Firebase (always matches the registered
+      # signing fingerprints); fall back to the GOOGLE_SERVICES_JSON secret.
+      - name: Write google-services.json
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY }}
+          FIREBASE_PROJECT: hebrewcalendar-68363
+          PACKAGE_NAME: ${{ env.APP_ID }}
+        run: |
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          if [ "$HAS_GOOGLE_PLAY_KEY" = "true" ]; then
+            pip install --quiet google-auth requests
+            python3 tool/fetch_google_services.py android/app/google-services.json \
+              || echo "::warning::Could not fetch google-services.json from Firebase; using the secret"
+          fi
+          # Unlike ci.yml there is no placeholder fallback: a release without
+          # the real Firebase config would ship with Google Sign-In broken.
+          if ! grep -q "\"$APP_ID\"" android/app/google-services.json; then
+            echo "::error::GOOGLE_SERVICES_JSON has no client for $APP_ID" >&2
+            exit 1
+          fi
 
       # android/key.properties + the decoded keystore are exactly what
       # android/app/build.gradle.kts's `hasReleaseSigning` check looks for —
@@ -105,6 +158,37 @@ jobs:
           name: hebrew-calendar-release-aab
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
+
+      - name: Resolve Play release status
+        id: play
+        if: ${{ inputs.track != 'none' }}
+        env:
+          ROLLOUT: ${{ inputs.rollout }}
+          DRAFT: ${{ inputs.draft }}
+        run: |
+          if [ "$DRAFT" = "true" ]; then
+            status=draft; fraction=""
+          elif [ "$TRACK" = "production" ] && awk "BEGIN{exit !($ROLLOUT > 0 && $ROLLOUT < 1)}"; then
+            status=inProgress; fraction="$ROLLOUT"
+          else
+            status=completed; fraction=""
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "fraction=$fraction" >> "$GITHUB_OUTPUT"
+          echo "### ${{ steps.version.outputs.name }} (${{ steps.version.outputs.code }}) -> $TRACK [$status${fraction:+ $fraction}]" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload to Google Play
+        if: ${{ inputs.track != 'none' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_KEY }}
+          packageName: ${{ env.APP_ID }}
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.track }}
+          status: ${{ steps.play.outputs.status }}
+          userFraction: ${{ steps.play.outputs.fraction }}
+          releaseName: ${{ steps.version.outputs.name }} (${{ steps.version.outputs.code }})
+          whatsNewDirectory: distribution/whatsnew
 
       # Secrets only ever exist on this ephemeral GitHub-hosted runner, but
       # remove them explicitly anyway rather than relying solely on the
