@@ -10,6 +10,13 @@
 
 ## פריסה
 
+**אוטומטית (מ-2026-10-10):** `.github/workflows/firestore.yml` מריץ את בדיקות
+הכללים (`firebase/test/`, מול ה-Firestore emulator) בכל שינוי. כשהשינוי נכנס
+ל-`main`, הוא פורס את ה-rules וה-indexes לפרויקט, עם חשבון השירות של
+`GOOGLE_PLAY_KEY` (Firebase Admin + Service Usage Consumer). אם הבדיקות
+נכשלות, אין פריסה. הרצה מקומית: `cd firebase/test && npm ci && npm test`.
+הדרכים הידניות למטה נשארות לגיבוי.
+
 **חשוב:** הקבצים כאן הם קוד בלבד — הם לא נכנסים לתוקף עד שמישהו מפרסם אותם
 בפועל לפרויקט Firebase. יש שתי דרכים:
 
