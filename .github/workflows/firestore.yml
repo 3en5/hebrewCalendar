@@ -62,8 +62,12 @@ jobs:
         run: |
           creds="$RUNNER_TEMP/sa.json"
           trap 'rm -f "$creds"' EXIT
-          printf '%s' "$GOOGLE_PLAY_KEY" > "$creds"
+          # Bill API calls to the Firebase project, not the service account's
+          # own project (where e.g. the Firebase Rules API is not enabled).
+          printf '%s' "$GOOGLE_PLAY_KEY" \
+            | jq '. + {quota_project_id: "hebrewcalendar-68363"}' > "$creds"
           export GOOGLE_APPLICATION_CREDENTIALS="$creds"
+          export GOOGLE_CLOUD_QUOTA_PROJECT=hebrewcalendar-68363
           cd ../..
           npx --prefix firebase/test firebase deploy \
             --only firestore:rules,firestore:indexes \
