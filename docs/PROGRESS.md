@@ -5,6 +5,17 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-10 — מיתוג ודף חנות
+
+- **Security Rules פורסמו לפרויקט** (Firestore rules run 6, אחרי תיקון ה-quota project).
+- **אייקון חדש:** לפני כן האפליקציה השתמשה באייקון ברירת המחדל של Flutter. העיצוב החדש
+  (ריבוע כחול #1A73E8, דף לוח עם "א") נוצר מקוד ב-`tool/brand/make_brand_assets.py`,
+  ואושר ע"י הבעלים.
+- **דף החנות (iw-IL, en-US):** הטקסטים אושרו ע"י הבעלים. `play-listing.yml` מעלה אותם
+  יחד עם התמונות.
+- **חסר:** צילומי מסך (Play דורש לפחות 2). ממתינים לצילומים מהבעלים, ואז הם נכנסים
+  ל-`distribution/listings/images/phoneScreenshots/`.
+
 ## 2026-10-10 — בדיקות ופריסה אוטומטית של Firestore Security Rules
 
 - נוספו בדיקות כללים מול ה-emulator (`firebase/test/`), שמכסות את מה שהמסמכים
