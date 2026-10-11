@@ -14,6 +14,8 @@
 /// rather than letting it propagate to a foreground trigger caller.
 library;
 
+import 'package:flutter/foundation.dart' show debugPrint;
+
 import '../../domain/event/event_repository.dart';
 import '../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../domain/sync/sync_run_result.dart';
@@ -74,7 +76,12 @@ class SyncEngine {
     }
     _inFlight = true;
     try {
-      final SyncSettings settings = await _settingsStore.load();
+      final SyncSettings settings;
+      try {
+        settings = await _settingsStore.load();
+      } catch (error) {
+        return SyncRunResult.failure(error.toString(), permanent: false);
+      }
       if (!settings.enabled) {
         return const SyncRunResult.disabled();
       }
@@ -89,7 +96,13 @@ class SyncEngine {
         return const SyncRunResult.success();
       } catch (error) {
         final bool permanent = _isPermanentFailure(error);
-        await _settingsStore.saveLastError(error.toString());
+        try {
+          await _settingsStore.saveLastError(error.toString());
+        } catch (saveError) {
+          // Never let a failed bookkeeping write hide the real failure (or
+          // escape as an exception that leaves the UI on "syncing").
+          debugPrint('[sync] saving the last error failed: $saveError');
+        }
         return SyncRunResult.failure(error.toString(), permanent: permanent);
       }
     } finally {

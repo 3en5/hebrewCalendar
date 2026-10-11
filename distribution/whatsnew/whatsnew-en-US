@@ -1,1 +1,1 @@
-New: pull down to sync with Google Calendar. Fix: sync works after the app restarts. Holidays, Rosh Chodesh and the weekly parsha in the calendar, and a redesigned month view.
+Fix: Google Calendar sync — the first import is faster and finishes, and the screen no longer gets stuck on "syncing". Pull down to sync.

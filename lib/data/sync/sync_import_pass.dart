@@ -43,6 +43,9 @@ class SyncImportPass {
        _repository = repository,
        _now = now;
 
+  /// How many local writes an import pass runs in parallel.
+  static const int _kApplyChunkSize = 20;
+
   final GoogleCalendarApi _api;
   final EventRepository _repository;
   final DateTime Function() _now;
@@ -73,13 +76,18 @@ class SyncImportPass {
       }
     }
 
+    // Device-feedback round #9: one query for all local events instead of
+    // one `getByGoogleEventId` query per remote event — a first sync of a
+    // long-used Google Calendar has hundreds of events, and hundreds of
+    // sequential queries kept the pass running for minutes (the app was
+    // closed before it ever finished, so nothing was imported).
     final Map<String, Event> localByGoogleId = <String, Event>{};
-    for (final RemoteEventSnapshot snapshot in importCandidates) {
-      final Event? local = await _repository.getByGoogleEventId(
-        snapshot.googleEventId,
-      );
-      if (local != null) {
-        localByGoogleId[snapshot.googleEventId] = local;
+    if (importCandidates.isNotEmpty) {
+      for (final Event local in await _repository.getAllForSync()) {
+        final String? googleId = local.googleSync.googleEventId;
+        if (googleId != null) {
+          localByGoogleId[googleId] = local;
+        }
       }
     }
 
@@ -87,8 +95,10 @@ class SyncImportPass {
       remoteEvents: importCandidates,
       localEventsByGoogleId: localByGoogleId,
     );
-    for (final SyncAction action in actions) {
-      await _apply(action);
+    // Writes go out a chunk at a time in parallel rather than strictly one
+    // by one (each Firestore write waits for the server's acknowledgement).
+    for (int i = 0; i < actions.length; i += _kApplyChunkSize) {
+      await Future.wait(actions.skip(i).take(_kApplyChunkSize).map(_apply));
     }
 
     return SyncImportPassResult(

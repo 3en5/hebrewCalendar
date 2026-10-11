@@ -75,7 +75,7 @@ def main():
             f"hasSyncToken={val('googleSyncToken') is not None} "
             f"lastSyncedAt={val('googleLastSyncedAt')} events={events}"
         )
-        print(f"  lastSyncError={err[:1500] if err else None} (at {val('googleLastSyncErrorAt')})")
+        print(f"  lastSyncError={err[:1500] if err else None}")
         print(f"  fields present: {sorted(f.keys())}; hasEmail={bool(val('email'))}")
 
 

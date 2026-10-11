@@ -582,3 +582,11 @@
   מהמשתמש לוגים מהטלפון.
 - `flutter test`/`pub get` משנים את `pubspec.lock` מקומית (ה-lock ב-main נוצר עם Dart
   חדש יותר מזה של CI). לבדוק `git status` לפני commit ולהבין כל שינוי ב-lock.
+
+## 2026-10-11 — שדה חדש במסמך Firestore = עדכון Rules באותו commit
+- `users/{uid}` מאומת עם `keys().hasOnly([...])`. הוספתי שדה (`googleLastSyncErrorAt`)
+  רק בקוד — כל כתיבה של המסמך נדחתה, והחריגה ברחה ממעבר הסנכרון והשאירה את המסך על
+  "מסנכרן..." בלי שום שגיאה. לפני כתיבת שדה חדש ל-Firestore: לבדוק את
+  `firebase/firestore.rules`, לעדכן גם אותו ואת טסטי ה-rules — וה-deploy רץ רק מ-main.
+- ייבוא מ-Google Calendar: תמיד לתחום גם `timeMax` כשמשתמשים ב-`singleEvents=true`,
+  ולא להריץ שאילתה לכל אירוע בלולאה.

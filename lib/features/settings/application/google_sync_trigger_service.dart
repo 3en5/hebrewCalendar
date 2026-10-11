@@ -358,7 +358,14 @@ class GoogleSyncTriggerService {
     }
     _state = _state.copyWith(status: SyncStatus.syncing);
     _emit();
-    final SyncRunResult result = await _engine.runSync();
+    SyncRunResult result;
+    try {
+      result = await _engine.runSync();
+    } catch (error) {
+      // Round #9: an exception escaping the pass used to leave the screen on
+      // "מסנכרן..." forever (callers run this unawaited).
+      result = SyncRunResult.failure(error.toString(), permanent: false);
+    }
     _lastRunAt = _now();
     if (result.wasConcurrentSkip) {
       // Another pass (e.g. the app-open trigger) is still running; it will

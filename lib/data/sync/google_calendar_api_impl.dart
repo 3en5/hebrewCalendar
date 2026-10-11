@@ -181,6 +181,16 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
               .subtract(const Duration(days: 365))
               .toIso8601String()
         : null;
+    // Round #9: and bound it forward too, to the same ~24 months the export
+    // window covers. Without timeMax, `singleEvents=true` expands every
+    // open-ended recurring Google event far into the future — thousands of
+    // instances for a calendar in long use.
+    final String? initialTimeMax = syncToken == null
+        ? DateTime.now()
+              .toUtc()
+              .add(const Duration(days: 730))
+              .toIso8601String()
+        : null;
     do {
       final Uri uri = Uri.parse(_kEventsUrl).replace(
         queryParameters: <String, String>{
@@ -188,6 +198,7 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
           'showDeleted': 'true',
           'maxResults': '250',
           if (initialTimeMin != null) 'timeMin': initialTimeMin,
+          if (initialTimeMax != null) 'timeMax': initialTimeMax,
           if (syncToken != null) 'syncToken': syncToken,
           if (pageToken != null) 'pageToken': pageToken,
         },

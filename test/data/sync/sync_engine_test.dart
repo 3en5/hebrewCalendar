@@ -381,4 +381,60 @@ void main() {
       expect((await settingsStore.load()).lastErrorMessage, isNull);
     });
   });
+
+  group('round #9', () {
+    test('a big first import lands every remote event exactly once', () async {
+      await settingsStore.setEnabled(true);
+      for (int i = 0; i < 120; i++) {
+        api.events['remote-big-$i'] = RemoteEventSnapshot(
+          googleEventId: 'remote-big-$i',
+          etag: 'etag-$i',
+          updatedAt: _fixedNow,
+          isCancelled: false,
+          summary: 'אירוע $i',
+          start: DateTime(2026, 7, 1).add(Duration(days: i)),
+          end: DateTime(2026, 7, 1).add(Duration(days: i, hours: 1)),
+          isAllDay: false,
+        );
+      }
+
+      final SyncRunResult first = await engine.runSync();
+      final SyncRunResult second = await engine.runSync();
+
+      expect(first.isError, isFalse);
+      expect(second.isError, isFalse);
+      final List<Event> all = await repository.getAllForSync();
+      expect(
+        all.where((Event e) => e.source == EventSource.google),
+        hasLength(120),
+      );
+    });
+
+    test('a failure whose error cannot be saved is still reported', () async {
+      final _FailingErrorStore store = _FailingErrorStore();
+      await store.setEnabled(true);
+      api.nextListError = StateError('boom');
+      final SyncEngine failing = SyncEngine(
+        repository: repository,
+        api: api,
+        settingsStore: store,
+        engine: _engine,
+        now: () => _fixedNow,
+      );
+
+      final SyncRunResult result = await failing.runSync();
+
+      expect(result.isError, isTrue);
+      expect(result.errorMessage, contains('boom'));
+    });
+  });
+}
+
+/// A settings store whose error bookkeeping write fails (round #9: the
+/// Security Rules rejected a new field, and the exception escaped the pass).
+class _FailingErrorStore extends InMemorySyncSettingsStore {
+  @override
+  Future<void> saveLastError(String? message) async {
+    throw StateError('permission-denied');
+  }
 }
