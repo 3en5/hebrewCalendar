@@ -11,6 +11,7 @@ import '../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../auth/application/demo_mode_provider.dart';
+import '../../event_editor/application/event_editor_controller.dart';
 import '../../event_editor/presentation/event_editor_screen.dart';
 import '../../notifications/application/reminder_providers.dart';
 import '../../../domain/sync/sync_run_result.dart';
@@ -298,7 +299,7 @@ class CalendarShellScreen extends ConsumerWidget {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => EventEditorScreen(
-          args: (initialDate: state.focusedDate, existing: null),
+          args: EventEditorArgs(initialDate: state.focusedDate, existing: null),
         ),
       ),
     );

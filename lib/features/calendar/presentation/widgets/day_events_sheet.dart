@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,7 +7,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../domain/event/event.dart';
 import '../../../../domain/event/event_occurrence.dart';
 import '../../../../domain/event/event_repository.dart';
-import '../../../../domain/event/recurrence_rule.dart';
+import '../../../../domain/event/recurring_edit.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../../domain/hebrew_date/hebrew_numerals.dart';
@@ -13,6 +15,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../event_editor/application/event_editor_controller.dart';
 import '../../../event_editor/application/event_repository_provider.dart';
 import '../../../event_editor/presentation/event_editor_screen.dart';
+import '../../../event_editor/presentation/recurring_scope_dialog.dart';
 import '../../application/hebrew_date_engine_provider.dart';
 
 /// Bottom sheet listing the event occurrences on a single Hebrew day (title,
@@ -53,9 +56,6 @@ class DayEventsSheet extends ConsumerWidget {
   }
 }
 
-/// The user's choice when deleting a recurring event's occurrence.
-enum _RecurringDeleteChoice { thisOccurrenceOnly, wholeSeries }
-
 class _DayEventTile extends ConsumerWidget {
   const _DayEventTile({required this.occurrence});
 
@@ -92,18 +92,33 @@ class _DayEventTile extends ConsumerWidget {
     );
   }
 
-  void _edit(BuildContext context) {
-    // Editing always opens the series' anchor date (`Event.hebrewDate`), not
-    // whichever occurrence date was tapped: per the task brief, editing a
-    // recurring event edits the whole series, and the anchor date is the
-    // series' defining field.
-    final EventEditorArgs args = (
+  /// M9: a recurring event first asks which occurrences to change (this
+  /// one, this and the following, or all), then opens the editor on this
+  /// occurrence's Hebrew date (or the series anchor, for "all").
+  Future<void> _edit(BuildContext context) async {
+    final NavigatorState navigator = Navigator.of(context);
+    RecurringEditScope scope = RecurringEditScope.allEvents;
+    if (occurrence.isRecurring) {
+      final RecurringEditScope? chosen = await askRecurringScope(
+        context,
+        forDelete: false,
+      );
+      if (chosen == null) {
+        return;
+      }
+      scope = chosen;
+    }
+    final EventEditorArgs args = EventEditorArgs(
       initialDate: _event.hebrewDate,
       existing: _event,
+      scope: scope,
+      occurrenceDate: occurrence.occurrenceDate,
     );
-    Navigator.of(context).pop();
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => EventEditorScreen(args: args)),
+    navigator.pop();
+    unawaited(
+      navigator.push(
+        MaterialPageRoute<void>(builder: (_) => EventEditorScreen(args: args)),
+      ),
     );
   }
 
@@ -146,57 +161,31 @@ class _DayEventTile extends ConsumerWidget {
     }
   }
 
-  /// Recurring event: a single dialog offering "this occurrence only" (adds
-  /// [EventOccurrence.occurrenceDate] to [RecurrenceRule.exceptions] and
-  /// updates the event) or "the whole series" (deletes the event outright),
-  /// alongside cancel — each action button doubles as that path's
-  /// confirmation, per the task brief.
+  /// Recurring event (M9): "this occurrence only" (adds it to the
+  /// exceptions), "this and following" (the series ends the day before) or
+  /// "the whole series" (deleted) — each option doubles as the confirmation.
   Future<void> _confirmDeleteRecurringOccurrence(
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final AppLocalizations l10n = AppLocalizations.of(context);
-    final _RecurringDeleteChoice? choice =
-        await showDialog<_RecurringDeleteChoice>(
-          context: context,
-          builder: (BuildContext dialogContext) => AlertDialog(
-            title: Text(l10n.eventDeleteConfirmTitle),
-            content: Text(l10n.eventDeleteRecurringChoiceMessage),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: Text(l10n.commonCancel),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(
-                  dialogContext,
-                ).pop(_RecurringDeleteChoice.thisOccurrenceOnly),
-                child: Text(l10n.eventDeleteThisOccurrenceOnly),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(
-                  dialogContext,
-                ).pop(_RecurringDeleteChoice.wholeSeries),
-                child: Text(l10n.eventDeleteWholeSeries),
-              ),
-            ],
-          ),
-        );
-    if (choice == null) {
+    final RecurringEditScope? scope = await askRecurringScope(
+      context,
+      forDelete: true,
+    );
+    if (scope == null) {
       return;
     }
+    final RecurringChangePlan plan = planRecurringDelete(
+      series: _event,
+      occurrenceDate: occurrence.occurrenceDate,
+      scope: scope,
+      engine: ref.read(hebrewDateEngineProvider),
+    );
     final EventRepository repository = ref.read(eventRepositoryProvider);
-    switch (choice) {
-      case _RecurringDeleteChoice.thisOccurrenceOnly:
-        final RecurrenceRule updatedRecurrence = _event.recurrence.copyWith(
-          exceptions: <HebrewDate>[
-            ..._event.recurrence.exceptions,
-            occurrence.occurrenceDate,
-          ],
-        );
-        await repository.update(_event.copyWith(recurrence: updatedRecurrence));
-      case _RecurringDeleteChoice.wholeSeries:
-        await repository.delete(_event.id);
+    if (plan.deleteSeries) {
+      await repository.delete(_event.id);
+    } else if (plan.updatedSeries != null) {
+      await repository.update(plan.updatedSeries!);
     }
     if (context.mounted) {
       Navigator.of(context).pop();

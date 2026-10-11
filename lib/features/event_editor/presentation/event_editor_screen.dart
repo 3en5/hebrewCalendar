@@ -70,6 +70,14 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     );
     final AppLocalizations l10n = AppLocalizations.of(context);
     final bool isEditing = widget.args.existing != null;
+    final bool editsSingleOccurrence =
+        widget.args.isPartialSeriesEdit &&
+        widget.args.scope == RecurringEditScope.thisOccurrence;
+    final String? scopeNote = !widget.args.isPartialSeriesEdit
+        ? null
+        : editsSingleOccurrence
+        ? l10n.eventEditorScopeThisOccurrenceNote
+        : l10n.eventEditorScopeThisAndFollowingNote;
 
     // The save action lives in the app bar (not the scrollable body) so it
     // is always reachable regardless of scroll position or keyboard state.
@@ -101,6 +109,16 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
           bottom: spacingMd + spacingXxl + keyboardInset,
         ),
         children: <Widget>[
+          if (scopeNote != null)
+            Padding(
+              padding: EdgeInsetsDirectional.only(bottom: spacingSm),
+              child: Text(
+                scopeNote,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
           TextField(
             controller: _titleController,
             decoration: InputDecoration(
@@ -172,22 +190,26 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                 : state.reminderMinutesBefore.first,
             onChanged: _controller.setReminderMinutesBefore,
           ),
-          SizedBox(height: spacingMd),
-          Text(
-            l10n.eventRecurrenceLabel,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          SizedBox(height: spacingXs),
-          RecurrenceTypeSelector(
-            selected: state.recurrenceType,
-            onChanged: _controller.setRecurrenceType,
-          ),
-          if (state.recurrenceType != RecurrenceType.none)
-            RecurrenceUntilField(
-              until: state.recurrenceUntil,
-              fallbackDate: state.hebrewDate,
-              onChanged: _controller.setRecurrenceUntil,
+          // M9: a single occurrence split off a series is a standalone
+          // event — it has no recurrence of its own to edit.
+          if (!editsSingleOccurrence) ...<Widget>[
+            SizedBox(height: spacingMd),
+            Text(
+              l10n.eventRecurrenceLabel,
+              style: Theme.of(context).textTheme.titleSmall,
             ),
+            SizedBox(height: spacingXs),
+            RecurrenceTypeSelector(
+              selected: state.recurrenceType,
+              onChanged: _controller.setRecurrenceType,
+            ),
+            if (state.recurrenceType != RecurrenceType.none)
+              RecurrenceUntilField(
+                until: state.recurrenceUntil,
+                fallbackDate: state.hebrewDate,
+                onChanged: _controller.setRecurrenceUntil,
+              ),
+          ],
         ],
       ),
     );

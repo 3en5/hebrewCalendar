@@ -51,7 +51,7 @@ void main() {
     );
     addTearDown(repository.dispose);
 
-    const EventEditorArgs args = (initialDate: _fixedDate, existing: null);
+    const EventEditorArgs args = EventEditorArgs(initialDate: _fixedDate);
 
     await tester.pumpWidget(
       _wrap(const EventEditorScreen(args: args), repository),
@@ -76,7 +76,7 @@ void main() {
     final InMemoryEventRepository repository = InMemoryEventRepository();
     addTearDown(repository.dispose);
 
-    const EventEditorArgs args = (initialDate: _fixedDate, existing: null);
+    const EventEditorArgs args = EventEditorArgs(initialDate: _fixedDate);
 
     await tester.pumpWidget(
       _wrap(const EventEditorScreen(args: args), repository),
@@ -99,7 +99,7 @@ void main() {
     final InMemoryEventRepository repository = InMemoryEventRepository();
     addTearDown(repository.dispose);
 
-    const EventEditorArgs args = (initialDate: _fixedDate, existing: null);
+    const EventEditorArgs args = EventEditorArgs(initialDate: _fixedDate);
 
     await tester.pumpWidget(
       _wrap(const EventEditorScreen(args: args), repository),
@@ -166,7 +166,7 @@ void main() {
       final InMemoryEventRepository repository = InMemoryEventRepository();
       addTearDown(repository.dispose);
 
-      const EventEditorArgs args = (initialDate: _fixedDate, existing: null);
+      const EventEditorArgs args = EventEditorArgs(initialDate: _fixedDate);
 
       await tester.pumpWidget(
         _wrap(const EventEditorScreen(args: args), repository),

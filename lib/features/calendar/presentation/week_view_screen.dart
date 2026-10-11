@@ -6,7 +6,9 @@ import '../../../domain/event/event.dart';
 import '../../../domain/event/event_occurrence.dart';
 import '../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../domain/hebrew_date/hebrew_date_engine.dart';
+import '../../event_editor/application/event_editor_controller.dart';
 import '../../event_editor/presentation/event_editor_screen.dart';
+import '../../event_editor/presentation/recurring_scope_dialog.dart';
 import '../application/calendar_view_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
 import '../application/range_events_provider.dart';
@@ -114,22 +116,16 @@ class _WeekPage extends ConsumerWidget {
         ),
         AllDayEventsRow(
           columns: columns,
-          onEventTap: (EventOccurrence occurrence) => _openEditor(
-            context,
-            initialDate: occurrence.event.hebrewDate,
-            existing: occurrence.event,
-          ),
+          onEventTap: (EventOccurrence occurrence) =>
+              openEventEditorForOccurrence(context, occurrence),
         ),
         Expanded(
           child: HourGrid(
             columns: columns,
             onEmptySlotTap: (HebrewDate date, int hour) =>
                 _openEditor(context, initialDate: date, existing: null),
-            onEventTap: (EventOccurrence occurrence) => _openEditor(
-              context,
-              initialDate: occurrence.event.hebrewDate,
-              existing: occurrence.event,
-            ),
+            onEventTap: (EventOccurrence occurrence) =>
+                openEventEditorForOccurrence(context, occurrence),
           ),
         ),
       ],
@@ -144,7 +140,7 @@ class _WeekPage extends ConsumerWidget {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => EventEditorScreen(
-          args: (initialDate: initialDate, existing: existing),
+          args: EventEditorArgs(initialDate: initialDate, existing: existing),
         ),
       ),
     );

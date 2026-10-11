@@ -6,11 +6,15 @@ import '../../../domain/event/event.dart';
 import '../../../domain/event/event_time_of_day.dart';
 import '../../../domain/event/event_validation.dart';
 import '../../../domain/event/recurrence_rule.dart';
+import '../../../domain/event/recurring_edit.dart';
+import '../../../domain/hebrew_date/hebrew_date_engine.dart';
+import '../../calendar/application/hebrew_date_engine_provider.dart';
 import '../../../domain/hebrew_date/hebrew_date.dart';
 import 'event_editor_state.dart';
 import 'event_repository_provider.dart';
 
 export '../../../domain/event/default_calendar_id.dart' show kDefaultCalendarId;
+export '../../../domain/event/recurring_edit.dart' show RecurringEditScope;
 
 /// Placeholder identity used until Firebase Auth lands in M2b (ARCHITECTURE
 /// §9 — M2 is split; M2a has no signed-in user yet).
@@ -19,10 +23,48 @@ const String kLocalOwnerUid = 'local-user';
 /// Identifies which event the editor is working on: a blank [initialDate]
 /// to create a new event, or an [existing] event to edit.
 ///
-/// A record gets free structural equality, which is exactly what
+/// Value equality (hand-written: it used to be a record) is what
 /// `NotifierProvider.autoDispose.family` needs to key provider instances
 /// (two screens opened with equal args share one controller instance).
-typedef EventEditorArgs = ({HebrewDate initialDate, Event? existing});
+class EventEditorArgs {
+  const EventEditorArgs({
+    required this.initialDate,
+    this.existing,
+    this.scope = RecurringEditScope.allEvents,
+    this.occurrenceDate,
+  });
+
+  /// The date a new event starts on (ignored when editing).
+  final HebrewDate initialDate;
+
+  /// The event being edited, or null to create one.
+  final Event? existing;
+
+  /// M9: for a recurring [existing], which occurrences the edit applies to.
+  final RecurringEditScope scope;
+
+  /// M9: the occurrence the user opened the editor from (required for
+  /// [RecurringEditScope.thisOccurrence] / [RecurringEditScope.thisAndFollowing]).
+  final HebrewDate? occurrenceDate;
+
+  /// Whether this edit splits a recurring series rather than rewriting it.
+  bool get isPartialSeriesEdit =>
+      existing != null &&
+      existing!.recurrence.type != RecurrenceType.none &&
+      occurrenceDate != null &&
+      scope != RecurringEditScope.allEvents;
+
+  @override
+  bool operator ==(Object other) =>
+      other is EventEditorArgs &&
+      other.initialDate == initialDate &&
+      other.existing == existing &&
+      other.scope == scope &&
+      other.occurrenceDate == occurrenceDate;
+
+  @override
+  int get hashCode => Object.hash(initialDate, existing, scope, occurrenceDate);
+}
 
 /// The outcome of [EventEditorController.save]: whether the screen should
 /// pop (success) or keep showing the now-populated inline errors (invalid).
@@ -42,9 +84,25 @@ class EventEditorController extends Notifier<EventEditorState> {
   @override
   EventEditorState build() {
     final Event? existing = _args.existing;
-    return existing != null
-        ? EventEditorState.fromEvent(existing)
-        : EventEditorState.blank(_args.initialDate);
+    if (existing == null) {
+      return EventEditorState.blank(_args.initialDate);
+    }
+    final EventEditorState fromEvent = EventEditorState.fromEvent(existing);
+    if (!_args.isPartialSeriesEdit) {
+      return fromEvent;
+    }
+    // M9: editing from a specific occurrence starts on that occurrence's
+    // Hebrew date; "this occurrence only" also drops the recurrence (it
+    // becomes a standalone event).
+    final EventEditorState onOccurrence = fromEvent.copyWith(
+      hebrewDate: _args.occurrenceDate,
+    );
+    return _args.scope == RecurringEditScope.thisOccurrence
+        ? onOccurrence.copyWith(
+            recurrenceType: RecurrenceType.none,
+            clearRecurrenceUntil: true,
+          )
+        : onOccurrence;
   }
 
   void setTitle(String value) => state = state.copyWith(title: value);
@@ -157,6 +215,21 @@ class EventEditorController extends Notifier<EventEditorState> {
     final repository = ref.read(eventRepositoryProvider);
     if (existing == null) {
       await repository.create(draft);
+    } else if (_args.isPartialSeriesEdit) {
+      final HebrewDateEngine engine = ref.read(hebrewDateEngineProvider);
+      final RecurringChangePlan plan = planRecurringEdit(
+        series: existing,
+        edited: draft,
+        occurrenceDate: _args.occurrenceDate!,
+        scope: _args.scope,
+        engine: engine,
+      );
+      if (plan.updatedSeries != null) {
+        await repository.update(plan.updatedSeries!);
+      }
+      if (plan.newEvent != null) {
+        await repository.create(plan.newEvent!);
+      }
     } else {
       await repository.update(draft);
     }

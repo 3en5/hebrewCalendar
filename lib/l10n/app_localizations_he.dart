@@ -352,4 +352,19 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get calendarPullSyncAlreadyRunningMessage =>
       'סנכרון כבר מתבצע ברגע זה. נסה שוב בעוד רגע.';
+
+  @override
+  String get eventEditRecurringChoiceMessage =>
+      'אירוע זה הוא חלק מסדרה חוזרת. על מה להחיל את השינוי?';
+
+  @override
+  String get eventScopeThisAndFollowing => 'מופע זה והבאים אחריו';
+
+  @override
+  String get eventEditorScopeThisOccurrenceNote =>
+      'עורך רק את המופע הזה. שאר הסדרה לא תשתנה.';
+
+  @override
+  String get eventEditorScopeThisAndFollowingNote =>
+      'עורך את המופע הזה ואת כל הבאים אחריו. מופעים קודמים לא ישתנו.';
 }

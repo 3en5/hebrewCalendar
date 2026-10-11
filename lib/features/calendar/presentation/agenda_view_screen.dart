@@ -7,7 +7,7 @@ import '../../../domain/event/event_occurrence.dart';
 import '../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../event_editor/presentation/event_editor_screen.dart';
+import '../../event_editor/presentation/recurring_scope_dialog.dart';
 import '../application/calendar_view_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
 import '../application/range_events_provider.dart';
@@ -184,13 +184,7 @@ class _AgendaEventTile extends StatelessWidget {
       trailing: event.location.isEmpty
           ? null
           : const Icon(Icons.location_on_outlined),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => EventEditorScreen(
-            args: (initialDate: event.hebrewDate, existing: event),
-          ),
-        ),
-      ),
+      onTap: () => openEventEditorForOccurrence(context, occurrence),
     );
   }
 }

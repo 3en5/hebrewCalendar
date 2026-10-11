@@ -49,6 +49,7 @@
 | `lib/domain/event/event.dart` | ישות טהורה `Event`: כל שדות מודל האירוע (ARCHITECTURE.md §4), שוויון וסדר, `copyWith` עם דגלי `clearStartTime`/`clearEndTime`; M5a: `source` (`EventSource`), `googleSync` (`GoogleSyncState` — מיפוי יחיד לאירוע לא-חוזר), `googleInstanceSync` (מפת `GoogleSyncState` לפי מפתח מופע, לאירועים חוזרים) |
 | `lib/domain/event/event_time_of_day.dart` | ערך טהור `EventTimeOfDay` (שעה/דקה) — תחליף ל-`TimeOfDay` של Flutter כדי ש-domain לא יתלה ב-Flutter |
 | `lib/domain/event/recurrence_rule.dart` | ערך טהור `RecurrenceRule` + `RecurrenceType`: מבנה הנתונים לחזרתיות (הלוגיקה/הרחבה ל-מופעים היא M3) |
+| `lib/domain/event/recurring_edit.dart` | M9: `RecurringEditScope` (מופע זה / זה והבאים / כל הסדרה) ו-`planRecurringEdit`/`planRecurringDelete` — לוגיקה טהורה שמחליטה מה לעדכן/ליצור/למחוק בסדרה חוזרת עברית |
 | `lib/domain/event/event_validation.dart` | ולידטורים טהורים ל-`Event`: כותרת חובה/אורך מקסימלי, תיאור/מיקום אורך מקסימלי, סיום אחרי התחלה — שגיאות מסוג טיפוסי (`EventValidationErrorType`) |
 | `lib/domain/event/event_repository.dart` | ממשק מופשט `EventRepository`: `watchEventsForHebrewMonth` (מחזיר `Stream<List<EventOccurrence>>` מ-M3a), `watchOccurrencesInRange` (M3b — טווח תאריכים עברי שרירותי, לא בהכרח חודש שלם), `getById`, `create`, `update`, `delete` — מוגדר על טיפוסי domain בלבד; M5a: `getAllForSync`/`getByGoogleEventId`/`updateSyncState`/`takePendingGoogleDeletions`/`upsertFromGoogle`/`applyRemoteDelete` לתמיכת מנוע הסנכרון, ו-`delete` מתועד כמי שמתעד `PendingGoogleDeletion` כשיש למחיקה מצב סנכרון קיים |
 | `lib/domain/event/event_occurrence.dart` | `EventOccurrence` (זוג `Event`+תאריך מופע קונקרטי) ו-`compareEventOccurrences` (סדר כרונולוגי משותף ל-repositories) — M3a |
@@ -117,6 +118,7 @@
 | `lib/features/event_editor/application/event_editor_state.dart` | State טהור למסך עורך האירועים: שדות הטופס, `recurrenceType`/`recurrenceUntil`/`recurrenceExceptions` (M3a), שגיאות ולידציה, `isSaving` |
 | `lib/features/event_editor/application/event_editor_controller.dart` | Riverpod `NotifierProvider.autoDispose.family` (`EventEditorArgs` — יצירה/עריכה): מוטציות שדות (כולל `setRecurrenceType`/`setRecurrenceUntil`, M3a), ולידציה ושמירה מול ה-repository; `kDefaultCalendarId` הועבר ל-`lib/domain/event/default_calendar_id.dart` (M5a) ומיוצא מחדש מכאן לתאימות לאחור |
 | `lib/features/event_editor/presentation/event_editor_screen.dart` | מסך יצירה/עריכה של אירוע (RTL, בהשראת Google Calendar): כותרת, כל היום, תאריך עברי, שעות, תיאור, מיקום, תזכורת, בורר חזרתיות + "עד תאריך" (M3a), שמירה עם שגיאות inline; סבב משוב מכשיר #1 (תיקון #1): כפתור השמירה קבוע ב-App Bar (לא בגוף הגולל), וריפוד תחתון של ה-`ListView` גדל לפי `MediaQuery.viewInsets.bottom` כדי שהשדה האחרון לא יישאר מוסתר מאחורי המקלדת |
+| `lib/features/event_editor/presentation/recurring_scope_dialog.dart` | M9: `askRecurringScope` (דיאלוג בחירת היקף לעריכה/מחיקה) ו-`openEventEditorForOccurrence` (פתיחת העורך ממופע, עם שאלת ההיקף לאירוע חוזר) |
 | `lib/features/event_editor/presentation/widgets/hebrew_date_picker_field.dart` | שדה לחיץ המציג את התאריך העברי הנבחר ופותח את `HebrewDatePickerSheet` |
 | `lib/features/event_editor/presentation/widgets/hebrew_date_picker_sheet.dart` | Bottom sheet לבחירת תאריך עברי: שלוש רשימות נפתחות (שנה/חודש/יום) בגימטריה, כולל אדר א׳/אדר ב׳ בשנה מעוברת; סבב משוב מכשיר #1: `isExpanded: true` בשלוש הרשימות הנפתחות מתקן overflow קטן (0.75px) שנחשף במסך צר תוך כדי תיקון #1 |
 | `lib/features/event_editor/presentation/widgets/event_time_section.dart` | שדות שעת התחלה/סיום (מנוטרלים כשהאירוע "כל היום"), עוטף את `showTimePicker` של Flutter וממיר ל-`EventTimeOfDay` |
@@ -153,6 +155,7 @@
 | `test/domain/hebrew_date/jewish_day_info_test.dart` | M8: טסטים לחגים, צומות, ראש חודש (כולל יום ל׳), חנוכה, פורים בשנה מעוברת, ימים לאומיים כולל הקדמה, הבדלי ארץ ישראל/חו״ל, שמות קצרים |
 | `test/domain/event/event_test.dart` | טסטים ל-`Event`: שוויון (כולל רשימת תזכורות), `copyWith` ודגלי `clearStartTime`/`clearEndTime` |
 | `test/domain/event/recurrence_rule_test.dart` | טסטים ל-`RecurrenceRule`: שוויון (כולל רשימת חריגים), `copyWith` ודגל `clearUntil` |
+| `test/domain/event/recurring_edit_test.dart` | M9: פיצול מופע בודד, "זה והבאים" (כולל חלוקת חריגות ו-until קודם), "כל הסדרה", ומחיקה בשלושת ההיקפים |
 | `test/domain/event/event_validation_test.dart` | טסטים ל-`validateEvent`: כותרת חובה/אורך מקסימלי, תיאור/מיקום אורך מקסימלי, סיום אחרי התחלה, צבירת מספר שגיאות |
 | `test/domain/event/event_occurrence_test.dart` | טסטים ל-`EventOccurrence`: שוויון/hashCode, `isRecurring`, וסדר `compareEventOccurrences` (M3a) |
 | `test/domain/event/recurrence_expander_yearly_test.dart` | טסטים ל-`RecurrenceType.none`/`hebrewYearly`: מיפוי אדר, מדיניות יום 30, ואין מופע לפני הבסיס (M3a) |

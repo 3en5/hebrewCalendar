@@ -140,4 +140,46 @@ void main() {
       );
     },
   );
+
+  testWidgets('editing "this occurrence only" splits it off the series (M9)', (
+    WidgetTester tester,
+  ) async {
+    final InMemoryEventRepository repository = InMemoryEventRepository();
+    addTearDown(repository.dispose);
+    await repository.create(_monthlyRecurringEvent());
+
+    await _pumpMonth(tester, repository, _tishrei);
+    await tester.tap(find.byKey(_dotKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('שיעור חודשי'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.edit));
+    await tester.pumpAndSettle();
+
+    // Three scopes, then the editor on this occurrence, without recurrence.
+    expect(find.text('מופע זה והבאים אחריו'), findsOneWidget);
+    await tester.tap(find.text('מופע זה בלבד'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('עורך רק את המופע הזה. שאר הסדרה לא תשתנה.'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(find.byType(TextField).first, 'שיעור מיוחד');
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+
+    final List<Event> all = await repository.getAllForSync();
+    expect(all, hasLength(2));
+    final Event series = all.firstWhere(
+      (Event e) => e.recurrence.type != RecurrenceType.none,
+    );
+    final Event single = all.firstWhere(
+      (Event e) => e.recurrence.type == RecurrenceType.none,
+    );
+    expect(series.title, 'שיעור חודשי');
+    expect(series.recurrence.exceptions, <HebrewDate>[_baseDate]);
+    expect(single.title, 'שיעור מיוחד');
+    expect(single.hebrewDate, _baseDate);
+  });
 }

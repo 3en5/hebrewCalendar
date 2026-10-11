@@ -463,5 +463,21 @@
   "calendarPullSyncAlreadyRunningMessage": "סנכרון כבר מתבצע ברגע זה. נסה שוב בעוד רגע.",
   "@calendarPullSyncAlreadyRunningMessage": {
     "description": "Snackbar when the user pulls down to sync while another Google sync pass is already in progress."
+  },
+  "eventEditRecurringChoiceMessage": "אירוע זה הוא חלק מסדרה חוזרת. על מה להחיל את השינוי?",
+  "@eventEditRecurringChoiceMessage": {
+    "description": "Title of the choice dialog shown before editing an occurrence of a recurring event (M9)."
+  },
+  "eventScopeThisAndFollowing": "מופע זה והבאים אחריו",
+  "@eventScopeThisAndFollowing": {
+    "description": "Option in the recurring edit/delete dialog: apply to this occurrence and all later ones (M9)."
+  },
+  "eventEditorScopeThisOccurrenceNote": "עורך רק את המופע הזה. שאר הסדרה לא תשתנה.",
+  "@eventEditorScopeThisOccurrenceNote": {
+    "description": "Note at the top of the event editor when editing a single occurrence of a recurring series (M9)."
+  },
+  "eventEditorScopeThisAndFollowingNote": "עורך את המופע הזה ואת כל הבאים אחריו. מופעים קודמים לא ישתנו.",
+  "@eventEditorScopeThisAndFollowingNote": {
+    "description": "Note at the top of the event editor when editing an occurrence and all following ones of a recurring series (M9)."
   }
 }

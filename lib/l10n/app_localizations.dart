@@ -723,6 +723,30 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'סנכרון כבר מתבצע ברגע זה. נסה שוב בעוד רגע.'**
   String get calendarPullSyncAlreadyRunningMessage;
+
+  /// Title of the choice dialog shown before editing an occurrence of a recurring event (M9).
+  ///
+  /// In he, this message translates to:
+  /// **'אירוע זה הוא חלק מסדרה חוזרת. על מה להחיל את השינוי?'**
+  String get eventEditRecurringChoiceMessage;
+
+  /// Option in the recurring edit/delete dialog: apply to this occurrence and all later ones (M9).
+  ///
+  /// In he, this message translates to:
+  /// **'מופע זה והבאים אחריו'**
+  String get eventScopeThisAndFollowing;
+
+  /// Note at the top of the event editor when editing a single occurrence of a recurring series (M9).
+  ///
+  /// In he, this message translates to:
+  /// **'עורך רק את המופע הזה. שאר הסדרה לא תשתנה.'**
+  String get eventEditorScopeThisOccurrenceNote;
+
+  /// Note at the top of the event editor when editing an occurrence and all following ones of a recurring series (M9).
+  ///
+  /// In he, this message translates to:
+  /// **'עורך את המופע הזה ואת כל הבאים אחריו. מופעים קודמים לא ישתנו.'**
+  String get eventEditorScopeThisAndFollowingNote;
 }
 
 class _AppLocalizationsDelegate
