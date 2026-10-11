@@ -687,6 +687,24 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'יום {weekday}, {day} {month}'**
   String monthAgendaDayHeader(String weekday, String day, String month);
+
+  /// Tag in the month view's day agenda naming the weekly Torah portion read on that Shabbat (M8).
+  ///
+  /// In he, this message translates to:
+  /// **'פרשת {name}'**
+  String monthAgendaParshaTag(String name);
+
+  /// Settings switch (M8): whether holidays and the parsha follow the Israel calendar.
+  ///
+  /// In he, this message translates to:
+  /// **'לוח ארץ ישראל'**
+  String get settingsInIsraelTitle;
+
+  /// Explains the Israel/diaspora calendar switch in Settings (M8).
+  ///
+  /// In he, this message translates to:
+  /// **'כבוי: לוח חו״ל (יום טוב שני של גלויות וסדר הפרשות בחו״ל)'**
+  String get settingsInIsraelSubtitle;
 }
 
 class _AppLocalizationsDelegate

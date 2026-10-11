@@ -7,6 +7,7 @@ import '../../../core/theme/dimens.dart';
 import '../../../domain/sync/sync_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/demo_mode_provider.dart';
+import '../../calendar/application/jewish_day_labels_provider.dart';
 import '../application/app_version_provider.dart';
 import '../application/google_sync_providers.dart';
 import '../application/google_sync_settings_state.dart';
@@ -49,6 +50,21 @@ class SettingsScreen extends ConsumerWidget {
             )
           else
             _RealGoogleSyncSection(l10n: l10n),
+          SizedBox(height: spacingMd),
+          // A ListTile + Switch (not a SwitchListTile) so the Google sync
+          // section stays the screen's only SwitchListTile.
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.public),
+            title: Text(l10n.settingsInIsraelTitle),
+            subtitle: Text(l10n.settingsInIsraelSubtitle),
+            trailing: Switch(
+              key: const ValueKey<String>('in-israel-switch'),
+              value: ref.watch(inIsraelProvider),
+              onChanged: (bool value) =>
+                  ref.read(inIsraelProvider.notifier).set(value),
+            ),
+          ),
           SizedBox(height: spacingMd),
           const BackupSection(),
           SizedBox(height: spacingMd),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/dimens.dart';
 import '../../../../domain/hebrew_date/hebrew_numerals.dart';
+import '../../../../domain/hebrew_date/jewish_day_info.dart';
 
 /// Maximum number of event dots drawn under the day numeral; a busier day
 /// still shows this many (the full list is in the agenda below the grid).
@@ -9,7 +10,8 @@ const int _maxDots = 3;
 
 /// A single day cell in the month grid (owner-approved "variant B" design):
 /// thin grid lines, the Hebrew day in gematria centered, the Gregorian day
-/// small in the top-end corner, and one dot per event underneath. Today is
+/// small in the top-end corner, the day's main holiday/parsha [label] (M8)
+/// in small text, and one dot per event underneath. Today is
 /// a filled `primary` circle; the selected day gets a tinted background
 /// (and a ring, when it isn't also today). Shabbat cells are lightly tinted.
 class DayCell extends StatelessWidget {
@@ -21,6 +23,7 @@ class DayCell extends StatelessWidget {
     required this.isShabbat,
     required this.drawEndLine,
     this.eventCount = 0,
+    this.label,
     this.onTap,
     super.key,
   });
@@ -45,6 +48,9 @@ class DayCell extends StatelessWidget {
 
   /// Number of events on this day; drawn as up to [_maxDots] dots.
   final int eventCount;
+
+  /// The day's most important holiday/parsha label, if any.
+  final JewishDayLabel? label;
 
   final VoidCallback? onTap;
 
@@ -81,24 +87,34 @@ class DayCell extends StatelessWidget {
                   ),
                 ),
               ),
-              Center(
-                // Safety net for large system font scales / short rows:
-                // scale the content down instead of overflowing the cell.
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      _DayNumeral(
-                        hebrewDay: hebrewDay,
-                        isToday: isToday,
-                        isSelected: isSelected,
+              LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) =>
+                    Center(
+                      // Safety net for large system font scales / short
+                      // rows: scale the content down instead of overflowing.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            _DayNumeral(
+                              hebrewDay: hebrewDay,
+                              isToday: isToday,
+                              isSelected: isSelected,
+                            ),
+                            if (label != null)
+                              // Fixed to the cell's width so a long name
+                              // ellipsizes instead of shrinking the numeral.
+                              SizedBox(
+                                width: constraints.maxWidth - spacingXs,
+                                child: _DayLabel(label: label!),
+                              ),
+                            SizedBox(height: spacingXs / 2),
+                            _EventDots(hebrewDay: hebrewDay, count: eventCount),
+                          ],
+                        ),
                       ),
-                      SizedBox(height: spacingXs / 2),
-                      _EventDots(hebrewDay: hebrewDay, count: eventCount),
-                    ],
-                  ),
-                ),
+                    ),
               ),
             ],
           ),
@@ -175,6 +191,46 @@ class _DayNumeral extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _DayLabel extends StatelessWidget {
+  const _DayLabel({required this.label});
+
+  final JewishDayLabel label;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return Text(
+      label.shortName,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: rem(0.5625),
+        height: 1.2,
+        fontWeight: FontWeight.w600,
+        color: jewishDayLabelColor(colorScheme, label.kind),
+      ),
+    );
+  }
+}
+
+/// Text color for a holiday/parsha label, shared by the month cell and the
+/// day agenda's tags: the parsha in the primary color, fasts and memorial
+/// days in a muted tone, everything else in the tertiary (holiday) color.
+Color jewishDayLabelColor(ColorScheme colorScheme, JewishDayKind kind) {
+  switch (kind) {
+    case JewishDayKind.parsha:
+      return colorScheme.primary;
+    case JewishDayKind.fast:
+    case JewishDayKind.national:
+      return colorScheme.onSurfaceVariant;
+    case JewishDayKind.holiday:
+    case JewishDayKind.minor:
+    case JewishDayKind.roshChodesh:
+      return colorScheme.tertiary;
   }
 }
 

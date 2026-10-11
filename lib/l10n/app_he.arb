@@ -438,5 +438,18 @@
       "day": {"type": "String"},
       "month": {"type": "String"}
     }
+  },
+  "monthAgendaParshaTag": "פרשת {name}",
+  "@monthAgendaParshaTag": {
+    "description": "Tag in the month view's day agenda naming the weekly Torah portion read on that Shabbat (M8).",
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "settingsInIsraelTitle": "לוח ארץ ישראל",
+  "@settingsInIsraelTitle": {
+    "description": "Settings switch (M8): whether holidays and the parsha follow the Israel calendar."
+  },
+  "settingsInIsraelSubtitle": "כבוי: לוח חו״ל (יום טוב שני של גלויות וסדר הפרשות בחו״ל)",
+  "@settingsInIsraelSubtitle": {
+    "description": "Explains the Israel/diaspora calendar switch in Settings (M8)."
   }
 }

@@ -5,8 +5,10 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../domain/event/event_occurrence.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
+import '../../../../domain/hebrew_date/jewish_day_info.dart';
 import '../../application/calendar_view_provider.dart';
 import '../../application/hebrew_date_engine_provider.dart';
+import '../../application/jewish_day_labels_provider.dart';
 import '../../application/month_events_provider.dart';
 import 'day_cell.dart';
 import 'month_day_agenda.dart';
@@ -58,6 +60,15 @@ class MonthGrid extends ConsumerWidget {
     final List<EventOccurrence> monthOccurrences =
         ref.watch(monthEventsProvider(displayedMonth)).value ??
         const <EventOccurrence>[];
+    final Map<int, List<JewishDayLabel>> labelsByDay = ref.watch(
+      monthDayLabelsProvider(
+        HebrewDate(
+          year: displayedMonth.year,
+          month: displayedMonth.month,
+          day: 1,
+        ),
+      ),
+    );
     final Map<int, List<EventOccurrence>> occurrencesByDay =
         <int, List<EventOccurrence>>{};
     for (final EventOccurrence occurrence in monthOccurrences) {
@@ -98,6 +109,7 @@ class MonthGrid extends ConsumerWidget {
                                 today: today,
                                 selected: selected,
                                 occurrencesByDay: occurrencesByDay,
+                                labelsByDay: labelsByDay,
                               ),
                             ),
                         ],
@@ -106,6 +118,8 @@ class MonthGrid extends ConsumerWidget {
                   Expanded(
                     child: MonthDayAgenda(
                       date: selected,
+                      labels:
+                          labelsByDay[selected.day] ?? const <JewishDayLabel>[],
                       occurrences:
                           occurrencesByDay[selected.day] ??
                           const <EventOccurrence>[],
@@ -128,6 +142,7 @@ class MonthGrid extends ConsumerWidget {
     required HebrewDate today,
     required HebrewDate selected,
     required Map<int, List<EventOccurrence>> occurrencesByDay,
+    required Map<int, List<JewishDayLabel>> labelsByDay,
   }) {
     final bool drawEndLine = col < _daysPerWeek - 1;
     if (cellDate == null) {
@@ -146,6 +161,8 @@ class MonthGrid extends ConsumerWidget {
       isShabbat: col == _daysPerWeek - 1,
       drawEndLine: drawEndLine,
       eventCount: occurrencesByDay[cellDate.day]?.length ?? 0,
+      // Labels are ordered most important first, parsha last.
+      label: labelsByDay[cellDate.day]?.first,
       onTap: () =>
           ref.read(calendarViewProvider.notifier).setFocusedDate(cellDate),
     );

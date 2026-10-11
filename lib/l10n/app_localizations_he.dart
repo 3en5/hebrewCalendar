@@ -329,4 +329,16 @@ class AppLocalizationsHe extends AppLocalizations {
   String monthAgendaDayHeader(String weekday, String day, String month) {
     return 'יום $weekday, $day $month';
   }
+
+  @override
+  String monthAgendaParshaTag(String name) {
+    return 'פרשת $name';
+  }
+
+  @override
+  String get settingsInIsraelTitle => 'לוח ארץ ישראל';
+
+  @override
+  String get settingsInIsraelSubtitle =>
+      'כבוי: לוח חו״ל (יום טוב שני של גלויות וסדר הפרשות בחו״ל)';
 }

@@ -10,8 +10,10 @@ import '../../../../domain/event/event_occurrence.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../../domain/hebrew_date/hebrew_numerals.dart';
+import '../../../../domain/hebrew_date/jewish_day_info.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/hebrew_date_engine_provider.dart';
+import 'day_cell.dart' show jewishDayLabelColor;
 import 'day_events_sheet.dart';
 import 'weekday_names.dart';
 
@@ -23,10 +25,14 @@ class MonthDayAgenda extends ConsumerWidget {
   const MonthDayAgenda({
     required this.date,
     required this.occurrences,
+    this.labels = const <JewishDayLabel>[],
     super.key,
   });
 
   final HebrewDate date;
+
+  /// The day's holidays/parsha (M8), shown as tags under the date header.
+  final List<JewishDayLabel> labels;
 
   /// The occurrences on [date], already in chronological order.
   final List<EventOccurrence> occurrences;
@@ -77,6 +83,23 @@ class MonthDayAgenda extends ConsumerWidget {
             ],
           ),
         ),
+        if (labels.isNotEmpty)
+          Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(
+              spacingMd,
+              0,
+              spacingMd,
+              spacingXs,
+            ),
+            child: Wrap(
+              spacing: spacingXs,
+              runSpacing: spacingXs,
+              children: <Widget>[
+                for (final JewishDayLabel label in labels)
+                  _LabelTag(label: label),
+              ],
+            ),
+          ),
         Expanded(
           child: occurrences.isEmpty
               ? Padding(
@@ -100,6 +123,38 @@ class MonthDayAgenda extends ConsumerWidget {
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _LabelTag extends StatelessWidget {
+  const _LabelTag({required this.label});
+
+  final JewishDayLabel label;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color color = jewishDayLabelColor(theme.colorScheme, label.kind);
+    final String text = label.kind == JewishDayKind.parsha
+        ? AppLocalizations.of(context).monthAgendaParshaTag(label.name)
+        : label.name;
+    return Container(
+      padding: EdgeInsetsDirectional.symmetric(
+        horizontal: spacingSm,
+        vertical: spacingXs / 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(spacingMd),
+      ),
+      child: Text(
+        text,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

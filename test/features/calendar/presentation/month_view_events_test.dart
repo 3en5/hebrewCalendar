@@ -145,4 +145,19 @@ void main() {
       expect(find.text('אין אירועים ביום זה'), findsNothing);
     },
   );
+
+  testWidgets('shows holidays in the cell and as a tag in the day agenda', (
+    WidgetTester tester,
+  ) async {
+    await _pumpFixedMonth(tester);
+    // The fixed focus is א׳ תשרי (Rosh Hashana), and ב׳ תשרי is too: two
+    // cells plus the selected day's agenda tag.
+    expect(find.text('ראש השנה'), findsNWidgets(3));
+    // Shabbat ד׳ תשרי תשפ״ו (Shabbat Shuva) is parshat Haazinu: the cell
+    // shows the bare name; selecting it shows "פרשת ...".
+    expect(find.text('האזינו'), findsOneWidget);
+    await tester.tap(find.text('האזינו'));
+    await tester.pumpAndSettle();
+    expect(find.text('פרשת האזינו'), findsOneWidget);
+  });
 }
