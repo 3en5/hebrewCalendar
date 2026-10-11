@@ -49,6 +49,14 @@ class MonthGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
     final HebrewDate today = engine.fromGregorian(DateTime.now());
+    // Provider keys use the month's first day: `displayedMonth.day` follows
+    // the selected day, and keying on it re-ran the month's queries on every
+    // tap (round #10).
+    final HebrewDate firstOfMonth = HebrewDate(
+      year: displayedMonth.year,
+      month: displayedMonth.month,
+      day: 1,
+    );
     final HebrewDate focused = ref.watch(
       calendarViewProvider.select((CalendarViewState s) => s.focusedDate),
     );
@@ -58,16 +66,10 @@ class MonthGrid extends ConsumerWidget {
     final List<HebrewDate?> cells = _buildCells(engine, displayedMonth);
     final int rowCount = cells.length ~/ _daysPerWeek;
     final List<EventOccurrence> monthOccurrences =
-        ref.watch(monthEventsProvider(displayedMonth)).value ??
+        ref.watch(monthEventsProvider(firstOfMonth)).value ??
         const <EventOccurrence>[];
     final Map<int, List<JewishDayLabel>> labelsByDay = ref.watch(
-      monthDayLabelsProvider(
-        HebrewDate(
-          year: displayedMonth.year,
-          month: displayedMonth.month,
-          day: 1,
-        ),
-      ),
+      monthDayLabelsProvider(firstOfMonth),
     );
     final Map<int, List<EventOccurrence>> occurrencesByDay =
         <int, List<EventOccurrence>>{};

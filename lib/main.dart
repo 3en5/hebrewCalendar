@@ -61,6 +61,16 @@ Future<void> _initializeFirebase() async {
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
   );
+  // Round #10: with ~2,000 events in the offline cache, every month page's
+  // range query scanned the whole cached collection. Let the SDK build
+  // local indexes for the queries the app actually runs.
+  try {
+    await FirebaseFirestore.instance
+        .persistentCacheIndexManager()
+        ?.enableIndexAutoCreation();
+  } catch (error) {
+    debugPrint('Firestore cache index auto-creation unavailable: $error');
+  }
 }
 
 /// Registers the M5b WorkManager [callbackDispatcher] — Android only (task
