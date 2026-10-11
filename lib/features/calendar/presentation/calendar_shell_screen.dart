@@ -24,8 +24,10 @@ import '../application/calendar_view_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
 import 'agenda_view_screen.dart';
 import 'day_view_screen.dart';
+import 'event_search_screen.dart';
 import 'month_view_body.dart';
 import 'week_view_screen.dart';
+import 'widgets/go_to_date_sheet.dart';
 
 enum _OverflowAction { signOut }
 
@@ -110,10 +112,19 @@ class CalendarShellScreen extends ConsumerWidget {
         ),
         actions: <Widget>[
           IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: l10n.searchTooltip,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const EventSearchScreen(),
+              ),
+            ),
+          ),
+          // M12: today, or jump to any Hebrew/Gregorian date.
+          IconButton(
             icon: const Icon(Icons.today),
-            tooltip: l10n.calendarTodayTooltip,
-            onPressed: () =>
-                ref.read(calendarViewProvider.notifier).goToToday(),
+            tooltip: l10n.goToDateTooltip,
+            onPressed: () => openGoToDateSheet(context, ref),
           ),
           _ViewSwitcher(current: state.viewType, l10n: l10n),
           IconButton(

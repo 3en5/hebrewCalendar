@@ -825,6 +825,48 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'{count} משתתפים, {accepted} אישרו'**
   String eventAttendeesSummary(int count, int accepted);
+
+  /// App bar button opening the go-to-date sheet (M12).
+  ///
+  /// In he, this message translates to:
+  /// **'מעבר לתאריך'**
+  String get goToDateTooltip;
+
+  /// Go-to-date option: pick a Hebrew date (M12).
+  ///
+  /// In he, this message translates to:
+  /// **'תאריך עברי…'**
+  String get goToHebrewDate;
+
+  /// Go-to-date option: pick a Gregorian date (M12).
+  ///
+  /// In he, this message translates to:
+  /// **'תאריך לועזי…'**
+  String get goToGregorianDate;
+
+  /// App bar button opening event search (M13).
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש'**
+  String get searchTooltip;
+
+  /// Hint text of the event search field (M13).
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש בכותרת, תיאור או מיקום'**
+  String get searchHint;
+
+  /// Shown when an event search has no matches (M13).
+  ///
+  /// In he, this message translates to:
+  /// **'לא נמצאו אירועים'**
+  String get searchNoResults;
+
+  /// Marks a recurring event in search results (M13).
+  ///
+  /// In he, this message translates to:
+  /// **'חוזר'**
+  String get searchRecurringNote;
 }
 
 class _AppLocalizationsDelegate

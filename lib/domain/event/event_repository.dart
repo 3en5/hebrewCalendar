@@ -75,6 +75,11 @@ abstract class EventRepository {
   /// use.
   Future<List<Event>> getDirtyForSync();
 
+  /// Every event, for the search screen (M13) — read from the on-device
+  /// cache when there is one, so a search costs no server reads and works
+  /// offline.
+  Future<List<Event>> getAllForSearch();
+
   /// Fires after each user-facing local mutation ([create], [update],
   /// [delete]) — never for sync-engine writes ([upsertFromGoogle],
   /// [applyRemoteDelete], [updateSyncState]). The sync trigger's "local edit"

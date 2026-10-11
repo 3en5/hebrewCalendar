@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/in_memory_event_repository.dart';
 import 'package:hebrew_calendar/data/sync/in_memory_sync_settings_store.dart';
+import 'package:hebrew_calendar/domain/event/event.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date_engine.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_numerals.dart';
@@ -119,12 +120,62 @@ void main() {
     expect(find.text(_monthYearTitle(farPast)), findsOneWidget);
     expect(find.byType(MonthViewBody), findsOneWidget);
 
+    // M12: the button opens "go to date"; "היום" is its first option.
     await tester.tap(find.byIcon(Icons.today));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('היום').last);
     await tester.pumpAndSettle();
 
     expect(find.text(_monthYearTitle(today)), findsOneWidget);
     expect(find.text(_monthYearTitle(farPast)), findsNothing);
     // Still the month view — only the focus moved.
     expect(find.byType(MonthViewBody), findsOneWidget);
+  });
+
+  testWidgets('search finds an event and jumps to its day (M13)', (
+    WidgetTester tester,
+  ) async {
+    final HebrewDate today = _engine.fromGregorian(DateTime.now());
+    final HebrewDate target = _engine.addDays(today, 40);
+    final List<Override> overrides = _signedInOverrides();
+    late InMemoryEventRepository repository;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            repository =
+                ref.read(eventRepositoryProvider) as InMemoryEventRepository;
+            return const HebrewCalendarApp();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await repository.create(
+      Event(
+        id: '',
+        ownerUid: 'uid-1',
+        calendarId: 'default',
+        title: 'פגישה עם רואה חשבון',
+        hebrewDate: target,
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('event-search-field')),
+      'רואה',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('פגישה עם רואה חשבון'), findsOneWidget);
+
+    await tester.tap(find.text('פגישה עם רואה חשבון'));
+    await tester.pumpAndSettle();
+    expect(find.text(_monthYearTitle(target)), findsOneWidget);
   });
 }

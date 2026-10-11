@@ -154,6 +154,9 @@ class InMemoryEventRepository implements EventRepository {
   Future<List<Event>> getAllForSync() async => _events.values.toList();
 
   @override
+  Future<List<Event>> getAllForSearch() async => _events.values.toList();
+
+  @override
   Future<List<Event>> getDirtyForSync() async =>
       _events.values.where((Event event) => event.googleSync.dirty).toList();
 

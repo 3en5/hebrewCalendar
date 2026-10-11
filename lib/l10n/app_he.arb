@@ -511,5 +511,19 @@
   "@eventAttendeesSummary": {
     "description": "Short participants summary under an event in the day events sheet (M11).",
     "placeholders": {"count": {"type": "int"}, "accepted": {"type": "int"}}
-  }
+  },
+  "goToDateTooltip": "מעבר לתאריך",
+  "@goToDateTooltip": {"description": "App bar button opening the go-to-date sheet (M12)."},
+  "goToHebrewDate": "תאריך עברי…",
+  "@goToHebrewDate": {"description": "Go-to-date option: pick a Hebrew date (M12)."},
+  "goToGregorianDate": "תאריך לועזי…",
+  "@goToGregorianDate": {"description": "Go-to-date option: pick a Gregorian date (M12)."},
+  "searchTooltip": "חיפוש",
+  "@searchTooltip": {"description": "App bar button opening event search (M13)."},
+  "searchHint": "חיפוש בכותרת, תיאור או מיקום",
+  "@searchHint": {"description": "Hint text of the event search field (M13)."},
+  "searchNoResults": "לא נמצאו אירועים",
+  "@searchNoResults": {"description": "Shown when an event search has no matches (M13)."},
+  "searchRecurringNote": "חוזר",
+  "@searchRecurringNote": {"description": "Marks a recurring event in search results (M13)."}
 }

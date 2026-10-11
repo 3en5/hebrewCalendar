@@ -61,6 +61,30 @@ class FirestoreEventSyncSupport {
         .toList();
   }
 
+  /// Cache first (no server reads, works offline); the server only when
+  /// the cache has nothing yet.
+  Future<List<Event>> getAllForSearch() async {
+    final Query<Map<String, dynamic>> query = _events.where(
+      'ownerUid',
+      isEqualTo: _ownerUid,
+    );
+    QuerySnapshot<Map<String, dynamic>> snapshot;
+    try {
+      snapshot = await query.get(const GetOptions(source: Source.cache));
+    } catch (_) {
+      snapshot = await query.get();
+    }
+    if (snapshot.docs.isEmpty) {
+      snapshot = await query.get();
+    }
+    return snapshot.docs
+        .map(
+          (QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              eventFromFirestoreData(doc.id, doc.data()),
+        )
+        .toList();
+  }
+
   Future<List<Event>> getDirtyForSync() async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _events
         .where('ownerUid', isEqualTo: _ownerUid)

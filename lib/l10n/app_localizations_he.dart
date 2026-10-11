@@ -425,4 +425,25 @@ class AppLocalizationsHe extends AppLocalizations {
   String eventAttendeesSummary(int count, int accepted) {
     return '$count משתתפים, $accepted אישרו';
   }
+
+  @override
+  String get goToDateTooltip => 'מעבר לתאריך';
+
+  @override
+  String get goToHebrewDate => 'תאריך עברי…';
+
+  @override
+  String get goToGregorianDate => 'תאריך לועזי…';
+
+  @override
+  String get searchTooltip => 'חיפוש';
+
+  @override
+  String get searchHint => 'חיפוש בכותרת, תיאור או מיקום';
+
+  @override
+  String get searchNoResults => 'לא נמצאו אירועים';
+
+  @override
+  String get searchRecurringNote => 'חוזר';
 }
