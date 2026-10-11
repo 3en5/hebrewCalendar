@@ -1,0 +1,29 @@
+name: Diagnose Google sync
+
+# Manual, read-only: prints each user's Google-sync status from Firestore
+# (enabled, sync token present, last sync time, last error, event count) —
+# never event content. See tool/diagnose_sync.py.
+#
+# The push trigger exists because workflow_dispatch only works once a workflow
+# file is on the default branch; it runs this once when the workflow or its
+# script changes on a feature branch.
+on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - .github/workflows/diagnose-sync.yml
+      - tool/diagnose_sync.py
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read sync status
+        env:
+          GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY }}
+          FIREBASE_PROJECT: hebrewcalendar-68363
+        run: |
+          pip install --quiet google-auth requests
+          python3 tool/diagnose_sync.py

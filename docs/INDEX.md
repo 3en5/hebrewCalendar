@@ -26,7 +26,9 @@
 | `.github/workflows/release.yml` | M7: workflow ידני (`workflow_dispatch` בלבד). בונה App Bundle חתום מ-secrets ומחשב `versionName`/`versionCode` מ-`pubspec.yaml`+`GITHUB_RUN_NUMBER`. שומר את ה-`.aab` כ-artifact, ולפי `track` (none/internal/alpha/beta/production, עם `rollout` ו-`draft`) מעלה אותו ל-Google Play דרך `r0adkll/upload-google-play` עם `GOOGLE_PLAY_KEY` |
 | `distribution/whatsnew/whatsnew-iw-IL`, `whatsnew-en-US` | הערות גרסה ל-Google Play (עד 500 תווים כל אחת). `release.yml` שולח אותן בכל העלאה |
 | `.github/workflows/firebase-shas.yml` | workflow ידני: רושם ב-Firebase את טביעות האצבע (SHA-1/256) של Play App Signing ושל מפתח ההעלאה, עם `GOOGLE_PLAY_KEY`. בלעדיהן, Google Sign-In לא עובד בהתקנות מ-Play |
+| `.github/workflows/diagnose-sync.yml` | הרצה ידנית (וגם ב-push לענף כשהקובץ משתנה) של `tool/diagnose_sync.py` |
 | `tool/register_firebase_shas.py` | הסקריפט של `firebase-shas.yml`. מוצא את אפליקציית ה-Android ב-Firebase, מוריד מ-Play את ה-universal APK של הגרסה האחרונה ב-track, וקורא ממנו את התעודה עם `apksigner`. מוסיף רק טביעות שחסרות |
+| `tool/diagnose_sync.py` | אבחון לקריאה בלבד: לכל משתמש ב-Firestore — האם סנכרון Google מופעל, יש sync token, זמן סנכרון אחרון, השגיאה האחרונה ומספר אירועים (בלי תוכן אירועים) |
 | `tool/fetch_google_services.py` | מוריד את `google-services.json` העדכני מ-Firebase Management API. `release.yml` משתמש בו לפני הבנייה, ואם הוא נכשל, נופל חזרה ל-secret `GOOGLE_SERVICES_JSON` |
 | `.github/workflows/firestore.yml` | בודק את `firebase/firestore.rules` מול ה-Firestore emulator בכל שינוי, ופורס rules ו-indexes לפרויקט אחרי מיזוג ל-`main` |
 | `firebase/test/rules.test.mjs`, `package.json` | בדיקות ה-Security Rules (`@firebase/rules-unit-testing`, `node:test`). ה-fixture תואם לפלט של `event_firestore_mapper.dart`. בודק בידוד בין משתמשים, ולידציית שדות, איסור העברת בעלות, ו-catch-all |
