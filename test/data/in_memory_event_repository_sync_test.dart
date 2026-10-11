@@ -269,4 +269,52 @@ void main() {
       },
     );
   });
+
+  test(
+    'localEdits fires for user edits only, never for imports (round #10)',
+    () async {
+      int edits = 0;
+      final sub = repository.localEdits.listen((_) => edits++);
+      addTearDown(sub.cancel);
+
+      await repository.upsertFromGoogle(
+        RemoteEventSnapshot(
+          googleEventId: 'g-edits',
+          etag: 'etag',
+          updatedAt: DateTime(2026, 3, 1),
+          isCancelled: false,
+          summary: 'מיובא',
+          start: DateTime(2026, 3, 1),
+          end: DateTime(2026, 3, 2),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(edits, 0);
+
+      final Event created = await repository.create(_draftEvent());
+      await repository.update(created.copyWith(title: 'שונה'));
+      await repository.delete(created.id);
+      await Future<void>.delayed(Duration.zero);
+      expect(edits, 3);
+    },
+  );
+
+  test('getDirtyForSync returns only events waiting to be pushed', () async {
+    final Event created = await repository.create(_draftEvent());
+    await repository.upsertFromGoogle(
+      RemoteEventSnapshot(
+        googleEventId: 'g-clean',
+        etag: 'etag',
+        updatedAt: DateTime(2026, 3, 1),
+        isCancelled: false,
+        summary: 'מיובא',
+        start: DateTime(2026, 3, 1),
+        end: DateTime(2026, 3, 2),
+      ),
+    );
+
+    final List<Event> dirty = await repository.getDirtyForSync();
+
+    expect(dirty.map((Event e) => e.id), <String>[created.id]);
+  });
 }

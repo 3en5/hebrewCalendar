@@ -121,7 +121,6 @@ GoogleSyncTriggerService _buildTriggerService(Ref ref) {
       settingsStore: ref.watch(syncSettingsStoreProvider),
       api: ref.watch(googleCalendarApiProvider),
       repository: ref.watch(eventRepositoryProvider),
-      hebrewEngine: ref.watch(hebrewDateEngineProvider),
       backgroundScheduler: ref.watch(backgroundSyncSchedulerProvider),
       startTimeout: ref.watch(syncStartTimeoutProvider),
     );
@@ -146,7 +145,6 @@ GoogleSyncTriggerService _buildTriggerService(Ref ref) {
       settingsStore: fallbackStore,
       api: fallbackApi,
       repository: fallbackRepository,
-      hebrewEngine: fallbackEngine,
       constructionError: error,
     );
   }

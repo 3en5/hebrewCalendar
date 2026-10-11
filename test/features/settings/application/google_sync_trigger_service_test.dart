@@ -58,7 +58,6 @@ void main() {
       settingsStore: settingsStore,
       api: api,
       repository: repository,
-      hebrewEngine: _engine,
       now: () => _now,
       editDebounce: const Duration(milliseconds: 10),
       openThrottle: const Duration(milliseconds: 50),
@@ -233,7 +232,6 @@ void main() {
           settingsStore: settingsStore,
           api: api,
           repository: repository,
-          hebrewEngine: _engine,
           now: () => _now,
           backgroundScheduler: scheduler,
         );
@@ -266,7 +264,6 @@ void main() {
           settingsStore: settingsStore,
           api: api,
           repository: repository,
-          hebrewEngine: _engine,
           now: () => _now,
           backgroundScheduler: scheduler,
         );
@@ -291,7 +288,6 @@ void main() {
         settingsStore: settingsStore,
         api: api,
         repository: repository,
-        hebrewEngine: _engine,
         now: () => _now,
         backgroundScheduler: scheduler,
       );
@@ -330,7 +326,6 @@ void main() {
         settingsStore: hangingStore,
         api: api,
         repository: repository,
-        hebrewEngine: _engine,
         now: () => _now,
         // A tiny timeout so the test doesn't wait for the real 10s
         // production default — the timeout mechanism itself is what's
@@ -360,7 +355,6 @@ void main() {
         settingsStore: hangingStore,
         api: api,
         repository: repository,
-        hebrewEngine: _engine,
         now: () => _now,
         startTimeout: const Duration(milliseconds: 20),
       );
@@ -425,7 +419,6 @@ void main() {
           settingsStore: settingsStore,
           api: api,
           repository: repository,
-          hebrewEngine: _engine,
           now: () => _now,
           constructionError: StateError('בנייה נכשלה'),
         );

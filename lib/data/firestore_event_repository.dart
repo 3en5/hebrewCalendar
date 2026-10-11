@@ -220,6 +220,7 @@ class FirestoreEventRepository implements EventRepository {
           ..['createdAt'] = FieldValue.serverTimestamp()
           ..['updatedAt'] = FieldValue.serverTimestamp();
     await docRef.set(data);
+    _notifyLocalEdit();
     return toStore.copyWith(id: docRef.id);
   }
 
@@ -249,6 +250,7 @@ class FirestoreEventRepository implements EventRepository {
           ..['updatedAt'] = FieldValue.serverTimestamp()
           ..remove('createdAt');
     await docRef.update(data);
+    _notifyLocalEdit();
     return toStore;
   }
 
@@ -263,10 +265,31 @@ class FirestoreEventRepository implements EventRepository {
       );
     }
     await docRef.delete();
+    _notifyLocalEdit();
   }
 
   @override
   Future<List<Event>> getAllForSync() => _sync.getAllForSync();
+
+  @override
+  Future<List<Event>> getDirtyForSync() => _sync.getDirtyForSync();
+
+  final StreamController<void> _localEdits = StreamController<void>.broadcast();
+
+  @override
+  Stream<void> get localEdits => _localEdits.stream;
+
+  void _notifyLocalEdit() {
+    if (!_localEdits.isClosed) {
+      _localEdits.add(null);
+    }
+  }
+
+  /// Closes [localEdits] (RULES.md §6.1) — called when the provider that
+  /// built this repository is disposed (e.g. on sign-out).
+  void dispose() {
+    unawaited(_localEdits.close());
+  }
 
   @override
   Future<Event?> getByGoogleEventId(String googleEventId) =>

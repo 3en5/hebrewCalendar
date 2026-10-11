@@ -68,6 +68,20 @@ abstract class EventRepository {
   /// an incoming remote snapshot.
   Future<List<Event>> getAllForSync();
 
+  /// Only the events with a local change still waiting to be pushed
+  /// (`googleSync.dirty`) — the export pass's input. Round #10: reading
+  /// every event on every sync was ~2,000 documents for a calendar in long
+  /// use.
+  Future<List<Event>> getDirtyForSync();
+
+  /// Fires after each user-facing local mutation ([create], [update],
+  /// [delete]) — never for sync-engine writes ([upsertFromGoogle],
+  /// [applyRemoteDelete], [updateSyncState]). The sync trigger's "local edit"
+  /// signal. Round #10: it used to watch every occurrence in a three-year
+  /// range, which re-read and re-expanded thousands of events on every
+  /// change (each imported Google event included) and made the app stutter.
+  Stream<void> get localEdits;
+
   /// The local event whose [Event.googleSync]/[Event.googleInstanceSync]
   /// references [googleEventId], or null if none does — used by the M5a
   /// sync engine's import path to tell "already-imported, check for

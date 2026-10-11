@@ -4,10 +4,7 @@ import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../../../data/sync/google_calendar_api.dart';
 import '../../../data/sync/sync_engine.dart';
-import '../../../domain/event/event_occurrence.dart';
 import '../../../domain/event/event_repository.dart';
-import '../../../domain/hebrew_date/hebrew_date.dart';
-import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../domain/sync/sync_run_result.dart';
 import '../../../domain/sync/sync_settings_store.dart';
 import '../../../domain/sync/sync_state.dart';
@@ -37,7 +34,6 @@ class GoogleSyncTriggerService {
     required SyncSettingsStore settingsStore,
     required GoogleCalendarApi api,
     required EventRepository repository,
-    required HebrewDateEngine hebrewEngine,
     DateTime Function() now = DateTime.now,
     Duration editDebounce = const Duration(seconds: 30),
     Duration openThrottle = const Duration(minutes: 5),
@@ -49,7 +45,6 @@ class GoogleSyncTriggerService {
        _settingsStore = settingsStore,
        _api = api,
        _repository = repository,
-       _hebrewEngine = hebrewEngine,
        _now = now,
        _editDebounce = editDebounce,
        _openThrottle = openThrottle,
@@ -61,7 +56,6 @@ class GoogleSyncTriggerService {
   final SyncSettingsStore _settingsStore;
   final GoogleCalendarApi _api;
   final EventRepository _repository;
-  final HebrewDateEngine _hebrewEngine;
   final DateTime Function() _now;
   final Duration _editDebounce;
   final Duration _openThrottle;
@@ -97,7 +91,7 @@ class GoogleSyncTriggerService {
   GoogleSyncSettingsState _state = const GoogleSyncSettingsState();
   DateTime? _lastRunAt;
   // ignore: cancel_subscriptions
-  StreamSubscription<List<EventOccurrence>>? _localChangesSubscription;
+  StreamSubscription<void>? _localChangesSubscription;
   Timer? _debounceTimer;
   bool _disposed = false;
 
@@ -391,25 +385,17 @@ class GoogleSyncTriggerService {
     if (_localChangesSubscription != null) {
       return;
     }
-    final DateTime nowValue = _now();
-    final HebrewDate from = _hebrewEngine.fromGregorian(
-      nowValue.subtract(const Duration(days: 365)),
-    );
-    final HebrewDate to = _hebrewEngine.fromGregorian(
-      nowValue.add(const Duration(days: 730)),
-    );
-    // `skip(1)`: the first emission is the current snapshot, not a change —
-    // only emissions after that represent an actual local edit.
-    _localChangesSubscription = _repository
-        .watchOccurrencesInRange(from, to)
-        .skip(1)
-        .listen((_) {
-          if (_disposed) {
-            return;
-          }
-          _debounceTimer?.cancel();
-          _debounceTimer = Timer(_editDebounce, () => unawaited(syncNow()));
-        });
+    // Round #10: listen to the repository's user-edit signal, not to every
+    // occurrence in a three-year range — that re-read thousands of events on
+    // each change (imported Google events included, which also re-triggered
+    // sync after every import).
+    _localChangesSubscription = _repository.localEdits.listen((_) {
+      if (_disposed) {
+        return;
+      }
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(_editDebounce, () => unawaited(syncNow()));
+    });
   }
 
   void _emit() {
@@ -429,8 +415,7 @@ class GoogleSyncTriggerService {
     _disposed = true;
     _debounceTimer?.cancel();
     _debounceTimer = null;
-    final StreamSubscription<List<EventOccurrence>>? subscription =
-        _localChangesSubscription;
+    final StreamSubscription<void>? subscription = _localChangesSubscription;
     _localChangesSubscription = null;
     await subscription?.cancel();
     if (_state.enabled) {

@@ -60,6 +60,19 @@ class FirestoreEventSyncSupport {
         .toList();
   }
 
+  Future<List<Event>> getDirtyForSync() async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _events
+        .where('ownerUid', isEqualTo: _ownerUid)
+        .where('googleSync.dirty', isEqualTo: true)
+        .get();
+    return snapshot.docs
+        .map(
+          (QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+              eventFromFirestoreData(doc.id, doc.data()),
+        )
+        .toList();
+  }
+
   Future<Event?> getByGoogleEventId(String googleEventId) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _events
         .where('ownerUid', isEqualTo: _ownerUid)

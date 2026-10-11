@@ -63,7 +63,7 @@ class SyncExportPass {
     required Map<String, GoogleSyncState> ownExportsLookup,
   }) async {
     await _flushPendingDeletions();
-    final List<Event> events = await _repository.getAllForSync();
+    final List<Event> events = await _repository.getDirtyForSync();
     final DateTime start = _now();
     final HebrewDate from = _engine.fromGregorian(start);
     final HebrewDate to = _engine.fromGregorian(start.add(_exportWindow));

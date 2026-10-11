@@ -55,7 +55,6 @@ void main() {
       settingsStore: settingsStore,
       api: api,
       repository: repository,
-      hebrewEngine: _engine,
       now: () => _now,
     );
   });
@@ -175,7 +174,6 @@ void main() {
       settingsStore: failingStore,
       api: api,
       repository: repository,
-      hebrewEngine: _engine,
       now: () => _now,
     );
     await svc.start();

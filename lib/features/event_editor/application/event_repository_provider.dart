@@ -33,7 +33,11 @@ final Provider<EventRepository> eventRepositoryProvider =
     Provider<EventRepository>((Ref ref) {
       final AppUser? user = ref.watch(currentUserProvider);
       if (user != null) {
-        return FirestoreEventRepository(ownerUid: user.uid);
+        final FirestoreEventRepository repository = FirestoreEventRepository(
+          ownerUid: user.uid,
+        );
+        ref.onDispose(repository.dispose);
+        return repository;
       }
       final bool demoMode = ref.watch(demoModeProvider);
       if (!demoMode) {

@@ -5,6 +5,20 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-11 — סבב #10: האפליקציה נתקעה במעבר בין מסכים
+
+- אחרי שהייבוא עבד הצטברו ~1,960 אירועים (1,957 מ-Google, 0 כפולים — לפי
+  `diagnose-sync.yml`). מקורות האיטיות:
+  - טריגר "עריכה מקומית" ב-`google_sync_trigger_service.dart` האזין ל-
+    `watchOccurrencesInRange` על שלוש שנים: כל שינוי (גם כל אירוע שיובא) קרא ופרש מחדש
+    אלפי אירועים על ה-UI thread, וגם הפעיל סנכרון נוסף אחרי כל ייבוא.
+  - מעבר היצוא קרא את כל האירועים (`getAllForSync`) בכל סנכרון.
+- תיקון: `EventRepository.localEdits` (נורה רק מ-create/update/delete של המשתמש, לא
+  מכתיבות הסנכרון) מחליף את ההאזנה; `getDirtyForSync` (שאילתת `googleSync.dirty ==
+  true`) מחליף את `getAllForSync` ביצוא; בייבוא — עד 30 שינויים נבדקים אחד-אחד, מעל
+  זה שאילתה אחת. `FirestoreEventRepository.dispose` נקרא ב-`ref.onDispose`.
+- טסטים: `localEdits` לא נורה על ייבוא, `getDirtyForSync`. 382 טסטים עוברים.
+
 ## 2026-10-11 — סבב #9: הסנכרון לא סיים אף מעבר
 
 - אבחון (`diagnose-sync.yml`): גם אחרי גרסאות 13–14 — אין `googleLastSyncedAt` והשגיאה

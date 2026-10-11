@@ -46,6 +46,10 @@ class SyncImportPass {
   /// How many local writes an import pass runs in parallel.
   static const int _kApplyChunkSize = 20;
 
+  /// Above this many incoming changes, read all local events in one query
+  /// instead of one lookup per change.
+  static const int _kBulkLookupThreshold = 30;
+
   final GoogleCalendarApi _api;
   final EventRepository _repository;
   final DateTime Function() _now;
@@ -81,12 +85,23 @@ class SyncImportPass {
     // long-used Google Calendar has hundreds of events, and hundreds of
     // sequential queries kept the pass running for minutes (the app was
     // closed before it ever finished, so nothing was imported).
+    // An incremental sync usually brings a handful of changes: look those
+    // up one by one rather than reading every local event.
     final Map<String, Event> localByGoogleId = <String, Event>{};
-    if (importCandidates.isNotEmpty) {
+    if (importCandidates.length > _kBulkLookupThreshold) {
       for (final Event local in await _repository.getAllForSync()) {
         final String? googleId = local.googleSync.googleEventId;
         if (googleId != null) {
           localByGoogleId[googleId] = local;
+        }
+      }
+    } else {
+      for (final RemoteEventSnapshot snapshot in importCandidates) {
+        final Event? local = await _repository.getByGoogleEventId(
+          snapshot.googleEventId,
+        );
+        if (local != null) {
+          localByGoogleId[snapshot.googleEventId] = local;
         }
       }
     }

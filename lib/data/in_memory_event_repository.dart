@@ -113,6 +113,7 @@ class InMemoryEventRepository implements EventRepository {
     );
     _events[created.id] = created;
     _notify();
+    _notifyLocalEdit();
     return created;
   }
 
@@ -133,6 +134,7 @@ class InMemoryEventRepository implements EventRepository {
     );
     _events[updated.id] = updated;
     _notify();
+    _notifyLocalEdit();
     return updated;
   }
 
@@ -144,10 +146,26 @@ class InMemoryEventRepository implements EventRepository {
     }
     _enqueuePendingDeletionIfSynced(existing);
     _notify();
+    _notifyLocalEdit();
   }
 
   @override
   Future<List<Event>> getAllForSync() async => _events.values.toList();
+
+  @override
+  Future<List<Event>> getDirtyForSync() async =>
+      _events.values.where((Event event) => event.googleSync.dirty).toList();
+
+  final StreamController<void> _localEdits = StreamController<void>.broadcast();
+
+  @override
+  Stream<void> get localEdits => _localEdits.stream;
+
+  void _notifyLocalEdit() {
+    if (!_localEdits.isClosed) {
+      _localEdits.add(null);
+    }
+  }
 
   @override
   Future<Event?> getByGoogleEventId(String googleEventId) async {
@@ -273,6 +291,7 @@ class InMemoryEventRepository implements EventRepository {
   /// whole app session and is never disposed.
   void dispose() {
     unawaited(_changes.close());
+    unawaited(_localEdits.close());
   }
 
   void _notify() {

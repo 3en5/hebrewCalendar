@@ -1,1 +1,1 @@
-Fix: Google Calendar sync — the first import is faster and finishes, and the screen no longer gets stuck on "syncing". Pull down to sync.
+Performance: fast screen switching even with thousands of Google Calendar events. More efficient sync.
