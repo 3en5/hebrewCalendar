@@ -69,6 +69,45 @@ def main():
             events = count.json()[0]["result"]["aggregateFields"]["n"]["integerValue"]
         else:
             events = f"error {count.status_code}"
+        # Source breakdown and duplicate check (same Google event imported
+        # twice), reading only two fields of each event — never content.
+        by_source, google_ids, page = {}, [], None
+        while True:
+            q = {
+                "structuredQuery": {
+                    "from": [{"collectionId": "events"}],
+                    "select": {"fields": [
+                        {"fieldPath": "source"},
+                        {"fieldPath": "googleSync.googleEventId"},
+                    ]},
+                    "where": {"fieldFilter": {
+                        "field": {"fieldPath": "ownerUid"},
+                        "op": "EQUAL",
+                        "value": {"stringValue": uid},
+                    }},
+                    "orderBy": [{"field": {"fieldPath": "__name__"}}],
+                    "limit": 1000,
+                }
+            }
+            if page:
+                q["structuredQuery"]["startAt"] = {
+                    "values": [{"referenceValue": page}], "before": False}
+            rows = s.post(f"{base}:runQuery", json=q, timeout=120).json()
+            docs_page = [r["document"] for r in rows if "document" in r]
+            for d in docs_page:
+                df = d.get("fields", {})
+                src = next(iter(df.get("source", {"nullValue": None}).values()))
+                by_source[src] = by_source.get(src, 0) + 1
+                gs = df.get("googleSync", {}).get("mapValue", {}).get("fields", {})
+                gid = gs.get("googleEventId", {}).get("stringValue")
+                if gid:
+                    google_ids.append(gid)
+            if len(docs_page) < 1000:
+                break
+            page = docs_page[-1]["name"]
+        dupes = len(google_ids) - len(set(google_ids))
+        print(f"  events by source: {by_source}; with googleEventId: {len(google_ids)}; "
+              f"duplicate googleEventIds: {dupes}")
         err = val("googleLastSyncError")
         print(
             f"- user {uid[:6]}…: syncEnabled={val('googleSyncEnabled')} "
