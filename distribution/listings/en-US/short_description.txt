@@ -1,1 +1,1 @@
-Calendar built around the Hebrew date: recurring events, reminders, Google sync
+Hebrew-date calendar: holidays, parsha, recurring events and Google sync

@@ -107,7 +107,10 @@ void main() {
       await tester.tap(find.text(l10n.signInDemoModeButton));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.settings));
+      // Settings lives in the app bar's overflow menu (KALFAPP rebrand).
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.settingsTooltip));
       await tester.pumpAndSettle();
 
       expect(

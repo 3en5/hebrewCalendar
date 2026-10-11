@@ -53,77 +53,92 @@ class MonthDayAgenda extends ConsumerWidget {
       'he',
     ).format(engine.toGregorian(date));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(
-            spacingMd,
-            spacingSm,
-            spacingMd,
-            spacingXs,
-          ),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  hebrewLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Text(
-                gregorianLabel,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (labels.isNotEmpty)
+    // KALFAPP style (ARCHITECTURE.md §13): the agenda sits in a light-blue
+    // rounded card, like PowerWatch's summary card.
+    return Container(
+      margin: EdgeInsetsDirectional.fromSTEB(
+        spacingSm,
+        spacingSm,
+        spacingSm,
+        0,
+      ),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(spacingMd)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
           Padding(
             padding: EdgeInsetsDirectional.fromSTEB(
               spacingMd,
-              0,
+              spacingMd,
               spacingMd,
               spacingXs,
             ),
-            child: Wrap(
-              spacing: spacingXs,
-              runSpacing: spacingXs,
+            child: Row(
               children: <Widget>[
-                for (final JewishDayLabel label in labels)
-                  _LabelTag(label: label),
+                Expanded(
+                  child: Text(
+                    hebrewLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  gregorianLabel,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
-        Expanded(
-          child: occurrences.isEmpty
-              ? Padding(
-                  padding: EdgeInsetsDirectional.symmetric(
-                    horizontal: spacingMd,
-                    vertical: spacingSm,
-                  ),
-                  child: Text(
-                    l10n.monthAgendaEmpty,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+          if (labels.isNotEmpty)
+            Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(
+                spacingMd,
+                0,
+                spacingMd,
+                spacingXs,
+              ),
+              child: Wrap(
+                spacing: spacingXs,
+                runSpacing: spacingXs,
+                children: <Widget>[
+                  for (final JewishDayLabel label in labels)
+                    _LabelTag(label: label),
+                ],
+              ),
+            ),
+          Expanded(
+            child: occurrences.isEmpty
+                ? Padding(
+                    padding: EdgeInsetsDirectional.symmetric(
+                      horizontal: spacingMd,
+                      vertical: spacingSm,
                     ),
+                    child: Text(
+                      l10n.monthAgendaEmpty,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    // Bottom padding keeps the last row clear of the FAB.
+                    padding: EdgeInsetsDirectional.only(bottom: spacingXxl * 2),
+                    itemCount: occurrences.length,
+                    itemBuilder: (BuildContext context, int index) =>
+                        _AgendaRow(occurrence: occurrences[index]),
                   ),
-                )
-              : ListView.builder(
-                  // Bottom padding keeps the last row clear of the FAB.
-                  padding: EdgeInsetsDirectional.only(bottom: spacingXxl * 2),
-                  itemCount: occurrences.length,
-                  itemBuilder: (BuildContext context, int index) =>
-                      _AgendaRow(occurrence: occurrences[index]),
-                ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -590,3 +590,10 @@
   `firebase/firestore.rules`, לעדכן גם אותו ואת טסטי ה-rules — וה-deploy רץ רק מ-main.
 - ייבוא מ-Google Calendar: תמיד לתחום גם `timeMax` כשמשתמשים ב-`singleEvents=true`,
   ולא להריץ שאילתה לכל אירוע בלולאה.
+
+## 2026-10-11 — גופן משתנה (variable font) ב-Flutter
+- `FontWeight` לא מזיז את ציר ה-`wght` של קובץ variable font, ולכן כל המשקלים נראים
+  אותו דבר. פתרון: לייצר instances סטטיים (`fonttools varLib.instancer Rubik.ttf wght=600
+  --static`) ולרשום כל אחד עם `weight:` ב-pubspec.
+- קובץ גופן שמובנה באפליקציה ברישיון OFL — לרשום את הרישיון ב-`LicenseRegistry`.
+

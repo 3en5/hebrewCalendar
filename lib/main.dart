@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/theme/font_licenses.dart';
 import 'features/auth/presentation/auth_gate.dart';
 import 'features/settings/application/background_sync_bootstrap.dart';
 import 'l10n/app_localizations.dart';
@@ -33,6 +34,7 @@ void main() {
     runZonedGuarded(
       () async {
         WidgetsFlutterBinding.ensureInitialized();
+        registerFontLicenses();
         FlutterError.onError = (FlutterErrorDetails details) {
           FlutterError.presentError(details);
           debugPrint('FlutterError: ${details.exceptionAsString()}');

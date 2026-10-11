@@ -97,7 +97,7 @@ abstract class AppLocalizations {
   /// The application title, shown in the app bar and OS task switcher.
   ///
   /// In he, this message translates to:
-  /// **'יומן עברי'**
+  /// **'לוח עברי'**
   String get appTitle;
 
   /// Generic cancel button label, used in confirmation dialogs.
@@ -661,13 +661,13 @@ abstract class AppLocalizations {
   /// Short tagline shown under the app name on the About screen (M5c).
   ///
   /// In he, this message translates to:
-  /// **'יומן עברי'**
+  /// **'היומן שבו התאריך העברי במרכז'**
   String get aboutTagline;
 
-  /// Modest developer/maker credit on the About screen (M5c) — the first place kalit branding appears in the app.
+  /// Maker credit on the About screen: the KALFAPP app family (owner-approved rebrand, ARCHITECTURE.md §13).
   ///
   /// In he, this message translates to:
-  /// **'מבית kalit'**
+  /// **'מבית KALFAPP'**
   String get aboutDeveloperCredit;
 
   /// Button on the About screen that opens Flutter's built-in open-source licenses page (M5c).
@@ -675,6 +675,30 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'רישיונות קוד פתוח'**
   String get aboutLicensesButton;
+
+  /// Heading under the KALFAPP logo on the About screen, as in PowerWatch.
+  ///
+  /// In he, this message translates to:
+  /// **'אודות האפליקציה'**
+  String get aboutHeading;
+
+  /// The About screen's explanation, in the owner's personal voice shared with PowerWatch.
+  ///
+  /// In he, this message translates to:
+  /// **'לוח עברי נועד למי שחי לפי התאריך העברי – ימי הולדת, אזכרות, ימי נישואין וחגים – ורוצה יומן אחד שבו הכל מסודר.\n\nהאפליקציה פשוטה. יוצרים אירוע, בוחרים שהוא חוזר לפי התאריך העברי, והוא יופיע במקום הנכון בכל שנה – גם בשנה מעוברת. החגים והפרשה מופיעים בלוח מעצמם, והכל מסתנכרן עם Google Calendar בשני הכיוונים.\n\nהשימוש באפליקציה הוא על אחריות המשתמש. למרות שאנחנו עושים את המקסימום כדי לשמור על המידע ועל הפרטיות שלכם, זהו פרויקט התנדבותי לחלוטין ולכן אין שום אחריות מכל סוג שהוא לא על תקינות האפליקציה ולא על שמירת הנתונים.\n\nעם זאת, אם יש לך רעיון לשיפור – נשמח לקבל פידבקים ורעיונות לאפליקציות נוספות.'**
+  String get aboutBody;
+
+  /// The owner's sign-off at the end of the About text.
+  ///
+  /// In he, this message translates to:
+  /// **'בהצלחה!\nנתן-אור.'**
+  String get aboutSignature;
+
+  /// Screen-reader label for the KALFAPP logo on the About screen.
+  ///
+  /// In he, this message translates to:
+  /// **'KALFAPP'**
+  String get aboutLogoSemantics;
 
   /// Shown in the month view's day agenda (below the grid) when the selected day has no events.
   ///

@@ -79,6 +79,22 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # KALFAPP brand (owner-approved rebrand, ARCHITECTURE.md §13).
+  assets:
+    - assets/brand/kalfapp_logo.png
+    - assets/fonts/OFL-Rubik.txt
+
+  fonts:
+    - family: Rubik
+      fonts:
+        - asset: assets/fonts/Rubik-Regular.ttf
+        - asset: assets/fonts/Rubik-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Rubik-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Rubik-Bold.ttf
+          weight: 700
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

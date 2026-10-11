@@ -1,6 +1,6 @@
 {
   "@@locale": "he",
-  "appTitle": "יומן עברי",
+  "appTitle": "לוח עברי",
   "@appTitle": {
     "description": "The application title, shown in the app bar and OS task switcher."
   },
@@ -414,17 +414,33 @@
   "@aboutScreenTitle": {
     "description": "App bar title for the About screen (M5c)."
   },
-  "aboutTagline": "יומן עברי",
+  "aboutTagline": "היומן שבו התאריך העברי במרכז",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name on the About screen (M5c)."
   },
-  "aboutDeveloperCredit": "מבית kalit",
+  "aboutDeveloperCredit": "מבית KALFAPP",
   "@aboutDeveloperCredit": {
-    "description": "Modest developer/maker credit on the About screen (M5c) — the first place kalit branding appears in the app."
+    "description": "Maker credit on the About screen: the KALFAPP app family (owner-approved rebrand, ARCHITECTURE.md §13)."
   },
   "aboutLicensesButton": "רישיונות קוד פתוח",
   "@aboutLicensesButton": {
     "description": "Button on the About screen that opens Flutter's built-in open-source licenses page (M5c)."
+  },
+  "aboutHeading": "אודות האפליקציה",
+  "@aboutHeading": {
+    "description": "Heading under the KALFAPP logo on the About screen, as in PowerWatch."
+  },
+  "aboutBody": "לוח עברי נועד למי שחי לפי התאריך העברי – ימי הולדת, אזכרות, ימי נישואין וחגים – ורוצה יומן אחד שבו הכל מסודר.\n\nהאפליקציה פשוטה. יוצרים אירוע, בוחרים שהוא חוזר לפי התאריך העברי, והוא יופיע במקום הנכון בכל שנה – גם בשנה מעוברת. החגים והפרשה מופיעים בלוח מעצמם, והכל מסתנכרן עם Google Calendar בשני הכיוונים.\n\nהשימוש באפליקציה הוא על אחריות המשתמש. למרות שאנחנו עושים את המקסימום כדי לשמור על המידע ועל הפרטיות שלכם, זהו פרויקט התנדבותי לחלוטין ולכן אין שום אחריות מכל סוג שהוא לא על תקינות האפליקציה ולא על שמירת הנתונים.\n\nעם זאת, אם יש לך רעיון לשיפור – נשמח לקבל פידבקים ורעיונות לאפליקציות נוספות.",
+  "@aboutBody": {
+    "description": "The About screen's explanation, in the owner's personal voice shared with PowerWatch."
+  },
+  "aboutSignature": "בהצלחה!\nנתן-אור.",
+  "@aboutSignature": {
+    "description": "The owner's sign-off at the end of the About text."
+  },
+  "aboutLogoSemantics": "KALFAPP",
+  "@aboutLogoSemantics": {
+    "description": "Screen-reader label for the KALFAPP logo on the About screen."
   },
   "monthAgendaEmpty": "אין אירועים ביום זה",
   "@monthAgendaEmpty": {

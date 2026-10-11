@@ -19,6 +19,7 @@ import '../../../domain/sync/sync_state.dart';
 import '../../settings/application/google_sync_providers.dart';
 import '../../settings/application/google_sync_settings_state.dart';
 import '../../settings/application/google_sync_trigger_service.dart';
+import '../../settings/presentation/about_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../application/calendar_view_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
@@ -29,7 +30,7 @@ import 'month_view_body.dart';
 import 'week_view_screen.dart';
 import 'widgets/go_to_date_sheet.dart';
 
-enum _OverflowAction { signOut }
+enum _OverflowAction { settings, about, signOut }
 
 /// The app's single home screen (M3b — replaces the old month-only
 /// `MonthViewScreen`): a shared app bar (title, view switcher, "today"
@@ -92,7 +93,6 @@ class CalendarShellScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Text(_title(state, engine, l10n)),
@@ -127,16 +127,27 @@ class CalendarShellScreen extends ConsumerWidget {
             onPressed: () => openGoToDateSheet(context, ref),
           ),
           _ViewSwitcher(current: state.viewType, l10n: l10n),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: l10n.settingsTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
-            ),
-          ),
+          // KALFAPP style (as in PowerWatch): settings, about and sign-out
+          // live in the overflow menu, leaving room for a centered title.
           PopupMenuButton<_OverflowAction>(
             onSelected: (_OverflowAction action) {
               switch (action) {
+                case _OverflowAction.settings:
+                  unawaited(
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const SettingsScreen(),
+                      ),
+                    ),
+                  );
+                case _OverflowAction.about:
+                  unawaited(
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const AboutScreen(),
+                      ),
+                    ),
+                  );
                 case _OverflowAction.signOut:
                   if (demoMode) {
                     // Task brief #5: leaving demo mode just clears the flag
@@ -150,6 +161,14 @@ class CalendarShellScreen extends ConsumerWidget {
             },
             itemBuilder: (BuildContext context) =>
                 <PopupMenuEntry<_OverflowAction>>[
+                  PopupMenuItem<_OverflowAction>(
+                    value: _OverflowAction.settings,
+                    child: Text(l10n.settingsTooltip),
+                  ),
+                  PopupMenuItem<_OverflowAction>(
+                    value: _OverflowAction.about,
+                    child: Text(l10n.settingsAboutTooltip),
+                  ),
                   PopupMenuItem<_OverflowAction>(
                     value: _OverflowAction.signOut,
                     child: Text(

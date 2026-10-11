@@ -9,7 +9,7 @@ class AppLocalizationsHe extends AppLocalizations {
   AppLocalizationsHe([String locale = 'he']) : super(locale);
 
   @override
-  String get appTitle => 'יומן עברי';
+  String get appTitle => 'לוח עברי';
 
   @override
   String get commonCancel => 'ביטול';
@@ -314,13 +314,26 @@ class AppLocalizationsHe extends AppLocalizations {
   String get aboutScreenTitle => 'אודות';
 
   @override
-  String get aboutTagline => 'יומן עברי';
+  String get aboutTagline => 'היומן שבו התאריך העברי במרכז';
 
   @override
-  String get aboutDeveloperCredit => 'מבית kalit';
+  String get aboutDeveloperCredit => 'מבית KALFAPP';
 
   @override
   String get aboutLicensesButton => 'רישיונות קוד פתוח';
+
+  @override
+  String get aboutHeading => 'אודות האפליקציה';
+
+  @override
+  String get aboutBody =>
+      'לוח עברי נועד למי שחי לפי התאריך העברי – ימי הולדת, אזכרות, ימי נישואין וחגים – ורוצה יומן אחד שבו הכל מסודר.\n\nהאפליקציה פשוטה. יוצרים אירוע, בוחרים שהוא חוזר לפי התאריך העברי, והוא יופיע במקום הנכון בכל שנה – גם בשנה מעוברת. החגים והפרשה מופיעים בלוח מעצמם, והכל מסתנכרן עם Google Calendar בשני הכיוונים.\n\nהשימוש באפליקציה הוא על אחריות המשתמש. למרות שאנחנו עושים את המקסימום כדי לשמור על המידע ועל הפרטיות שלכם, זהו פרויקט התנדבותי לחלוטין ולכן אין שום אחריות מכל סוג שהוא לא על תקינות האפליקציה ולא על שמירת הנתונים.\n\nעם זאת, אם יש לך רעיון לשיפור – נשמח לקבל פידבקים ורעיונות לאפליקציות נוספות.';
+
+  @override
+  String get aboutSignature => 'בהצלחה!\nנתן-אור.';
+
+  @override
+  String get aboutLogoSemantics => 'KALFAPP';
 
   @override
   String get monthAgendaEmpty => 'אין אירועים ביום זה';

@@ -10,8 +10,12 @@ import 'dimens.dart';
 class AppTheme {
   const AppTheme._();
 
-  /// Seed color: Google-Calendar-like blue.
-  static const Color _seedColor = Color(0xFF1A73E8);
+  /// Seed color: the KALFAPP family blue (same as PowerWatch's
+  /// `Colors.blue`; owner-approved rebrand, ARCHITECTURE.md §13).
+  static const Color _seedColor = Color(0xFF2196F3);
+
+  /// The KALFAPP family font, bundled under `assets/fonts` (OFL).
+  static const String fontFamily = 'Rubik';
 
   /// Light theme.
   static ThemeData get light => _buildTheme(Brightness.light);
@@ -29,15 +33,18 @@ class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
+      fontFamily: fontFamily,
       textTheme: _textTheme,
+      // KALFAPP style: a centered title in the brand blue.
       appBarTheme: AppBarTheme(
-        centerTitle: false,
+        centerTitle: true,
         backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        foregroundColor: colorScheme.primary,
         titleTextStyle: TextStyle(
+          fontFamily: fontFamily,
           fontSize: titleLargeRem,
-          fontWeight: FontWeight.w500,
-          color: colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.primary,
         ),
       ),
     );
