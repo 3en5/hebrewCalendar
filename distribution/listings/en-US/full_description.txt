@@ -1,33 +1,33 @@
-Hebrew Calendar is for people who live by the Hebrew date. A Hebrew birthday, a yahrzeit or an anniversary: set it once, and it shows up on the right day every year. No calculations, no searching a printed calendar.
+Hebrew Calendar is for people who live by the Hebrew date. Set a Hebrew birthday, a yahrzeit or an anniversary once, and it shows up on the right day every year. No calculations, no searching a printed calendar.
 
-The app is simple. The Hebrew date is the calendar's main axis, not a small add-on in the corner. Holidays and the weekly Torah portion are already there, and everything syncs both ways with Google Calendar.
+The app is simple. The Hebrew date is the main axis of the calendar, not a small add-on in the corner. Holidays and the weekly Torah portion are already there, and everything syncs both ways with Google Calendar.
 
-📅 A calendar built on the Hebrew date
+A calendar built on the Hebrew date
 • Month, week, day and agenda views, with the Hebrew and Gregorian dates side by side
 • Holidays, fasts, Rosh Chodesh, Israeli national days and the weekly parsha, for Israel or the diaspora
 • Jump to any Hebrew or Gregorian date, and search all your events by word
 
-🔁 Events that repeat by the Hebrew date
+Events that repeat by the Hebrew date
 • Hebrew birthdays, anniversaries, yahrzeits, or any event on the same Hebrew date
 • Yearly, monthly, weekly or daily recurrence
 • Correct handling of leap years (Adar I and Adar II) and 29-day months
 • Edit or delete one occurrence, this and following, or the whole series
 
-🎨 Meetings, colors and participants
+Meetings, colors and participants
 • A color for every event, using Google Calendar's colors
-• Invite participants by email: Google sends the invitation, and you see who accepted
+• Invite participants by email. Google sends the invitation and you can see who accepted
 
-🔔 Reminders
+Reminders
 • Phone notifications before an event, at the time you choose
 
-🔄 Google Calendar sync
+Google Calendar sync
 • Two-way sync: events created here appear in Google, and vice versa
 • Pull the screen down to sync right away
 
-💾 Backup and restore
+Backup and restore
 • Export all your events to a file and restore them at any time
 
-🔒 Privacy
-• Your data is stored in your own account only; other users cannot access it
+Privacy
+• Your data is stored in your own account only, and other users cannot access it
 
-Hebrew Calendar is part of the KALFAPP family: a volunteer project of small, simple apps for everyday life. Have an idea for an improvement? We'd love to hear it.
+Hebrew Calendar is part of the KALFAPP family, a volunteer project of small, simple apps for everyday life. Have an idea for an improvement? We'd love to hear it.
