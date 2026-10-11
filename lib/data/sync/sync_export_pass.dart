@@ -8,6 +8,13 @@
 /// locally), then push every dirty event — a single [ExportCandidate] for a
 /// non-recurring event, or one per occurrence `recurrence_expander.dart`
 /// computes within the rolling export window for a recurring one.
+///
+/// Export window (owner request, 2026-10-11): five years ahead for yearly
+/// and monthly series, two for weekly and daily ones (a daily series would
+/// otherwise put ~1,800 separate events in Google). Every pass then tops up
+/// recurring series whose missing instances come within a year: the
+/// missing occurrences up to the full window are created, so Google never
+/// runs out of instances for a series nobody edits.
 library;
 
 import '../../domain/event/event.dart';
@@ -35,24 +42,36 @@ import 'google_calendar_api.dart';
 /// `applyRemoteDelete`).
 typedef _PushOutcome = ({String occurrenceKey, GoogleSyncState state})?;
 
+/// Export window for weekly and daily series.
+const Duration kShortExportWindow = Duration(days: 730);
+
+/// Export window for yearly and monthly series (owner request: five years).
+const Duration kLongExportWindow = Duration(days: 1826);
+
+/// A series is topped up once a missing instance is this close.
+const Duration kExportTopUpLead = Duration(days: 365);
+
 class SyncExportPass {
   SyncExportPass({
     required GoogleCalendarApi api,
     required EventRepository repository,
     required HebrewDateEngine engine,
     DateTime Function() now = DateTime.now,
-    Duration exportWindow = const Duration(days: 730),
+    Duration exportWindow = kShortExportWindow,
+    Duration longExportWindow = kLongExportWindow,
   }) : _api = api,
        _repository = repository,
        _engine = engine,
        _now = now,
-       _exportWindow = exportWindow;
+       _exportWindow = exportWindow,
+       _longExportWindow = longExportWindow;
 
   final GoogleCalendarApi _api;
   final EventRepository _repository;
   final HebrewDateEngine _engine;
   final DateTime Function() _now;
   final Duration _exportWindow;
+  final Duration _longExportWindow;
 
   /// [ownExportsLookup] (built by `SyncImportPass` from remote events
   /// carrying our own extendedProperties) lets a candidate whose local
@@ -66,15 +85,87 @@ class SyncExportPass {
     final List<Event> events = await _repository.getDirtyForSync();
     final DateTime start = _now();
     final HebrewDate from = _engine.fromGregorian(start);
-    final HebrewDate to = _engine.fromGregorian(start.add(_exportWindow));
+    final Set<String> pushed = <String>{};
     for (final Event event in events) {
       if (!event.googleSync.dirty) {
         continue;
       }
+      pushed.add(event.id);
       if (event.recurrence.type == RecurrenceType.none) {
         await _exportSingle(event, ownExportsLookup);
       } else {
+        final HebrewDate to = _engine.fromGregorian(
+          start.add(_windowFor(event.recurrence.type)),
+        );
         await _exportRecurring(event, from, to, ownExportsLookup);
+      }
+    }
+    await _topUpRecurring(from, start, pushed, ownExportsLookup);
+  }
+
+  /// How far ahead a series of [type] is exported to Google.
+  Duration _windowFor(RecurrenceType type) => switch (type) {
+    RecurrenceType.hebrewYearly ||
+    RecurrenceType.hebrewMonthly => _longExportWindow,
+    _ => _exportWindow,
+  };
+
+  /// Adds the missing Google instances of every recurring series that was
+  /// already exported and isn't being pushed in this pass, once a missing
+  /// occurrence falls within a year of now. Only creates: instances
+  /// already recorded (including ones deleted in Google) are left alone.
+  Future<void> _topUpRecurring(
+    HebrewDate from,
+    DateTime start,
+    Set<String> pushed,
+    Map<String, GoogleSyncState> ownExportsLookup,
+  ) async {
+    for (final Event event in await _repository.getRecurringForSync()) {
+      if (event.googleSync.dirty ||
+          pushed.contains(event.id) ||
+          event.googleInstanceSync.isEmpty) {
+        continue;
+      }
+      final Duration window = _windowFor(event.recurrence.type);
+      final HebrewDate to = _engine.fromGregorian(start.add(window));
+      final HebrewDate due = _engine.fromGregorian(
+        start.add(window - kExportTopUpLead),
+      );
+      final List<EventOccurrence> missing = <EventOccurrence>[
+        for (final EventOccurrence occurrence in occurrencesForEventInRange(
+          event: event,
+          from: from,
+          to: to,
+          engine: _engine,
+        ))
+          if (!event.googleInstanceSync.containsKey(
+            occurrenceKeyFor(occurrence.occurrenceDate),
+          ))
+            occurrence,
+      ];
+      if (missing.isEmpty || missing.first.occurrenceDate > due) {
+        continue;
+      }
+      final List<SyncAction> actions = planExportActions(
+        candidates: <ExportCandidate>[
+          for (final EventOccurrence occurrence in missing)
+            _candidateFor(event, occurrence, ownExportsLookup, <String>{}),
+        ],
+        staleInstances: const <StaleExportInstance>[],
+      );
+      final Map<String, GoogleSyncState> instanceUpdates =
+          <String, GoogleSyncState>{};
+      for (final SyncAction action in actions) {
+        final _PushOutcome outcome = await _applyExportAction(action);
+        if (outcome != null) {
+          instanceUpdates[outcome.occurrenceKey] = outcome.state;
+        }
+      }
+      if (instanceUpdates.isNotEmpty) {
+        await _repository.updateSyncState(
+          event.id,
+          googleInstanceSync: instanceUpdates,
+        );
       }
     }
   }

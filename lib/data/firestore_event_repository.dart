@@ -276,6 +276,9 @@ class FirestoreEventRepository implements EventRepository {
   Future<List<Event>> getDirtyForSync() => _sync.getDirtyForSync();
 
   @override
+  Future<List<Event>> getRecurringForSync() => _sync.getRecurringForSync();
+
+  @override
   Future<List<Event>> getAllForSearch() => _sync.getAllForSearch();
 
   final StreamController<void> _localEdits = StreamController<void>.broadcast();

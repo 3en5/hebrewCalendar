@@ -21,6 +21,7 @@ import '../domain/event/default_calendar_id.dart';
 import '../domain/event/event.dart';
 import '../domain/event/event_attendee.dart';
 import '../domain/event/event_source.dart';
+import '../domain/event/recurrence_rule.dart';
 import '../domain/hebrew_date/hebrew_date.dart';
 import '../domain/hebrew_date/hebrew_date_engine.dart';
 import '../domain/sync/export_candidate.dart';
@@ -84,6 +85,12 @@ class FirestoreEventSyncSupport {
         )
         .toList();
   }
+
+  /// Filtered in memory from the cached events: recurring events are few,
+  /// and a query on the recurrence type would need its own index.
+  Future<List<Event>> getRecurringForSync() async => (await getAllForSearch())
+      .where((Event event) => event.recurrence.type != RecurrenceType.none)
+      .toList();
 
   Future<List<Event>> getDirtyForSync() async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _events

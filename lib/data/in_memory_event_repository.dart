@@ -7,6 +7,7 @@ import '../domain/event/event_occurrence.dart';
 import '../domain/event/event_repository.dart';
 import '../domain/event/event_source.dart';
 import '../domain/event/recurrence_expander.dart';
+import '../domain/event/recurrence_rule.dart';
 import '../domain/hebrew_date/hebrew_date.dart';
 import '../domain/hebrew_date/hebrew_date_engine.dart';
 import '../domain/sync/export_candidate.dart';
@@ -159,6 +160,11 @@ class InMemoryEventRepository implements EventRepository {
   @override
   Future<List<Event>> getDirtyForSync() async =>
       _events.values.where((Event event) => event.googleSync.dirty).toList();
+
+  @override
+  Future<List<Event>> getRecurringForSync() async => _events.values
+      .where((Event event) => event.recurrence.type != RecurrenceType.none)
+      .toList();
 
   final StreamController<void> _localEdits = StreamController<void>.broadcast();
 

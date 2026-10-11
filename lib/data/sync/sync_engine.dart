@@ -31,7 +31,8 @@ class SyncEngine {
     required SyncSettingsStore settingsStore,
     required HebrewDateEngine engine,
     DateTime Function() now = DateTime.now,
-    Duration exportWindow = const Duration(days: 730),
+    Duration exportWindow = kShortExportWindow,
+    Duration longExportWindow = kLongExportWindow,
   }) : _settingsStore = settingsStore,
        _importPass = SyncImportPass(api: api, repository: repository, now: now),
        _exportPass = SyncExportPass(
@@ -40,6 +41,7 @@ class SyncEngine {
          engine: engine,
          now: now,
          exportWindow: exportWindow,
+         longExportWindow: longExportWindow,
        ),
        _now = now;
 

@@ -75,6 +75,11 @@ abstract class EventRepository {
   /// use.
   Future<List<Event>> getDirtyForSync();
 
+  /// Every recurring event (any recurrence type but `none`), for the export
+  /// pass's rolling top-up of Google instances (ARCHITECTURE.md §5). Read
+  /// from the on-device cache when there is one, like [getAllForSearch].
+  Future<List<Event>> getRecurringForSync();
+
   /// Every event, for the search screen (M13) — read from the on-device
   /// cache when there is one, so a search costs no server reads and works
   /// offline.
