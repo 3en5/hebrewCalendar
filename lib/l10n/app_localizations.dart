@@ -675,6 +675,18 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'רישיונות קוד פתוח'**
   String get aboutLicensesButton;
+
+  /// Shown in the month view's day agenda (below the grid) when the selected day has no events.
+  ///
+  /// In he, this message translates to:
+  /// **'אין אירועים ביום זה'**
+  String get monthAgendaEmpty;
+
+  /// Header of the month view's day agenda, e.g. 'יום שני, א׳ חשוון'.
+  ///
+  /// In he, this message translates to:
+  /// **'יום {weekday}, {day} {month}'**
+  String monthAgendaDayHeader(String weekday, String day, String month);
 }
 
 class _AppLocalizationsDelegate

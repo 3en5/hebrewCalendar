@@ -111,6 +111,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('יום הולדת'), findsOneWidget);
 
+    // Tapping a day selects it; its events are listed one per row under
+    // the grid, and tapping a row opens the edit/delete sheet.
+    await tester.tap(find.text('יום הולדת'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.delete));
     await tester.pumpAndSettle();
     expect(find.text('מחיקה'), findsOneWidget);
@@ -122,4 +126,23 @@ void main() {
     expect(find.byKey(_eventDotKey), findsNothing);
     expect(find.text('יום הולדת'), findsNothing);
   });
+
+  testWidgets(
+    'selecting a day lists its events, one row each, under the grid',
+    (WidgetTester tester) async {
+      final InMemoryEventRepository repository = await _pumpFixedMonth(tester);
+      // The fixed focus (א׳ תשרי) has no events: the agenda shows its empty
+      // state.
+      expect(find.text('אין אירועים ביום זה'), findsOneWidget);
+
+      await repository.create(_buildEvent());
+      await tester.pumpAndSettle();
+      expect(find.text('יום הולדת'), findsNothing);
+
+      await tester.tap(find.byKey(_eventDotKey));
+      await tester.pumpAndSettle();
+      expect(find.text('יום הולדת'), findsOneWidget);
+      expect(find.text('אין אירועים ביום זה'), findsNothing);
+    },
+  );
 }

@@ -321,4 +321,12 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get aboutLicensesButton => 'רישיונות קוד פתוח';
+
+  @override
+  String get monthAgendaEmpty => 'אין אירועים ביום זה';
+
+  @override
+  String monthAgendaDayHeader(String weekday, String day, String month) {
+    return 'יום $weekday, $day $month';
+  }
 }

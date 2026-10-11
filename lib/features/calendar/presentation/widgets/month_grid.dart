@@ -1,5 +1,3 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,10 +5,11 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../domain/event/event_occurrence.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
+import '../../application/calendar_view_provider.dart';
 import '../../application/hebrew_date_engine_provider.dart';
 import '../../application/month_events_provider.dart';
 import 'day_cell.dart';
-import 'day_events_sheet.dart';
+import 'month_day_agenda.dart';
 
 /// Sunday-first single-letter weekday abbreviations (א׳..ש׳). Saturday uses
 /// ש for Shabbat rather than the number 7, per Hebrew calendar convention.
@@ -24,26 +23,38 @@ const List<String> _weekdayLetters = <String>[
   'ש׳',
 ];
 
-/// Number of cells in the grid: always 6 full Sunday-to-Saturday weeks, the
-/// same fixed layout Google Calendar's month view uses.
-const int _gridCellCount = 42;
 const int _daysPerWeek = 7;
 
-/// Renders one Hebrew month as a Google-Calendar-like grid: a weekday
-/// header row followed by a 6-week day grid (RTL-laid-out via the ambient
-/// Hebrew [Directionality], week starts Sunday). Leading/trailing days
-/// borrowed from adjacent months are dimmed; today is highlighted.
+/// Share of the vertical space below the weekday header given to the grid;
+/// the rest goes to the selected day's agenda. Owner feedback: the calendar
+/// itself should get the larger part.
+const double _gridHeightShare = 0.64;
+
+/// Renders one Hebrew month (owner-approved design): a weekday header row,
+/// a grid of thin-lined day cells (only as many weeks as the month spans,
+/// RTL-laid-out via the ambient Hebrew [Directionality], week starts
+/// Sunday), and below it [MonthDayAgenda] for the selected day — the
+/// shell's focused date when it falls in this month. Tapping a day selects
+/// it. Days borrowed from adjacent months render as empty cells.
 class MonthGrid extends ConsumerWidget {
   const MonthGrid({required this.displayedMonth, super.key});
 
-  /// The month being displayed (the `day` field is ignored).
+  /// The month being displayed. Its `day` is the fallback selected day when
+  /// the shell's focused date is in a different month (a neighbor page).
   final HebrewDate displayedMonth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
     final HebrewDate today = engine.fromGregorian(DateTime.now());
-    final List<HebrewDate> cells = _buildCells(engine, displayedMonth);
+    final HebrewDate focused = ref.watch(
+      calendarViewProvider.select((CalendarViewState s) => s.focusedDate),
+    );
+    final HebrewDate selected = _isSameMonth(focused, displayedMonth)
+        ? focused
+        : displayedMonth;
+    final List<HebrewDate?> cells = _buildCells(engine, displayedMonth);
+    final int rowCount = cells.length ~/ _daysPerWeek;
     final List<EventOccurrence> monthOccurrences =
         ref.watch(monthEventsProvider(displayedMonth)).value ??
         const <EventOccurrence>[];
@@ -57,65 +68,50 @@ class MonthGrid extends ConsumerWidget {
 
     return Column(
       children: <Widget>[
-        _WeekdayHeaderRow(),
+        const _WeekdayHeaderRow(),
         Expanded(
-          // A fixed `childAspectRatio` (the previous implementation's
-          // implicit default of 1.0, i.e. square cells) forces each cell's
-          // height to match its width — on a narrow phone that's ~50dp,
-          // less than `DayCell`'s content needs, which overflowed the
-          // bottom of every cell on a real device ("BOTTOM OVERFLOWED BY 20
-          // PIXELS"). `LayoutBuilder` derives the aspect ratio from the
-          // *actual available height* for the fixed 6-week grid instead, so
-          // rows always fill the space they're given rather than being
-          // forced square.
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
-              final double gridPadding = spacingSm * 2;
-              final double cellWidth =
-                  (constraints.maxWidth - gridPadding) / _daysPerWeek;
-              const int rowCount = _gridCellCount ~/ _daysPerWeek;
-              final double availableHeight = constraints.maxHeight;
-              final double cellHeight = availableHeight.isFinite
-                  ? (availableHeight - gridPadding) / rowCount
-                  : cellWidth;
-              final double aspectRatio = (cellHeight > 0 && cellWidth > 0)
-                  ? cellWidth / cellHeight
-                  : 1.0;
-              return GridView.builder(
-                padding: EdgeInsetsDirectional.all(spacingSm),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _daysPerWeek,
-                  childAspectRatio: aspectRatio,
-                ),
-                itemCount: cells.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final HebrewDate cellDate = cells[index];
-                  final bool inDisplayedMonth =
-                      cellDate.year == displayedMonth.year &&
-                      cellDate.month == displayedMonth.month;
-                  // Device feedback: adjacent-month days (previously shown
-                  // dimmed) cluttered the month view — render empty cells so
-                  // only the displayed Hebrew month's days appear.
-                  if (!inDisplayedMonth) {
-                    return const SizedBox.shrink();
-                  }
-                  final DateTime gregorianDate = engine.toGregorian(cellDate);
-                  final List<EventOccurrence> dayOccurrences = inDisplayedMonth
-                      ? (occurrencesByDay[cellDate.day] ??
-                            const <EventOccurrence>[])
-                      : const <EventOccurrence>[];
-                  return DayCell(
-                    hebrewDay: cellDate.day,
-                    gregorianDay: gregorianDate.day,
-                    isInDisplayedMonth: inDisplayedMonth,
-                    isToday: cellDate == today,
-                    hasEvents: dayOccurrences.isNotEmpty,
-                    onTap: dayOccurrences.isEmpty
-                        ? null
-                        : () =>
-                              _showDayEvents(context, cellDate, dayOccurrences),
+              final double rowHeight =
+                  (constraints.maxHeight * _gridHeightShare / rowCount).clamp(
+                    rem(2.75),
+                    rem(4.5),
                   );
-                },
+              return Column(
+                children: <Widget>[
+                  for (int row = 0; row < rowCount; row++)
+                    SizedBox(
+                      height: rowHeight,
+                      child: Row(
+                        // Stretch so empty (out-of-month) cells, which have
+                        // no child to size them, still fill the row and
+                        // their grid lines line up with the day cells'.
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          for (int col = 0; col < _daysPerWeek; col++)
+                            Expanded(
+                              child: _buildCell(
+                                context,
+                                ref,
+                                cells[row * _daysPerWeek + col],
+                                col: col,
+                                today: today,
+                                selected: selected,
+                                occurrencesByDay: occurrencesByDay,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  Expanded(
+                    child: MonthDayAgenda(
+                      date: selected,
+                      occurrences:
+                          occurrencesByDay[selected.day] ??
+                          const <EventOccurrence>[],
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -124,24 +120,45 @@ class MonthGrid extends ConsumerWidget {
     );
   }
 
-  void _showDayEvents(
+  Widget _buildCell(
     BuildContext context,
-    HebrewDate date,
-    List<EventOccurrence> occurrences,
-  ) {
-    unawaited(
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        builder: (_) => DayEventsSheet(date: date, occurrences: occurrences),
-      ),
+    WidgetRef ref,
+    HebrewDate? cellDate, {
+    required int col,
+    required HebrewDate today,
+    required HebrewDate selected,
+    required Map<int, List<EventOccurrence>> occurrencesByDay,
+  }) {
+    final bool drawEndLine = col < _daysPerWeek - 1;
+    if (cellDate == null) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          border: monthGridLineBorder(context, drawEndLine: drawEndLine),
+        ),
+      );
+    }
+    final HebrewDateEngine engine = ref.read(hebrewDateEngineProvider);
+    return DayCell(
+      hebrewDay: cellDate.day,
+      gregorianDay: engine.toGregorian(cellDate).day,
+      isToday: cellDate == today,
+      isSelected: cellDate == selected,
+      isShabbat: col == _daysPerWeek - 1,
+      drawEndLine: drawEndLine,
+      eventCount: occurrencesByDay[cellDate.day]?.length ?? 0,
+      onTap: () =>
+          ref.read(calendarViewProvider.notifier).setFocusedDate(cellDate),
     );
   }
 
-  /// Builds the fixed 42-cell (6-week) grid for [month]: leading days
-  /// borrowed from the previous Hebrew month, the month's own days, then
-  /// trailing days borrowed from the next Hebrew month.
-  static List<HebrewDate> _buildCells(
+  static bool _isSameMonth(HebrewDate a, HebrewDate b) =>
+      a.year == b.year && a.month == b.month;
+
+  /// Builds the grid cells for [month] as whole Sunday-to-Saturday weeks,
+  /// only as many as the month spans (5 or 6): `null` for the leading/trailing slots outside the
+  /// month, which render as empty cells (device feedback: adjacent-month
+  /// days cluttered the view).
+  static List<HebrewDate?> _buildCells(
     HebrewDateEngine engine,
     HebrewDate month,
   ) {
@@ -153,34 +170,14 @@ class MonthGrid extends ConsumerWidget {
     final int firstWeekday = engine.weekdayIndex(firstOfMonth);
     final int daysInMonth = engine.daysInMonth(month.year, month.month);
 
-    final HebrewDate previousMonth = engine.previousMonth(firstOfMonth);
-    final int previousMonthDays = engine.daysInMonth(
-      previousMonth.year,
-      previousMonth.month,
-    );
-    final HebrewDate nextMonth = engine.nextMonth(firstOfMonth);
-
-    final List<HebrewDate> cells = <HebrewDate>[];
-
-    for (int i = firstWeekday - 1; i >= 0; i--) {
-      cells.add(
-        HebrewDate(
-          year: previousMonth.year,
-          month: previousMonth.month,
-          day: previousMonthDays - i,
-        ),
-      );
+    final List<HebrewDate?> cells = <HebrewDate?>[
+      for (int i = 0; i < firstWeekday; i++) null,
+      for (int day = 1; day <= daysInMonth; day++)
+        HebrewDate(year: month.year, month: month.month, day: day),
+    ];
+    while (cells.length % _daysPerWeek != 0) {
+      cells.add(null);
     }
-    for (int day = 1; day <= daysInMonth; day++) {
-      cells.add(HebrewDate(year: month.year, month: month.month, day: day));
-    }
-    final int trailingDays = _gridCellCount - cells.length;
-    for (int day = 1; day <= trailingDays; day++) {
-      cells.add(
-        HebrewDate(year: nextMonth.year, month: nextMonth.month, day: day),
-      );
-    }
-
     return cells;
   }
 }
@@ -190,17 +187,39 @@ class _WeekdayHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle? style = Theme.of(context).textTheme.labelMedium?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    );
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextStyle? style = Theme.of(
+      context,
+    ).textTheme.labelMedium?.copyWith(color: colorScheme.onSurfaceVariant);
 
-    return Padding(
+    return Container(
       padding: EdgeInsetsDirectional.symmetric(vertical: spacingXs),
+      // The grid's top line; each cell draws its own bottom/end lines.
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+            width: 0.5,
+          ),
+        ),
+      ),
       child: Row(
         children: <Widget>[
-          for (final String letter in _weekdayLetters)
+          for (int i = 0; i < _weekdayLetters.length; i++)
             Expanded(
-              child: Center(child: Text(letter, style: style)),
+              child: Center(
+                child: Text(
+                  _weekdayLetters[i],
+                  // Shabbat's letter in the accent color, matching the
+                  // tinted Shabbat column below it.
+                  style: i == _weekdayLetters.length - 1
+                      ? style?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                        )
+                      : style,
+                ),
+              ),
             ),
         ],
       ),

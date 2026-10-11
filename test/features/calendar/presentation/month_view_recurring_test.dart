@@ -116,6 +116,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('שיעור חודשי'), findsOneWidget);
 
+      // Tapping a day selects it; its events are listed one per row under
+      // the grid, and tapping a row opens the edit/delete sheet.
+      await tester.tap(find.text('שיעור חודשי'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.delete));
       await tester.pumpAndSettle();
       // The recurring-delete dialog offers three choices; cancel is not one

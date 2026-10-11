@@ -425,5 +425,18 @@
   "aboutLicensesButton": "רישיונות קוד פתוח",
   "@aboutLicensesButton": {
     "description": "Button on the About screen that opens Flutter's built-in open-source licenses page (M5c)."
+  },
+  "monthAgendaEmpty": "אין אירועים ביום זה",
+  "@monthAgendaEmpty": {
+    "description": "Shown in the month view's day agenda (below the grid) when the selected day has no events."
+  },
+  "monthAgendaDayHeader": "יום {weekday}, {day} {month}",
+  "@monthAgendaDayHeader": {
+    "description": "Header of the month view's day agenda, e.g. 'יום שני, א׳ חשוון'.",
+    "placeholders": {
+      "weekday": {"type": "String"},
+      "day": {"type": "String"},
+      "month": {"type": "String"}
+    }
   }
 }
