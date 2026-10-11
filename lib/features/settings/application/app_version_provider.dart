@@ -12,5 +12,9 @@ final FutureProvider<String> appVersionProvider = FutureProvider<String>((
   Ref ref,
 ) async {
   final PackageInfo info = await PackageInfo.fromPlatform();
-  return info.version;
+  // Build number too ("1.0.0 (13)"), so a device report says exactly
+  // which Play build is installed.
+  return info.buildNumber.isEmpty
+      ? info.version
+      : '${info.version} (${info.buildNumber})';
 });

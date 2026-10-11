@@ -459,5 +459,9 @@
   "calendarPullSyncDisabledMessage": "הסנכרון עם Google כבוי. אפשר להפעיל אותו בהגדרות.",
   "@calendarPullSyncDisabledMessage": {
     "description": "Snackbar when the user pulls the calendar down to sync but Google Calendar sync is turned off."
+  },
+  "calendarPullSyncAlreadyRunningMessage": "סנכרון כבר מתבצע ברגע זה. נסה שוב בעוד רגע.",
+  "@calendarPullSyncAlreadyRunningMessage": {
+    "description": "Snackbar when the user pulls down to sync while another Google sync pass is already in progress."
   }
 }

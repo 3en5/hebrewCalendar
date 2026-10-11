@@ -56,6 +56,11 @@ class FirestoreSyncSettingsStore implements SyncSettingsStore {
   Future<void> saveLastError(String? message) async {
     await _doc.set(<String, dynamic>{
       'googleLastSyncError': message,
+      // When the error was recorded (cleared with it), so a stale error can
+      // be told apart from a fresh one when diagnosing (tool/diagnose_sync.py).
+      'googleLastSyncErrorAt': message == null
+          ? null
+          : FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 }

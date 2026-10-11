@@ -717,6 +717,12 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'הסנכרון עם Google כבוי. אפשר להפעיל אותו בהגדרות.'**
   String get calendarPullSyncDisabledMessage;
+
+  /// Snackbar when the user pulls down to sync while another Google sync pass is already in progress.
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון כבר מתבצע ברגע זה. נסה שוב בעוד רגע.'**
+  String get calendarPullSyncAlreadyRunningMessage;
 }
 
 class _AppLocalizationsDelegate

@@ -91,7 +91,7 @@ void main() {
       final GoogleCalendarApiImpl api = GoogleCalendarApiImpl(
         httpClient: client,
         allowInteractiveAuth: false,
-        signedInEmail: () => 'owner@example.com',
+        signedInEmail: () async => 'owner@example.com',
       );
 
       final page = await api.listChangedEvents();
@@ -112,7 +112,7 @@ void main() {
     final GoogleCalendarApiImpl api = GoogleCalendarApiImpl(
       httpClient: client,
       allowInteractiveAuth: false,
-      signedInEmail: () => 'owner@example.com',
+      signedInEmail: () async => 'owner@example.com',
     );
 
     await api.listChangedEvents();
@@ -126,7 +126,7 @@ void main() {
     final GoogleCalendarApiImpl api = GoogleCalendarApiImpl(
       httpClient: client,
       allowInteractiveAuth: false,
-      signedInEmail: () => null,
+      signedInEmail: () async => null,
     );
 
     await expectLater(

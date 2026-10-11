@@ -44,7 +44,7 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
     GoogleSignIn? googleSignIn,
     http.Client? httpClient,
     this.allowInteractiveAuth = true,
-    String? Function()? signedInEmail,
+    Future<String?> Function()? signedInEmail,
   }) : _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
        _httpClient = httpClient ?? http.Client(),
        _signedInEmail = signedInEmail ?? _firebaseUserEmail;
@@ -69,16 +69,26 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
   /// [_authHeaders] now falls back to requesting the calendar token
   /// directly for this account, which needs no restored
   /// [GoogleSignInAccount].
-  final String? Function() _signedInEmail;
+  final Future<String?> Function() _signedInEmail;
 
   /// Whether this instance already tried a lightweight restore and got no
   /// account, so later requests go straight to the email-based fallback
   /// instead of waiting on the restore again for every REST call.
   bool _lightweightRestoreFailed = false;
 
-  static String? _firebaseUserEmail() {
+  /// The Firebase user's email. In the background isolate FirebaseAuth may
+  /// still be restoring its session when sync starts (`currentUser` null for
+  /// a moment), so wait briefly for the first auth state instead of failing.
+  static Future<String?> _firebaseUserEmail() async {
     try {
-      return fb_auth.FirebaseAuth.instance.currentUser?.email;
+      final fb_auth.FirebaseAuth auth = fb_auth.FirebaseAuth.instance;
+      final fb_auth.User? user =
+          auth.currentUser ??
+          await auth.authStateChanges().first.timeout(
+            const Duration(seconds: 5),
+            onTimeout: () => null,
+          );
+      return user?.email;
     } catch (_) {
       return null;
     }
@@ -408,10 +418,11 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
   /// succeeds without UI once the user granted `calendar.events` (they did,
   /// when enabling sync).
   Future<Map<String, String>> _authHeadersForSignedInEmail() async {
-    final String? email = _signedInEmail();
+    final String? email = await _signedInEmail();
     if (email == null) {
       throw StateError(
-        'No signed-in Google account available for Calendar sync.',
+        'No signed-in Google account available for Calendar sync '
+        '(no restored account and no signed-in email).',
       );
     }
     final ClientAuthorizationTokenData? tokens = await GoogleSignInPlatform
@@ -431,7 +442,10 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       'granted=${tokens != null}',
     );
     if (tokens == null) {
-      throw StateError('Calendar access was not granted.');
+      throw StateError(
+        'Calendar access was not granted for $email '
+        '(silent email-based authorization returned no token).',
+      );
     }
     return <String, String>{
       'Authorization': 'Bearer ${tokens.accessToken}',

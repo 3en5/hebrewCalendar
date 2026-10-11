@@ -348,4 +348,8 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get calendarPullSyncDisabledMessage =>
       'הסנכרון עם Google כבוי. אפשר להפעיל אותו בהגדרות.';
+
+  @override
+  String get calendarPullSyncAlreadyRunningMessage =>
+      'סנכרון כבר מתבצע ברגע זה. נסה שוב בעוד רגע.';
 }

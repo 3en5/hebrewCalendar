@@ -348,15 +348,23 @@ class GoogleSyncTriggerService {
 
   /// Runs a sync pass immediately, bypassing any debounce/throttle — the
   /// settings screen's manual "סנכרן עכשיו" button.
-  Future<void> syncNow() async {
+  ///
+  /// Returns the pass's result (`null` when sync is disabled), so the
+  /// pull-to-refresh gesture can tell "done" from "a sync was already
+  /// running" instead of reporting success either way.
+  Future<SyncRunResult?> syncNow() async {
     if (!_state.enabled) {
-      return;
+      return null;
     }
     _state = _state.copyWith(status: SyncStatus.syncing);
     _emit();
     final SyncRunResult result = await _engine.runSync();
     _lastRunAt = _now();
-    if (result.isError) {
+    if (result.wasConcurrentSkip) {
+      // Another pass (e.g. the app-open trigger) is still running; it will
+      // report its own outcome. Don't stamp a last-sync time it hasn't earned.
+      _state = _state.copyWith(status: SyncStatus.idle);
+    } else if (result.isError) {
       _state = _state.copyWith(
         status: SyncStatus.error,
         errorMessage: result.errorMessage,
@@ -369,6 +377,7 @@ class GoogleSyncTriggerService {
       );
     }
     _emit();
+    return result;
   }
 
   void _subscribeToLocalChanges() {

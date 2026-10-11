@@ -13,6 +13,7 @@ import '../../auth/application/auth_providers.dart';
 import '../../auth/application/demo_mode_provider.dart';
 import '../../event_editor/presentation/event_editor_screen.dart';
 import '../../notifications/application/reminder_providers.dart';
+import '../../../domain/sync/sync_run_result.dart';
 import '../../../domain/sync/sync_state.dart';
 import '../../settings/application/google_sync_providers.dart';
 import '../../settings/application/google_sync_settings_state.dart';
@@ -205,9 +206,11 @@ class CalendarShellScreen extends ConsumerWidget {
       );
       return;
     }
-    await service.syncNow();
+    final SyncRunResult? result = await service.syncNow();
     final GoogleSyncSettingsState after = service.state;
-    if (after.status == SyncStatus.error) {
+    if (result != null && result.wasConcurrentSkip) {
+      show(l10n.calendarPullSyncAlreadyRunningMessage);
+    } else if (after.status == SyncStatus.error) {
       show(
         l10n.settingsGoogleSyncActionFailedMessage(after.errorMessage ?? ''),
       );
