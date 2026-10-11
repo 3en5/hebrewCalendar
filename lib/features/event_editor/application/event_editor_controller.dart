@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/misc.dart' show NotifierProviderFamily;
 
 import '../../../domain/event/default_calendar_id.dart';
 import '../../../domain/event/event.dart';
+import '../../../domain/event/event_attendee.dart';
 import '../../../domain/event/event_time_of_day.dart';
 import '../../../domain/event/event_validation.dart';
 import '../../../domain/event/recurrence_rule.dart';
@@ -159,6 +160,32 @@ class EventEditorController extends Notifier<EventEditorState> {
       ? state.copyWith(clearColorId: true)
       : state.copyWith(colorId: colorId);
 
+  /// M11: adds [email] as a participant. Returns false (nothing changed)
+  /// when it isn't a valid address, is already invited, or the list is full.
+  bool addAttendee(String email) {
+    final String trimmed = email.trim();
+    if (!isValidAttendeeEmail(trimmed) ||
+        state.attendees.length >= kMaxEventAttendees ||
+        state.attendees.any(
+          (EventAttendee a) => a.email.toLowerCase() == trimmed.toLowerCase(),
+        )) {
+      return false;
+    }
+    state = state.copyWith(
+      attendees: <EventAttendee>[
+        ...state.attendees,
+        EventAttendee(email: trimmed),
+      ],
+    );
+    return true;
+  }
+
+  void removeAttendee(String email) => state = state.copyWith(
+    attendees: state.attendees
+        .where((EventAttendee a) => a.email != email)
+        .toList(),
+  );
+
   void setRecurrenceUntil(HebrewDate? until) {
     state = until == null
         ? state.copyWith(clearRecurrenceUntil: true)
@@ -208,6 +235,7 @@ class EventEditorController extends Notifier<EventEditorState> {
       clearEndTime: state.allDay || state.endTime == null,
       reminderMinutesBefore: state.reminderMinutesBefore,
       colorId: state.colorId,
+      attendees: state.attendees,
       clearColorId: state.colorId == null,
       recurrence: RecurrenceRule(
         type: state.recurrenceType,

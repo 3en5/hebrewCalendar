@@ -48,6 +48,7 @@
 | `lib/domain/hebrew_date/jewish_day_info.dart` | M8: `JewishDayInfo` — לכל `HebrewDate` רשימת `JewishDayLabel` (חג/מועד קטן/צום/ראש חודש/יום לאומי/פרשה, שם מלא + `shortName` לתא), לפי ארץ ישראל/חו״ל; הקובץ השני שמותר לו לייבא `kosher_dart` |
 | `lib/domain/hebrew_date/hebrew_numerals.dart` | פירמוט גימטריה טהור (ללא תלות ב-kosher_dart): יום/שנה לאותיות עבריות עם גרש/גרשיים, כולל ט״ו/ט״ז |
 | `lib/domain/event/event.dart` | ישות טהורה `Event`: כל שדות מודל האירוע (ARCHITECTURE.md §4), שוויון וסדר, `copyWith` עם דגלי `clearStartTime`/`clearEndTime`; M5a: `source` (`EventSource`), `googleSync` (`GoogleSyncState` — מיפוי יחיד לאירוע לא-חוזר), `googleInstanceSync` (מפת `GoogleSyncState` לפי מפתח מופע, לאירועים חוזרים) |
+| `lib/domain/event/event_attendee.dart` | M11: `EventAttendee` (מייל + `AttendeeResponse`), ולידציית מייל, `mergeAttendeeResponses`, ו-`attendeesToMaps`/`attendeesFromMaps` (Firestore וגיבוי) |
 | `lib/domain/event/event_time_of_day.dart` | ערך טהור `EventTimeOfDay` (שעה/דקה) — תחליף ל-`TimeOfDay` של Flutter כדי ש-domain לא יתלה ב-Flutter |
 | `lib/domain/event/recurrence_rule.dart` | ערך טהור `RecurrenceRule` + `RecurrenceType`: מבנה הנתונים לחזרתיות (הלוגיקה/הרחבה ל-מופעים היא M3) |
 | `lib/domain/event/recurring_edit.dart` | M9: `RecurringEditScope` (מופע זה / זה והבאים / כל הסדרה) ו-`planRecurringEdit`/`planRecurringDelete` — לוגיקה טהורה שמחליטה מה לעדכן/ליצור/למחוק בסדרה חוזרת עברית |
@@ -125,6 +126,7 @@
 | `lib/features/event_editor/presentation/widgets/hebrew_date_picker_sheet.dart` | Bottom sheet לבחירת תאריך עברי: שלוש רשימות נפתחות (שנה/חודש/יום) בגימטריה, כולל אדר א׳/אדר ב׳ בשנה מעוברת; סבב משוב מכשיר #1: `isExpanded: true` בשלוש הרשימות הנפתחות מתקן overflow קטן (0.75px) שנחשף במסך צר תוך כדי תיקון #1 |
 | `lib/features/event_editor/presentation/widgets/event_time_section.dart` | שדות שעת התחלה/סיום (מנוטרלים כשהאירוע "כל היום"), עוטף את `showTimePicker` של Flutter וממיר ל-`EventTimeOfDay` |
 | `lib/features/event_editor/presentation/widgets/event_color_picker.dart` | M10: שורת דוגמיות צבע בעורך — ברירת מחדל + 11 צבעי Google |
+| `lib/features/event_editor/presentation/widgets/attendees_field.dart` | M11: שדה מייל + צ׳יפ לכל משתתף עם אייקון תשובה; `attendeeResponseLabel` |
 | `lib/features/event_editor/presentation/widgets/reminder_selector.dart` | בורר צ'יפים לבחירת תזכורת יחידה: ללא/בזמן האירוע/10/30/60 דקות/יום לפני (הורחב מ-10/30/60 בלבד ב-M4) |
 | `lib/features/event_editor/presentation/widgets/recurrence_type_selector.dart` | בורר צ'יפים ל-`RecurrenceType`: ללא חזרה/כל שנה (עברי)/כל חודש (עברי)/כל שבוע/כל יום (M3a) |
 | `lib/features/event_editor/presentation/widgets/recurrence_until_field.dart` | שדה "עד תאריך" אופציונלי לאירוע חוזר: מציג "ללא תאריך סיום" כברירת מחדל, פותח מחדש את `HebrewDatePickerSheet` הקיים, וכפתור ניקוי (M3a) |
@@ -159,6 +161,7 @@
 | `test/domain/event/event_test.dart` | טסטים ל-`Event`: שוויון (כולל רשימת תזכורות), `copyWith` ודגלי `clearStartTime`/`clearEndTime` |
 | `test/domain/event/recurrence_rule_test.dart` | טסטים ל-`RecurrenceRule`: שוויון (כולל רשימת חריגים), `copyWith` ודגל `clearUntil` |
 | `test/domain/event/recurring_edit_test.dart` | M9: פיצול מופע בודד, "זה והבאים" (כולל חלוקת חריגות ו-until קודם), "כל הסדרה", ומחיקה בשלושת ההיקפים |
+| `test/domain/event/event_attendee_test.dart` | M11: ולידציית מייל, מיזוג תשובות לפי מייל, ושמירה/קריאה של מפות |
 | `test/domain/event/event_validation_test.dart` | טסטים ל-`validateEvent`: כותרת חובה/אורך מקסימלי, תיאור/מיקום אורך מקסימלי, סיום אחרי התחלה, צבירת מספר שגיאות |
 | `test/domain/event/event_occurrence_test.dart` | טסטים ל-`EventOccurrence`: שוויון/hashCode, `isRecurring`, וסדר `compareEventOccurrences` (M3a) |
 | `test/domain/event/recurrence_expander_yearly_test.dart` | טסטים ל-`RecurrenceType.none`/`hebrewYearly`: מיפוי אדר, מדיניות יום 30, ואין מופע לפני הבסיס (M3a) |

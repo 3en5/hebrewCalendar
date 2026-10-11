@@ -248,7 +248,7 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
     // extendedProperties before creating when local state is unknown (M5a).
     final http.Response response = await _requestWithRetry(
       () async => _httpClient.post(
-        Uri.parse(_kEventsUrl),
+        _withInviteFlag(Uri.parse(_kEventsUrl), event),
         headers: await _authHeaders(),
         body: jsonEncode(googleEventToJson(event)),
       ),
@@ -272,7 +272,7 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
         headers['If-Match'] = etag;
       }
       return _httpClient.patch(
-        Uri.parse('$_kEventsUrl/$googleEventId'),
+        _withInviteFlag(Uri.parse('$_kEventsUrl/$googleEventId'), event),
         headers: headers,
         body: jsonEncode(googleEventToJson(event)),
       );
@@ -297,7 +297,10 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
         headers['If-Match'] = etag;
       }
       return _httpClient.delete(
-        Uri.parse('$_kEventsUrl/$googleEventId'),
+        Uri.parse('$_kEventsUrl/$googleEventId').replace(
+          // M11: guests of a deleted event get Google's cancellation email.
+          queryParameters: <String, String>{'sendUpdates': 'all'},
+        ),
         headers: headers,
       );
     }, label: 'deleteEvent');
@@ -471,6 +474,13 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       'Content-Type': 'application/json',
     };
   }
+
+  /// M11: with guests on the event, ask Google to email them the invitation
+  /// (and updates); without guests, send nobody anything.
+  Uri _withInviteFlag(Uri uri, GoogleEventWrite event) =>
+      event.attendeeEmails.isEmpty
+      ? uri
+      : uri.replace(queryParameters: <String, String>{'sendUpdates': 'all'});
 
   void _throwIfError(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {

@@ -19,6 +19,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../domain/event/default_calendar_id.dart';
 import '../domain/event/event.dart';
+import '../domain/event/event_attendee.dart';
 import '../domain/event/event_source.dart';
 import '../domain/hebrew_date/hebrew_date.dart';
 import '../domain/hebrew_date/hebrew_date_engine.dart';
@@ -84,6 +85,24 @@ class FirestoreEventSyncSupport {
     }
     final QueryDocumentSnapshot<Map<String, dynamic>> doc = snapshot.docs.first;
     return eventFromFirestoreData(doc.id, doc.data());
+  }
+
+  Future<void> updateAttendeeResponses(
+    String eventId,
+    List<EventAttendee> fromGoogle,
+  ) async {
+    final DocumentReference<Map<String, dynamic>> docRef = _events.doc(eventId);
+    final DocumentSnapshot<Map<String, dynamic>> snapshot = await docRef.get();
+    final Map<String, dynamic>? data = snapshot.data();
+    if (data == null) {
+      return;
+    }
+    final Event existing = eventFromFirestoreData(snapshot.id, data);
+    await docRef.update(<String, dynamic>{
+      'attendees': attendeesToMaps(
+        mergeAttendeeResponses(existing.attendees, fromGoogle),
+      ),
+    });
   }
 
   Future<void> updateSyncState(
@@ -185,6 +204,7 @@ class FirestoreEventSyncSupport {
       description: snapshot.description,
       location: snapshot.location,
       colorId: snapshot.colorId,
+      attendees: snapshot.attendees,
       hebrewDate: hebrewDate,
       allDay: snapshot.isAllDay,
       createdAt: createdAt,

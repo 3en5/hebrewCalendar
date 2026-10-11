@@ -392,4 +392,37 @@ class AppLocalizationsHe extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get eventAttendeesLabel => 'משתתפים';
+
+  @override
+  String get eventAttendeesFieldLabel => 'הוספת משתתף לפי מייל';
+
+  @override
+  String get eventAttendeesHelper =>
+      'Google Calendar ישלח להם זימון במייל אחרי הסנכרון';
+
+  @override
+  String get eventAttendeesInvalid => 'כתובת מייל לא תקינה, או שהיא כבר ברשימה';
+
+  @override
+  String get eventAttendeesAdd => 'הוספה';
+
+  @override
+  String get attendeeAccepted => 'אישר/ה הגעה';
+
+  @override
+  String get attendeeDeclined => 'לא מגיע/ה';
+
+  @override
+  String get attendeeTentative => 'אולי';
+
+  @override
+  String get attendeeNoReply => 'טרם השיב/ה';
+
+  @override
+  String eventAttendeesSummary(int count, int accepted) {
+    return '$count משתתפים, $accepted אישרו';
+  }
 }

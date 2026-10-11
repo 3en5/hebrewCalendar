@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../domain/event/event.dart';
+import '../domain/event/event_attendee.dart';
 import '../domain/event/event_occurrence.dart';
 import '../domain/event/event_repository.dart';
 import '../domain/event/recurrence_expander.dart';
@@ -294,6 +295,12 @@ class FirestoreEventRepository implements EventRepository {
   @override
   Future<Event?> getByGoogleEventId(String googleEventId) =>
       _sync.getByGoogleEventId(googleEventId);
+
+  @override
+  Future<void> updateAttendeeResponses(
+    String eventId,
+    List<EventAttendee> fromGoogle,
+  ) => _sync.updateAttendeeResponses(eventId, fromGoogle);
 
   @override
   Future<void> updateSyncState(

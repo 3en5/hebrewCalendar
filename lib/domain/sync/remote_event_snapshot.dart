@@ -1,3 +1,5 @@
+import '../event/event_attendee.dart';
+
 /// A pure, googleapis-free snapshot of a single Google Calendar event, as
 /// returned by `GoogleCalendarApi.listChangedEvents`/`getEvent`
 /// (`lib/data/sync/google_calendar_api.dart`) and consumed by
@@ -14,6 +16,7 @@ class RemoteEventSnapshot {
     this.description = '',
     this.location = '',
     this.colorId,
+    this.attendees = const <EventAttendee>[],
     this.start,
     this.end,
     this.isAllDay = true,
@@ -39,6 +42,9 @@ class RemoteEventSnapshot {
 
   /// M10: Google's `colorId` ("1".."11"), null for the calendar color.
   final String? colorId;
+
+  /// M11: the event's guests (the account owner itself excluded).
+  final List<EventAttendee> attendees;
 
   /// Null only for a cancelled event, where Google Calendar may omit
   /// start/end entirely.

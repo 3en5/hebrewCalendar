@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/dimens.dart';
 import '../../../../domain/event/event.dart';
+import '../../../../domain/event/event_attendee.dart';
 import '../../../../domain/event/event_occurrence.dart';
 import '../../../../domain/event/event_repository.dart';
 import '../../../../domain/event/recurring_edit.dart';
@@ -73,7 +74,11 @@ class _DayEventTile extends ConsumerWidget {
     return ListTile(
       contentPadding: EdgeInsetsDirectional.zero,
       title: Text(_event.title),
-      subtitle: Text(timeLabel),
+      subtitle: Text(
+        _event.attendees.isEmpty
+            ? timeLabel
+            : '$timeLabel · ${l10n.eventAttendeesSummary(_event.attendees.length, _event.attendees.where((EventAttendee a) => a.response == AttendeeResponse.accepted).length)}',
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[

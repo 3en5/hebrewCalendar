@@ -3,8 +3,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/sync/google_calendar_api.dart';
 import 'package:hebrew_calendar/data/sync/google_event_json.dart';
+import 'package:hebrew_calendar/domain/event/event_attendee.dart';
 
-GoogleEventWrite _write({String? colorId}) => GoogleEventWrite(
+GoogleEventWrite _write({
+  String? colorId,
+  List<String> guests = const <String>[],
+}) => GoogleEventWrite(
   summary: 'פגישה',
   description: '',
   location: '',
@@ -14,6 +18,7 @@ GoogleEventWrite _write({String? colorId}) => GoogleEventWrite(
   hebcalEventId: 'e1',
   hebcalOccurrence: 'o1',
   colorId: colorId,
+  attendeeEmails: guests,
 );
 
 void main() {
@@ -36,5 +41,35 @@ void main() {
       'end': <String, String>{'date': '2026-10-13'},
     });
     expect(snapshot.colorId, '9');
+  });
+
+  test('M11: guests are sent as attendees; none sends no attendees', () {
+    final Map<String, dynamic> json = googleEventToJson(
+      _write(guests: <String>['a@example.com']),
+    );
+    expect(json['attendees'], <Map<String, String>>[
+      <String, String>{'email': 'a@example.com'},
+    ]);
+    expect(googleEventToJson(_write()).containsKey('attendees'), isFalse);
+  });
+
+  test('M11: imported guests keep their reply; the owner is left out', () {
+    final snapshot = googleEventFromJson(<String, dynamic>{
+      'id': 'g2',
+      'etag': '"1"',
+      'updated': '2026-10-01T10:00:00Z',
+      'start': <String, String>{'date': '2026-10-12'},
+      'end': <String, String>{'date': '2026-10-13'},
+      'attendees': <Map<String, dynamic>>[
+        <String, dynamic>{'email': 'me@example.com', 'self': true},
+        <String, dynamic>{
+          'email': 'b@example.com',
+          'responseStatus': 'accepted',
+        },
+      ],
+    });
+    expect(snapshot.attendees, hasLength(1));
+    expect(snapshot.attendees.single.email, 'b@example.com');
+    expect(snapshot.attendees.single.response, AttendeeResponse.accepted);
   });
 }

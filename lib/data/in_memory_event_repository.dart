@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../domain/event/default_calendar_id.dart';
 import '../domain/event/event.dart';
+import '../domain/event/event_attendee.dart';
 import '../domain/event/event_occurrence.dart';
 import '../domain/event/event_repository.dart';
 import '../domain/event/event_source.dart';
@@ -178,6 +179,21 @@ class InMemoryEventRepository implements EventRepository {
   }
 
   @override
+  Future<void> updateAttendeeResponses(
+    String eventId,
+    List<EventAttendee> fromGoogle,
+  ) async {
+    final Event? existing = _events[eventId];
+    if (existing == null) {
+      return;
+    }
+    _events[eventId] = existing.copyWith(
+      attendees: mergeAttendeeResponses(existing.attendees, fromGoogle),
+    );
+    _notify();
+  }
+
+  @override
   Future<void> updateSyncState(
     String eventId, {
     GoogleSyncState? googleSync,
@@ -239,6 +255,7 @@ class InMemoryEventRepository implements EventRepository {
               description: snapshot.description,
               location: snapshot.location,
               colorId: snapshot.colorId,
+              attendees: snapshot.attendees,
               hebrewDate: hebrewDate,
               allDay: snapshot.isAllDay,
               updatedAt: snapshot.updatedAt,

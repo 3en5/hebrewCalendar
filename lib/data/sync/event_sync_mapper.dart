@@ -8,6 +8,7 @@
 library;
 
 import '../../domain/event/event.dart';
+import '../../domain/event/event_attendee.dart';
 import '../../domain/event/event_time_of_day.dart';
 import '../../domain/hebrew_date/hebrew_date.dart';
 import '../../domain/hebrew_date/hebrew_date_engine.dart';
@@ -32,6 +33,9 @@ GoogleEventWrite buildGoogleEventWrite({
     description: event.description,
     location: event.location,
     colorId: event.colorId,
+    attendeeEmails: <String>[
+      for (final EventAttendee a in event.attendees) a.email,
+    ],
     isAllDay: event.allDay,
     start: start,
     end: end,

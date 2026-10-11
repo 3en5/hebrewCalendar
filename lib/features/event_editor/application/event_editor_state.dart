@@ -1,4 +1,5 @@
 import '../../../domain/event/event.dart';
+import '../../../domain/event/event_attendee.dart';
 import '../../../domain/event/event_time_of_day.dart';
 import '../../../domain/event/event_validation.dart';
 import '../../../domain/event/recurrence_rule.dart';
@@ -22,6 +23,7 @@ class EventEditorState {
     this.recurrenceUntil,
     this.recurrenceExceptions = const <HebrewDate>[],
     this.colorId,
+    this.attendees = const <EventAttendee>[],
     this.errors = const <EventValidationErrorType>[],
     this.isSaving = false,
   });
@@ -44,6 +46,7 @@ class EventEditorState {
     recurrenceUntil: event.recurrence.until,
     recurrenceExceptions: event.recurrence.exceptions,
     colorId: event.colorId,
+    attendees: event.attendees,
   );
 
   final HebrewDate hebrewDate;
@@ -72,6 +75,9 @@ class EventEditorState {
   /// M10: Google Calendar color id, null for the default color.
   final String? colorId;
 
+  /// M11: invited participants.
+  final List<EventAttendee> attendees;
+
   final List<EventValidationErrorType> errors;
   final bool isSaving;
 
@@ -93,6 +99,7 @@ class EventEditorState {
     bool clearRecurrenceUntil = false,
     String? colorId,
     bool clearColorId = false,
+    List<EventAttendee>? attendees,
     List<EventValidationErrorType>? errors,
     bool? isSaving,
   }) => EventEditorState(
@@ -110,6 +117,7 @@ class EventEditorState {
         : (recurrenceUntil ?? this.recurrenceUntil),
     recurrenceExceptions: recurrenceExceptions,
     colorId: clearColorId ? null : (colorId ?? this.colorId),
+    attendees: attendees ?? this.attendees,
     errors: errors ?? this.errors,
     isSaving: isSaving ?? this.isSaving,
   );

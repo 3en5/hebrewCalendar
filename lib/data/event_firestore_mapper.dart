@@ -23,6 +23,7 @@ library;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../domain/event/event.dart';
+import '../domain/event/event_attendee.dart';
 import '../domain/event/event_source.dart';
 import '../domain/event/event_time_of_day.dart';
 import '../domain/event/recurrence_rule.dart';
@@ -44,6 +45,7 @@ Map<String, dynamic> eventToFirestoreData({
     'description': event.description,
     'location': event.location,
     'colorId': event.colorId,
+    'attendees': attendeesToMaps(event.attendees),
     'hebrewDate': _hebrewDateToMap(event.hebrewDate),
     'gregorianStart': Timestamp.fromDate(gregorianStart),
     'gregorianEnd': Timestamp.fromDate(gregorianEnd),
@@ -85,6 +87,7 @@ Event eventFromFirestoreData(String id, Map<String, dynamic> data) {
     description: data['description'] as String? ?? '',
     location: data['location'] as String? ?? '',
     colorId: data['colorId'] as String?,
+    attendees: attendeesFromMaps(data['attendees']),
     hebrewDate: _hebrewDateFromMap(_asStringMap(data['hebrewDate'])!),
     allDay: data['allDay'] as bool? ?? true,
     startTime: startMap == null ? null : _timeFromMap(startMap),

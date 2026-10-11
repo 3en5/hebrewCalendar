@@ -16,6 +16,7 @@ library;
 import 'dart:convert';
 
 import '../event/event.dart';
+import '../event/event_attendee.dart';
 import '../event/event_source.dart';
 import '../event/event_time_of_day.dart';
 import '../event/recurrence_rule.dart';
@@ -123,6 +124,7 @@ Map<String, dynamic> _eventToBackupMap(Event event) => <String, dynamic>{
   'description': event.description,
   'location': event.location,
   'colorId': event.colorId,
+  'attendees': attendeesToMaps(event.attendees),
   'hebrewDate': _hebrewDateToMap(event.hebrewDate),
   'allDay': event.allDay,
   'startTime': event.startTime == null ? null : _timeToMap(event.startTime!),
@@ -152,6 +154,7 @@ Event _eventFromBackupMap(Map<String, dynamic> map) {
     description: map['description'] as String? ?? '',
     location: map['location'] as String? ?? '',
     colorId: map['colorId'] as String?,
+    attendees: attendeesFromMaps(map['attendees']),
     hebrewDate: _hebrewDateFromMap(_asStringMap(map['hebrewDate'])!),
     allDay: map['allDay'] as bool? ?? true,
     startTime: startMap == null ? null : _timeFromMap(startMap),

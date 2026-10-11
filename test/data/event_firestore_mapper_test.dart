@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/data/event_firestore_mapper.dart';
 import 'package:hebrew_calendar/domain/event/event.dart';
+import 'package:hebrew_calendar/domain/event/event_attendee.dart';
 import 'package:hebrew_calendar/domain/event/event_source.dart';
 import 'package:hebrew_calendar/domain/event/event_time_of_day.dart';
 import 'package:hebrew_calendar/domain/event/recurrence_rule.dart';
@@ -77,6 +78,24 @@ void main() {
         expect(restored, original);
       });
     }
+
+    test('round-trips participants and their replies (M11)', () {
+      final Event original = _baseEvent(month: HebrewMonth.cheshvan).copyWith(
+        attendees: const <EventAttendee>[
+          EventAttendee(email: 'a@example.com'),
+          EventAttendee(
+            email: 'b@example.com',
+            response: AttendeeResponse.declined,
+          ),
+        ],
+      );
+      final Event restored = eventFromFirestoreData(
+        original.id,
+        eventToFirestoreData(event: original, engine: _engine),
+      );
+      expect(restored.attendees, original.attendees);
+      expect(restored, original);
+    });
 
     test('round-trips an event color (M10)', () {
       final Event original = _baseEvent(

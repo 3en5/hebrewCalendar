@@ -488,5 +488,28 @@
   "@eventColorOption": {
     "description": "Hebrew name of one of Google Calendar's 11 event colors, by its Google colorId (M10).",
     "placeholders": {"id": {"type": "String"}}
+  },
+  "eventAttendeesLabel": "משתתפים",
+  "@eventAttendeesLabel": {"description": "Section label for participants in the event editor (M11)."},
+  "eventAttendeesFieldLabel": "הוספת משתתף לפי מייל",
+  "@eventAttendeesFieldLabel": {"description": "Label of the email field used to invite a participant (M11)."},
+  "eventAttendeesHelper": "Google Calendar ישלח להם זימון במייל אחרי הסנכרון",
+  "@eventAttendeesHelper": {"description": "Helper text under the participant email field explaining that Google sends the invitation (M11)."},
+  "eventAttendeesInvalid": "כתובת מייל לא תקינה, או שהיא כבר ברשימה",
+  "@eventAttendeesInvalid": {"description": "Error when the typed participant email is invalid or already invited (M11)."},
+  "eventAttendeesAdd": "הוספה",
+  "@eventAttendeesAdd": {"description": "Tooltip of the button that adds the typed participant email (M11)."},
+  "attendeeAccepted": "אישר/ה הגעה",
+  "@attendeeAccepted": {"description": "Participant reply: accepted (M11)."},
+  "attendeeDeclined": "לא מגיע/ה",
+  "@attendeeDeclined": {"description": "Participant reply: declined (M11)."},
+  "attendeeTentative": "אולי",
+  "@attendeeTentative": {"description": "Participant reply: tentative (M11)."},
+  "attendeeNoReply": "טרם השיב/ה",
+  "@attendeeNoReply": {"description": "Participant has not replied yet (M11)."},
+  "eventAttendeesSummary": "{count} משתתפים, {accepted} אישרו",
+  "@eventAttendeesSummary": {
+    "description": "Short participants summary under an event in the day events sheet (M11).",
+    "placeholders": {"count": {"type": "int"}, "accepted": {"type": "int"}}
   }
 }

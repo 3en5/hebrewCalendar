@@ -138,6 +138,14 @@ describe('events/{eventId}', () => {
     await assertFails(setDoc(ref, event({ colorId: '123' })));
   });
 
+  test('M11: participants are accepted, up to 50', async () => {
+    const one = [{ email: 'a@example.com', response: 'needsAction' }];
+    await assertSucceeds(setDoc(doc(alice(), 'events/p1'), event({ attendees: one })));
+    const many = Array.from({ length: 51 }, (_, i) => ({ email: `u${i}@example.com`, response: 'needsAction' }));
+    await assertFails(setDoc(doc(alice(), 'events/p2'), event({ attendees: many })));
+    await assertFails(setDoc(doc(alice(), 'events/p3'), event({ attendees: 'a@example.com' })));
+  });
+
   test('M10: an event color id is accepted (or null)', async () => {
     await assertSucceeds(setDoc(doc(alice(), 'events/c1'), event({ colorId: '11' })));
     await assertSucceeds(setDoc(doc(alice(), 'events/c2'), event({ colorId: null })));

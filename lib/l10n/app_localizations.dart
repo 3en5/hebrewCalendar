@@ -765,6 +765,66 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'{id, select, 1{לבנדר} 2{מרווה} 3{ענבים} 4{פלמינגו} 5{בננה} 6{מנדרינה} 7{טווס} 8{גרפיט} 9{אוכמניות} 10{בזיליקום} 11{עגבנייה} other{צבע}}'**
   String eventColorOption(String id);
+
+  /// Section label for participants in the event editor (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'משתתפים'**
+  String get eventAttendeesLabel;
+
+  /// Label of the email field used to invite a participant (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'הוספת משתתף לפי מייל'**
+  String get eventAttendeesFieldLabel;
+
+  /// Helper text under the participant email field explaining that Google sends the invitation (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'Google Calendar ישלח להם זימון במייל אחרי הסנכרון'**
+  String get eventAttendeesHelper;
+
+  /// Error when the typed participant email is invalid or already invited (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'כתובת מייל לא תקינה, או שהיא כבר ברשימה'**
+  String get eventAttendeesInvalid;
+
+  /// Tooltip of the button that adds the typed participant email (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'הוספה'**
+  String get eventAttendeesAdd;
+
+  /// Participant reply: accepted (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'אישר/ה הגעה'**
+  String get attendeeAccepted;
+
+  /// Participant reply: declined (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'לא מגיע/ה'**
+  String get attendeeDeclined;
+
+  /// Participant reply: tentative (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'אולי'**
+  String get attendeeTentative;
+
+  /// Participant has not replied yet (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'טרם השיב/ה'**
+  String get attendeeNoReply;
+
+  /// Short participants summary under an event in the day events sheet (M11).
+  ///
+  /// In he, this message translates to:
+  /// **'{count} משתתפים, {accepted} אישרו'**
+  String eventAttendeesSummary(int count, int accepted);
 }
 
 class _AppLocalizationsDelegate

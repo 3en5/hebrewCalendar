@@ -3,6 +3,7 @@
 /// `google_calendar_api_impl.dart` (RULES.md §2, 500-line limit).
 library;
 
+import '../../domain/event/event_attendee.dart';
 import '../../domain/sync/remote_event_snapshot.dart';
 import 'google_calendar_api.dart';
 
@@ -13,6 +14,12 @@ Map<String, dynamic> googleEventToJson(GoogleEventWrite event) =>
       'location': event.location,
       // M10: Google's event color ("1".."11"); omitted = the calendar's color.
       if (event.colorId != null) 'colorId': event.colorId,
+      // M11: Google sends the invitations (see `sendUpdates` on the request).
+      if (event.attendeeEmails.isNotEmpty)
+        'attendees': <Map<String, String>>[
+          for (final String email in event.attendeeEmails)
+            <String, String>{'email': email},
+        ],
       'start': event.isAllDay
           ? <String, String>{'date': _dateOnly(event.start)}
           : <String, String>{'dateTime': event.start.toUtc().toIso8601String()},
@@ -50,6 +57,7 @@ RemoteEventSnapshot googleEventFromJson(Map<String, dynamic> json) {
     description: json['description'] as String? ?? '',
     location: json['location'] as String? ?? '',
     colorId: json['colorId'] as String?,
+    attendees: _attendeesFromJson(json['attendees']),
     start: _parseEventDateTime(start),
     end: _parseEventDateTime(end),
     isAllDay: start != null && start['date'] != null,
@@ -68,4 +76,20 @@ DateTime? _parseEventDateTime(Map<String, dynamic>? map) {
   }
   final String? date = map['date'] as String?;
   return date == null ? null : DateTime.parse(date);
+}
+
+List<EventAttendee> _attendeesFromJson(Object? raw) {
+  if (raw is! List) {
+    return const <EventAttendee>[];
+  }
+  return <EventAttendee>[
+    for (final Object? item in raw)
+      if (item is Map && item['email'] is String && item['self'] != true)
+        EventAttendee(
+          email: item['email'] as String,
+          response: EventAttendee.responseFromGoogle(
+            item['responseStatus'] as String?,
+          ),
+        ),
+  ];
 }

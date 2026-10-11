@@ -70,6 +70,48 @@ void main() {
     expect(saved.single.event.hebrewDate, _fixedDate);
   });
 
+  testWidgets('invites participants by email, rejecting a bad one (M11)', (
+    WidgetTester tester,
+  ) async {
+    final InMemoryEventRepository repository = InMemoryEventRepository();
+    addTearDown(repository.dispose);
+    const EventEditorArgs args = EventEditorArgs(initialDate: _fixedDate);
+
+    await tester.pumpWidget(
+      _wrap(const EventEditorScreen(args: args), repository),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'ישיבה');
+
+    final Finder field = find.byKey(
+      const ValueKey<String>('attendee-email-field'),
+    );
+    await tester.dragUntilVisible(
+      field,
+      find.byType(ListView),
+      const Offset(0, -100),
+    );
+    await tester.enterText(field, 'not-an-email');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('כתובת מייל לא תקינה, או שהיא כבר ברשימה'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(field, 'guest@example.com');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(find.text('guest@example.com'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+    final List<EventOccurrence> saved = await repository
+        .watchEventsForHebrewMonth(_fixedDate.year, _fixedDate.month)
+        .first;
+    expect(saved.single.event.attendees.single.email, 'guest@example.com');
+  });
+
   testWidgets('saves the picked event color (M10)', (
     WidgetTester tester,
   ) async {

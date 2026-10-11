@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 import 'package:hebrew_calendar/core/auth/google_sign_in_gate.dart';
+import 'package:hebrew_calendar/data/sync/google_calendar_api.dart';
 import 'package:hebrew_calendar/data/sync/google_calendar_api_impl.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -141,4 +142,43 @@ void main() {
     );
     expect(sent, isEmpty);
   });
+
+  test(
+    'M11: an event with guests asks Google to send the invitations',
+    () async {
+      final GoogleCalendarApiImpl api = GoogleCalendarApiImpl(
+        httpClient: MockClient((http.Request request) async {
+          sent.add(request);
+          return http.Response(
+            jsonEncode(<String, dynamic>{
+              'id': 'new-1',
+              'etag': '"e"',
+              'updated': '2026-10-01T10:00:00Z',
+              'start': <String, String>{'date': '2026-10-12'},
+              'end': <String, String>{'date': '2026-10-13'},
+            }),
+            200,
+          );
+        }),
+        allowInteractiveAuth: false,
+        signedInEmail: () async => 'owner@example.com',
+      );
+
+      await api.insertEvent(
+        GoogleEventWrite(
+          summary: 'פגישה',
+          description: '',
+          location: '',
+          isAllDay: true,
+          start: DateTime(2026, 10, 12),
+          end: DateTime(2026, 10, 13),
+          hebcalEventId: 'e1',
+          hebcalOccurrence: 'o1',
+          attendeeEmails: const <String>['guest@example.com'],
+        ),
+      );
+
+      expect(sent.single.url.queryParameters['sendUpdates'], 'all');
+    },
+  );
 }

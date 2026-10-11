@@ -75,6 +75,7 @@ class GoogleEventWrite {
     required this.hebcalEventId,
     required this.hebcalOccurrence,
     this.colorId,
+    this.attendeeEmails = const <String>[],
   });
 
   final String summary;
@@ -93,6 +94,9 @@ class GoogleEventWrite {
 
   /// M10: Google `colorId`, or null to leave Google's color as it is.
   final String? colorId;
+
+  /// M11: guests to invite. Empty = leave Google's guest list as it is.
+  final List<String> attendeeEmails;
 }
 
 /// Thrown by [GoogleCalendarApi.listChangedEvents] when Google Calendar

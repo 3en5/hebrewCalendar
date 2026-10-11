@@ -87,6 +87,18 @@ class SyncImportPass {
     // closed before it ever finished, so nothing was imported).
     // An incremental sync usually brings a handful of changes: look those
     // up one by one rather than reading every local event.
+    // M11: Google never sends our own exports back as imports, but their
+    // guests' replies live there — copy them onto the local event.
+    for (final RemoteEventSnapshot snapshot in page.events) {
+      final String? localId = snapshot.hebcalEventId;
+      if (snapshot.isOwnExport &&
+          !snapshot.isCancelled &&
+          localId != null &&
+          snapshot.attendees.isNotEmpty) {
+        await _repository.updateAttendeeResponses(localId, snapshot.attendees);
+      }
+    }
+
     final Map<String, Event> localByGoogleId = <String, Event>{};
     if (importCandidates.length > _kBulkLookupThreshold) {
       for (final Event local in await _repository.getAllForSync()) {

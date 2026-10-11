@@ -116,6 +116,8 @@ service cloud.firestore {
           && (!('source' in data) || data.source in ['app', 'google'])
           // M10: Google Calendar color id ("1".."11"), null = default color.
           && (!('colorId' in data) || data.colorId == null || (data.colorId is string && data.colorId.size() <= 2))
+          // M11: invited participants ({email, response} maps), at most 50.
+          && (!('attendees' in data) || (data.attendees is list && data.attendees.size() <= 50))
           && (!('googleSync' in data) || isValidSyncState(data.googleSync))
           && (!('googleInstanceSync' in data) || data.googleInstanceSync is map);
       }

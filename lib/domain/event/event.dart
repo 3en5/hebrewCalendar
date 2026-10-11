@@ -1,5 +1,6 @@
 import '../hebrew_date/hebrew_date.dart';
 import '../sync/sync_state.dart';
+import 'event_attendee.dart';
 import 'event_source.dart';
 import 'event_time_of_day.dart';
 import 'recurrence_rule.dart';
@@ -31,6 +32,7 @@ class Event {
     this.googleSync = const GoogleSyncState(),
     this.googleInstanceSync = const <String, GoogleSyncState>{},
     this.colorId,
+    this.attendees = const <EventAttendee>[],
   });
 
   /// Repository-assigned identifier. Empty for an event not yet persisted.
@@ -92,6 +94,9 @@ class Event {
   /// `core/theme/event_colors.dart`), or null for the default color.
   final String? colorId;
 
+  /// M11: invited participants; Google Calendar sends them the invitation.
+  final List<EventAttendee> attendees;
+
   /// Returns a copy with the given fields replaced. Pass [clearStartTime]
   /// / [clearEndTime] to explicitly null out a time (a plain `startTime:
   /// null` argument is indistinguishable from "leave unchanged").
@@ -117,6 +122,7 @@ class Event {
     Map<String, GoogleSyncState>? googleInstanceSync,
     String? colorId,
     bool clearColorId = false,
+    List<EventAttendee>? attendees,
   }) => Event(
     id: id ?? this.id,
     ownerUid: ownerUid ?? this.ownerUid,
@@ -136,6 +142,7 @@ class Event {
     googleSync: googleSync ?? this.googleSync,
     googleInstanceSync: googleInstanceSync ?? this.googleInstanceSync,
     colorId: clearColorId ? null : (colorId ?? this.colorId),
+    attendees: attendees ?? this.attendees,
   );
 
   @override
@@ -161,11 +168,17 @@ class Event {
         other.googleSync != googleSync ||
         other.colorId != colorId ||
         other.reminderMinutesBefore.length != reminderMinutesBefore.length ||
+        other.attendees.length != attendees.length ||
         other.googleInstanceSync.length != googleInstanceSync.length) {
       return false;
     }
     for (int i = 0; i < reminderMinutesBefore.length; i++) {
       if (other.reminderMinutesBefore[i] != reminderMinutesBefore[i]) {
+        return false;
+      }
+    }
+    for (int i = 0; i < attendees.length; i++) {
+      if (other.attendees[i] != attendees[i]) {
         return false;
       }
     }
@@ -197,6 +210,7 @@ class Event {
     googleSync,
     colorId,
     Object.hashAll(reminderMinutesBefore),
+    Object.hashAll(attendees),
     Object.hashAllUnordered(
       googleInstanceSync.entries.map(
         (MapEntry<String, GoogleSyncState> e) => Object.hash(e.key, e.value),

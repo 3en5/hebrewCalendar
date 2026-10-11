@@ -3,6 +3,7 @@ import '../sync/export_candidate.dart';
 import '../sync/remote_event_snapshot.dart';
 import '../sync/sync_state.dart';
 import 'event.dart';
+import 'event_attendee.dart';
 import 'event_occurrence.dart';
 
 /// Abstract event storage, defined purely in terms of domain types
@@ -99,6 +100,14 @@ abstract class EventRepository {
     GoogleSyncState? googleSync,
     Map<String, GoogleSyncState>? googleInstanceSync,
   });
+
+  /// M11: stores participants' replies reported by Google for [eventId]
+  /// (matched by email; other fields untouched) — without marking the event
+  /// dirty or firing [localEdits], since nothing needs pushing back.
+  Future<void> updateAttendeeResponses(
+    String eventId,
+    List<EventAttendee> fromGoogle,
+  );
 
   /// Drains and returns every [PendingGoogleDeletion] queued by [delete]
   /// since the last call — each call empties the queue, so a deletion is
