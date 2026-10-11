@@ -30,6 +30,7 @@ class Event {
     this.source = EventSource.app,
     this.googleSync = const GoogleSyncState(),
     this.googleInstanceSync = const <String, GoogleSyncState>{},
+    this.colorId,
   });
 
   /// Repository-assigned identifier. Empty for an event not yet persisted.
@@ -87,6 +88,10 @@ class Event {
   /// for a non-recurring event, which uses [googleSync] directly instead.
   final Map<String, GoogleSyncState> googleInstanceSync;
 
+  /// M10: the event's color as a Google Calendar color id ("1".."11", see
+  /// `core/theme/event_colors.dart`), or null for the default color.
+  final String? colorId;
+
   /// Returns a copy with the given fields replaced. Pass [clearStartTime]
   /// / [clearEndTime] to explicitly null out a time (a plain `startTime:
   /// null` argument is indistinguishable from "leave unchanged").
@@ -110,6 +115,8 @@ class Event {
     EventSource? source,
     GoogleSyncState? googleSync,
     Map<String, GoogleSyncState>? googleInstanceSync,
+    String? colorId,
+    bool clearColorId = false,
   }) => Event(
     id: id ?? this.id,
     ownerUid: ownerUid ?? this.ownerUid,
@@ -128,6 +135,7 @@ class Event {
     source: source ?? this.source,
     googleSync: googleSync ?? this.googleSync,
     googleInstanceSync: googleInstanceSync ?? this.googleInstanceSync,
+    colorId: clearColorId ? null : (colorId ?? this.colorId),
   );
 
   @override
@@ -151,6 +159,7 @@ class Event {
         other.updatedAt != updatedAt ||
         other.source != source ||
         other.googleSync != googleSync ||
+        other.colorId != colorId ||
         other.reminderMinutesBefore.length != reminderMinutesBefore.length ||
         other.googleInstanceSync.length != googleInstanceSync.length) {
       return false;
@@ -186,6 +195,7 @@ class Event {
     updatedAt,
     source,
     googleSync,
+    colorId,
     Object.hashAll(reminderMinutesBefore),
     Object.hashAllUnordered(
       googleInstanceSync.entries.map(

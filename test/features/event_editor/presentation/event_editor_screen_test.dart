@@ -70,6 +70,36 @@ void main() {
     expect(saved.single.event.hebrewDate, _fixedDate);
   });
 
+  testWidgets('saves the picked event color (M10)', (
+    WidgetTester tester,
+  ) async {
+    final InMemoryEventRepository repository = InMemoryEventRepository();
+    addTearDown(repository.dispose);
+    const EventEditorArgs args = EventEditorArgs(initialDate: _fixedDate);
+
+    await tester.pumpWidget(
+      _wrap(const EventEditorScreen(args: args), repository),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'צבעוני');
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey<String>('event-color-11')),
+      find.byType(ListView),
+      const Offset(0, -100),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<String>('event-color-11')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+
+    final List<EventOccurrence> saved = await repository
+        .watchEventsForHebrewMonth(_fixedDate.year, _fixedDate.month)
+        .first;
+    expect(saved.single.event.colorId, '11');
+  });
+
   testWidgets('shows an inline error when saving with an empty title', (
     WidgetTester tester,
   ) async {

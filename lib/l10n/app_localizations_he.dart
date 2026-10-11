@@ -367,4 +367,29 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get eventEditorScopeThisAndFollowingNote =>
       'עורך את המופע הזה ואת כל הבאים אחריו. מופעים קודמים לא ישתנו.';
+
+  @override
+  String get eventColorLabel => 'צבע';
+
+  @override
+  String get eventColorDefault => 'ברירת מחדל';
+
+  @override
+  String eventColorOption(String id) {
+    String _temp0 = intl.Intl.selectLogic(id, {
+      '1': 'לבנדר',
+      '2': 'מרווה',
+      '3': 'ענבים',
+      '4': 'פלמינגו',
+      '5': 'בננה',
+      '6': 'מנדרינה',
+      '7': 'טווס',
+      '8': 'גרפיט',
+      '9': 'אוכמניות',
+      '10': 'בזיליקום',
+      '11': 'עגבנייה',
+      'other': 'צבע',
+    });
+    return '$_temp0';
+  }
 }

@@ -155,6 +155,10 @@ class EventEditorController extends Notifier<EventEditorState> {
   }
 
   /// Sets (or, when [until] is null, clears) the "repeat until" date.
+  void setColorId(String? colorId) => state = colorId == null
+      ? state.copyWith(clearColorId: true)
+      : state.copyWith(colorId: colorId);
+
   void setRecurrenceUntil(HebrewDate? until) {
     state = until == null
         ? state.copyWith(clearRecurrenceUntil: true)
@@ -203,6 +207,8 @@ class EventEditorController extends Notifier<EventEditorState> {
       endTime: state.allDay ? null : state.endTime,
       clearEndTime: state.allDay || state.endTime == null,
       reminderMinutesBefore: state.reminderMinutesBefore,
+      colorId: state.colorId,
+      clearColorId: state.colorId == null,
       recurrence: RecurrenceRule(
         type: state.recurrenceType,
         until: state.recurrenceType == RecurrenceType.none

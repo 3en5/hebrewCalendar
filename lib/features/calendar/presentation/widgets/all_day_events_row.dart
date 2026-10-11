@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/dimens.dart';
+import '../../../../core/theme/event_colors.dart';
 import '../../../../domain/event/event_occurrence.dart';
 import 'day_occurrences.dart';
 
@@ -65,10 +66,14 @@ class _AllDayChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final ({Color background, Color foreground}) colors = eventSurfaceColors(
+      occurrence.event.colorId,
+      colorScheme,
+    );
     return Padding(
       padding: EdgeInsetsDirectional.only(bottom: spacingXs / 2),
       child: Material(
-        color: colorScheme.primaryContainer,
+        color: colors.background,
         borderRadius: BorderRadius.circular(spacingXs),
         child: InkWell(
           borderRadius: BorderRadius.circular(spacingXs),
@@ -84,7 +89,7 @@ class _AllDayChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: captionRem,
                 fontWeight: FontWeight.w600,
-                color: colorScheme.onPrimaryContainer,
+                color: colors.foreground,
               ),
             ),
           ),

@@ -21,6 +21,7 @@ class EventEditorState {
     this.recurrenceType = RecurrenceType.none,
     this.recurrenceUntil,
     this.recurrenceExceptions = const <HebrewDate>[],
+    this.colorId,
     this.errors = const <EventValidationErrorType>[],
     this.isSaving = false,
   });
@@ -42,6 +43,7 @@ class EventEditorState {
     recurrenceType: event.recurrence.type,
     recurrenceUntil: event.recurrence.until,
     recurrenceExceptions: event.recurrence.exceptions,
+    colorId: event.colorId,
   );
 
   final HebrewDate hebrewDate;
@@ -67,6 +69,9 @@ class EventEditorState {
   /// never silently drops previously-recorded exceptions.
   final List<HebrewDate> recurrenceExceptions;
 
+  /// M10: Google Calendar color id, null for the default color.
+  final String? colorId;
+
   final List<EventValidationErrorType> errors;
   final bool isSaving;
 
@@ -86,6 +91,8 @@ class EventEditorState {
     RecurrenceType? recurrenceType,
     HebrewDate? recurrenceUntil,
     bool clearRecurrenceUntil = false,
+    String? colorId,
+    bool clearColorId = false,
     List<EventValidationErrorType>? errors,
     bool? isSaving,
   }) => EventEditorState(
@@ -102,6 +109,7 @@ class EventEditorState {
         ? null
         : (recurrenceUntil ?? this.recurrenceUntil),
     recurrenceExceptions: recurrenceExceptions,
+    colorId: clearColorId ? null : (colorId ?? this.colorId),
     errors: errors ?? this.errors,
     isSaving: isSaving ?? this.isSaving,
   );

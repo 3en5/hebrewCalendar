@@ -22,7 +22,7 @@ class DayCell extends StatelessWidget {
     required this.isSelected,
     required this.isShabbat,
     required this.drawEndLine,
-    this.eventCount = 0,
+    this.eventColors = const <Color>[],
     this.label,
     this.onTap,
     super.key,
@@ -46,8 +46,8 @@ class DayCell extends StatelessWidget {
   /// column but the last).
   final bool drawEndLine;
 
-  /// Number of events on this day; drawn as up to [_maxDots] dots.
-  final int eventCount;
+  /// One color per event on this day (M10); drawn as up to [_maxDots] dots.
+  final List<Color> eventColors;
 
   /// The day's most important holiday/parsha label, if any.
   final JewishDayLabel? label;
@@ -110,7 +110,10 @@ class DayCell extends StatelessWidget {
                                 child: _DayLabel(label: label!),
                               ),
                             SizedBox(height: spacingXs / 2),
-                            _EventDots(hebrewDay: hebrewDay, count: eventCount),
+                            _EventDots(
+                              hebrewDay: hebrewDay,
+                              colors: eventColors,
+                            ),
                           ],
                         ),
                       ),
@@ -235,23 +238,22 @@ Color jewishDayLabelColor(ColorScheme colorScheme, JewishDayKind kind) {
 }
 
 class _EventDots extends StatelessWidget {
-  const _EventDots({required this.hebrewDay, required this.count});
+  const _EventDots({required this.hebrewDay, required this.colors});
 
   final int hebrewDay;
-  final int count;
+  final List<Color> colors;
 
   @override
   Widget build(BuildContext context) {
     final double dot = spacingXs * 1.25;
-    if (count == 0) {
+    if (colors.isEmpty) {
       return SizedBox(height: dot);
     }
-    final Color color = Theme.of(context).colorScheme.primary;
     return Row(
       key: ValueKey<String>('event-dot-$hebrewDay'),
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        for (int i = 0; i < count.clamp(0, _maxDots); i++)
+        for (final Color color in colors.take(_maxDots))
           Container(
             width: dot,
             height: dot,

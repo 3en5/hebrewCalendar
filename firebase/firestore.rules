@@ -114,6 +114,8 @@ service cloud.firestore {
           && data.createdAt is timestamp
           && data.updatedAt is timestamp
           && (!('source' in data) || data.source in ['app', 'google'])
+          // M10: Google Calendar color id ("1".."11"), null = default color.
+          && (!('colorId' in data) || data.colorId == null || (data.colorId is string && data.colorId.size() <= 2))
           && (!('googleSync' in data) || isValidSyncState(data.googleSync))
           && (!('googleInstanceSync' in data) || data.googleInstanceSync is map);
       }

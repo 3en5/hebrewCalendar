@@ -78,6 +78,18 @@ void main() {
       });
     }
 
+    test('round-trips an event color (M10)', () {
+      final Event original = _baseEvent(
+        month: HebrewMonth.cheshvan,
+      ).copyWith(colorId: '11');
+      final Event restored = eventFromFirestoreData(
+        original.id,
+        eventToFirestoreData(event: original, engine: _engine),
+      );
+      expect(restored.colorId, '11');
+      expect(restored, original);
+    });
+
     test('round-trips start/end times and reminders', () {
       final Event original = _baseEvent(
         allDay: false,

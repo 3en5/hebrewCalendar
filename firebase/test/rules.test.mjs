@@ -134,6 +134,13 @@ describe('events/{eventId}', () => {
     await assertFails(setDoc(ref, event({ hebrewDate: { year: 5787, month: 'tishrei', day: 31 } })));
     await assertFails(setDoc(ref, event({ recurrence: { type: 'yearly', until: null, exceptions: [] } })));
     await assertFails(setDoc(ref, event({ source: 'other' })));
+    await assertFails(setDoc(ref, event({ colorId: 7 })));
+    await assertFails(setDoc(ref, event({ colorId: '123' })));
+  });
+
+  test('M10: an event color id is accepted (or null)', async () => {
+    await assertSucceeds(setDoc(doc(alice(), 'events/c1'), event({ colorId: '11' })));
+    await assertSucceeds(setDoc(doc(alice(), 'events/c2'), event({ colorId: null })));
   });
 
   test('owner can list their events by ownerUid (the app\'s query shape)', async () => {

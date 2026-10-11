@@ -74,6 +74,7 @@ class GoogleEventWrite {
     required this.end,
     required this.hebcalEventId,
     required this.hebcalOccurrence,
+    this.colorId,
   });
 
   final String summary;
@@ -89,6 +90,9 @@ class GoogleEventWrite {
 
   /// Written to `extendedProperties.private.hebcalOccurrence`.
   final String hebcalOccurrence;
+
+  /// M10: Google `colorId`, or null to leave Google's color as it is.
+  final String? colorId;
 }
 
 /// Thrown by [GoogleCalendarApi.listChangedEvents] when Google Calendar

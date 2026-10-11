@@ -7,6 +7,7 @@ import '../../../domain/event/recurrence_rule.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/event_editor_controller.dart';
 import '../application/event_editor_state.dart';
+import 'widgets/event_color_picker.dart';
 import 'widgets/event_time_section.dart';
 import 'widgets/hebrew_date_picker_field.dart';
 import 'widgets/recurrence_type_selector.dart';
@@ -177,6 +178,16 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                   : null,
             ),
             onChanged: _controller.setLocation,
+          ),
+          SizedBox(height: spacingMd),
+          Text(
+            l10n.eventColorLabel,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          SizedBox(height: spacingXs),
+          EventColorPicker(
+            selectedColorId: state.colorId,
+            onChanged: _controller.setColorId,
           ),
           SizedBox(height: spacingMd),
           Text(

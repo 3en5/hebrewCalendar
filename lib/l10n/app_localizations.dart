@@ -747,6 +747,24 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'עורך את המופע הזה ואת כל הבאים אחריו. מופעים קודמים לא ישתנו.'**
   String get eventEditorScopeThisAndFollowingNote;
+
+  /// Section label for the event color picker in the event editor (M10).
+  ///
+  /// In he, this message translates to:
+  /// **'צבע'**
+  String get eventColorLabel;
+
+  /// Tooltip of the default-color swatch in the event color picker (M10).
+  ///
+  /// In he, this message translates to:
+  /// **'ברירת מחדל'**
+  String get eventColorDefault;
+
+  /// Hebrew name of one of Google Calendar's 11 event colors, by its Google colorId (M10).
+  ///
+  /// In he, this message translates to:
+  /// **'{id, select, 1{לבנדר} 2{מרווה} 3{ענבים} 4{פלמינגו} 5{בננה} 6{מנדרינה} 7{טווס} 8{גרפיט} 9{אוכמניות} 10{בזיליקום} 11{עגבנייה} other{צבע}}'**
+  String eventColorOption(String id);
 }
 
 class _AppLocalizationsDelegate

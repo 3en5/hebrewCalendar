@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/dimens.dart';
+import '../../../../core/theme/event_colors.dart';
 import '../../../../domain/event/event.dart';
 import '../../../../domain/event/event_occurrence.dart';
 
@@ -19,11 +20,15 @@ class EventBlock extends StatelessWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final Event event = occurrence.event;
     final String? timeLabel = event.startTime?.toString();
+    final ({Color background, Color foreground}) colors = eventSurfaceColors(
+      event.colorId,
+      colorScheme,
+    );
 
     return Padding(
       padding: EdgeInsetsDirectional.all(spacingXs / 2),
       child: Material(
-        color: colorScheme.primaryContainer,
+        color: colors.background,
         borderRadius: BorderRadius.circular(spacingXs),
         child: InkWell(
           borderRadius: BorderRadius.circular(spacingXs),
@@ -44,7 +49,7 @@ class EventBlock extends StatelessWidget {
                   style: TextStyle(
                     fontSize: captionRem,
                     fontWeight: FontWeight.w600,
-                    color: colorScheme.onPrimaryContainer,
+                    color: colors.foreground,
                   ),
                 ),
                 if (timeLabel != null)
@@ -54,7 +59,7 @@ class EventBlock extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: captionRem,
-                      color: colorScheme.onPrimaryContainer,
+                      color: colors.foreground,
                     ),
                   ),
               ],

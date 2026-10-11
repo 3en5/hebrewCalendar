@@ -479,5 +479,14 @@
   "eventEditorScopeThisAndFollowingNote": "עורך את המופע הזה ואת כל הבאים אחריו. מופעים קודמים לא ישתנו.",
   "@eventEditorScopeThisAndFollowingNote": {
     "description": "Note at the top of the event editor when editing an occurrence and all following ones of a recurring series (M9)."
+  },
+  "eventColorLabel": "צבע",
+  "@eventColorLabel": {"description": "Section label for the event color picker in the event editor (M10)."},
+  "eventColorDefault": "ברירת מחדל",
+  "@eventColorDefault": {"description": "Tooltip of the default-color swatch in the event color picker (M10)."},
+  "eventColorOption": "{id, select, 1{לבנדר} 2{מרווה} 3{ענבים} 4{פלמינגו} 5{בננה} 6{מנדרינה} 7{טווס} 8{גרפיט} 9{אוכמניות} 10{בזיליקום} 11{עגבנייה} other{צבע}}",
+  "@eventColorOption": {
+    "description": "Hebrew name of one of Google Calendar's 11 event colors, by its Google colorId (M10).",
+    "placeholders": {"id": {"type": "String"}}
   }
 }

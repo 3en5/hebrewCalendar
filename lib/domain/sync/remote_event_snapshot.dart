@@ -13,6 +13,7 @@ class RemoteEventSnapshot {
     this.summary = '',
     this.description = '',
     this.location = '',
+    this.colorId,
     this.start,
     this.end,
     this.isAllDay = true,
@@ -35,6 +36,9 @@ class RemoteEventSnapshot {
   final String summary;
   final String description;
   final String location;
+
+  /// M10: Google's `colorId` ("1".."11"), null for the calendar color.
+  final String? colorId;
 
   /// Null only for a cancelled event, where Google Calendar may omit
   /// start/end entirely.

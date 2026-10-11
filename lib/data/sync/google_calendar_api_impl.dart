@@ -31,6 +31,7 @@ import 'package:http/http.dart' as http;
 import '../../core/auth/google_sign_in_gate.dart';
 import '../../domain/sync/remote_event_snapshot.dart';
 import 'google_calendar_api.dart';
+import 'google_event_json.dart';
 
 const List<String> _kCalendarScopes = <String>[
   'https://www.googleapis.com/auth/calendar.events',
@@ -217,7 +218,7 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
           body['items'] as List<dynamic>? ?? const <dynamic>[];
       events.addAll(
         items.map(
-          (dynamic item) => _snapshotFromJson(item as Map<String, dynamic>),
+          (dynamic item) => googleEventFromJson(item as Map<String, dynamic>),
         ),
       );
       pageToken = body['nextPageToken'] as String?;
@@ -236,7 +237,9 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       label: 'getEvent',
     );
     _throwIfError(response);
-    return _snapshotFromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return googleEventFromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   @override
@@ -247,12 +250,14 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       () async => _httpClient.post(
         Uri.parse(_kEventsUrl),
         headers: await _authHeaders(),
-        body: jsonEncode(_toJson(event)),
+        body: jsonEncode(googleEventToJson(event)),
       ),
       label: 'insertEvent',
     );
     _throwIfError(response);
-    return _snapshotFromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return googleEventFromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   @override
@@ -269,14 +274,16 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       return _httpClient.patch(
         Uri.parse('$_kEventsUrl/$googleEventId'),
         headers: headers,
-        body: jsonEncode(_toJson(event)),
+        body: jsonEncode(googleEventToJson(event)),
       );
     }, label: 'patchEvent');
     if (response.statusCode == 412) {
       throw GoogleEtagMismatchException(googleEventId);
     }
     _throwIfError(response);
-    return _snapshotFromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return googleEventFromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   @override
@@ -470,65 +477,5 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       return;
     }
     throw GoogleCalendarApiException(response.statusCode, response.body);
-  }
-
-  Map<String, dynamic> _toJson(GoogleEventWrite event) => <String, dynamic>{
-    'summary': event.summary,
-    'description': event.description,
-    'location': event.location,
-    'start': event.isAllDay
-        ? <String, String>{'date': _dateOnly(event.start)}
-        : <String, String>{'dateTime': event.start.toUtc().toIso8601String()},
-    'end': event.isAllDay
-        ? <String, String>{'date': _dateOnly(event.end)}
-        : <String, String>{'dateTime': event.end.toUtc().toIso8601String()},
-    'extendedProperties': <String, dynamic>{
-      'private': <String, String>{
-        'hebcalEventId': event.hebcalEventId,
-        'hebcalOccurrence': event.hebcalOccurrence,
-      },
-    },
-  };
-
-  String _dateOnly(DateTime dt) =>
-      '${dt.year.toString().padLeft(4, '0')}-'
-      '${dt.month.toString().padLeft(2, '0')}-'
-      '${dt.day.toString().padLeft(2, '0')}';
-
-  RemoteEventSnapshot _snapshotFromJson(Map<String, dynamic> json) {
-    final bool cancelled = json['status'] == 'cancelled';
-    final Map<String, dynamic>? extendedPrivate =
-        (json['extendedProperties'] as Map<String, dynamic>?)?['private']
-            as Map<String, dynamic>?;
-    final Map<String, dynamic>? start = json['start'] as Map<String, dynamic>?;
-    final Map<String, dynamic>? end = json['end'] as Map<String, dynamic>?;
-    return RemoteEventSnapshot(
-      googleEventId: json['id'] as String,
-      etag: json['etag'] as String? ?? '',
-      updatedAt: DateTime.parse(
-        json['updated'] as String? ?? DateTime.now().toIso8601String(),
-      ),
-      isCancelled: cancelled,
-      summary: json['summary'] as String? ?? '',
-      description: json['description'] as String? ?? '',
-      location: json['location'] as String? ?? '',
-      start: _parseEventDateTime(start),
-      end: _parseEventDateTime(end),
-      isAllDay: start != null && start['date'] != null,
-      hebcalEventId: extendedPrivate?['hebcalEventId'] as String?,
-      hebcalOccurrence: extendedPrivate?['hebcalOccurrence'] as String?,
-    );
-  }
-
-  DateTime? _parseEventDateTime(Map<String, dynamic>? map) {
-    if (map == null) {
-      return null;
-    }
-    final String? dateTime = map['dateTime'] as String?;
-    if (dateTime != null) {
-      return DateTime.parse(dateTime).toLocal();
-    }
-    final String? date = map['date'] as String?;
-    return date == null ? null : DateTime.parse(date);
   }
 }

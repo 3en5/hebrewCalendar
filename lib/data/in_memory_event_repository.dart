@@ -238,6 +238,7 @@ class InMemoryEventRepository implements EventRepository {
               title: snapshot.summary,
               description: snapshot.description,
               location: snapshot.location,
+              colorId: snapshot.colorId,
               hebrewDate: hebrewDate,
               allDay: snapshot.isAllDay,
               updatedAt: snapshot.updatedAt,

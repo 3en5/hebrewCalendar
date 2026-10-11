@@ -31,6 +31,7 @@ GoogleEventWrite buildGoogleEventWrite({
     summary: event.title,
     description: event.description,
     location: event.location,
+    colorId: event.colorId,
     isAllDay: event.allDay,
     start: start,
     end: end,

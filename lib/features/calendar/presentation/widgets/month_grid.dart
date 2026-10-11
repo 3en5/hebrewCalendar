@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/dimens.dart';
+import '../../../../core/theme/event_colors.dart';
 import '../../../../domain/event/event_occurrence.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
@@ -173,7 +174,11 @@ class MonthGrid extends ConsumerWidget {
       isSelected: cellDate == selected,
       isShabbat: col == _daysPerWeek - 1,
       drawEndLine: drawEndLine,
-      eventCount: occurrencesByDay[cellDate.day]?.length ?? 0,
+      eventColors: <Color>[
+        for (final EventOccurrence o
+            in occurrencesByDay[cellDate.day] ?? const <EventOccurrence>[])
+          eventColor(o.event.colorId, Theme.of(context).colorScheme),
+      ],
       // Labels are ordered most important first, parsha last.
       label: labelsByDay[cellDate.day]?.first,
       onTap: () =>

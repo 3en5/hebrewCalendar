@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/dimens.dart';
+import '../../../../core/theme/event_colors.dart';
 import '../../../../domain/event/event.dart';
 import '../../../../domain/event/event_occurrence.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
@@ -194,7 +195,7 @@ class _AgendaRow extends StatelessWidget {
               width: spacingXs,
               height: rem(1.125),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
+                color: eventColor(event.colorId, theme.colorScheme),
                 borderRadius: BorderRadius.circular(spacingXs / 2),
               ),
             ),
