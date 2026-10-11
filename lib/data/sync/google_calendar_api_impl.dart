@@ -22,8 +22,10 @@ library;
 import 'dart:async' show TimeoutException;
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/auth/google_sign_in_gate.dart';
@@ -42,8 +44,10 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
     GoogleSignIn? googleSignIn,
     http.Client? httpClient,
     this.allowInteractiveAuth = true,
+    String? Function()? signedInEmail,
   }) : _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
-       _httpClient = httpClient ?? http.Client();
+       _httpClient = httpClient ?? http.Client(),
+       _signedInEmail = signedInEmail ?? _firebaseUserEmail;
 
   final GoogleSignIn _googleSignIn;
   final http.Client _httpClient;
@@ -55,8 +59,34 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
   /// reuse it for the sync REST calls in the same session — otherwise every
   /// `_authHeaders()` call would silently fail ("No signed-in Google account
   /// available") right after the user enabled sync. NOT persisted across app
-  /// restarts: a new session re-authorizes via [requestAccess].
+  /// restarts: after a restart [_authHeadersForSignedInEmail] takes over.
   GoogleSignInAccount? _cachedAccount;
+
+  /// The signed-in app user's email (the Google account they signed in
+  /// with). Device-feedback round #7: after an app restart
+  /// `attemptLightweightAuthentication()` returned null on the owner's
+  /// phone, so *every* sync failed with "No signed-in Google account" —
+  /// [_authHeaders] now falls back to requesting the calendar token
+  /// directly for this account, which needs no restored
+  /// [GoogleSignInAccount].
+  final String? Function() _signedInEmail;
+
+  /// Whether this instance already tried a lightweight restore and got no
+  /// account, so later requests go straight to the email-based fallback
+  /// instead of waiting on the restore again for every REST call.
+  bool _lightweightRestoreFailed = false;
+
+  static String? _firebaseUserEmail() {
+    try {
+      return fb_auth.FirebaseAuth.instance.currentUser?.email;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// How long a silent account restore may take before it counts as "no
+  /// account" (it is a platform call that can stall).
+  static const Duration _kLightweightRestoreTimeout = Duration(seconds: 10);
 
   /// Whether [_authHeaders] may prompt the user for the `calendar.events`
   /// scope (`promptIfNecessary: true`) if it isn't already silently
@@ -314,9 +344,21 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       return _cachedAccount;
     }
     await GoogleSignInGate.ensure(_googleSignIn.initialize);
-    GoogleSignInAccount? account =
-        await (_googleSignIn.attemptLightweightAuthentication() ??
-            Future<GoogleSignInAccount?>.value());
+    GoogleSignInAccount? account;
+    if (!_lightweightRestoreFailed || interactive) {
+      try {
+        account =
+            await (_googleSignIn.attemptLightweightAuthentication() ??
+                    Future<GoogleSignInAccount?>.value())
+                .timeout(_kLightweightRestoreTimeout);
+      } on TimeoutException {
+        debugPrint(
+          '[sync-settings] attemptLightweightAuthentication() timed out',
+        );
+        account = null;
+      }
+      _lightweightRestoreFailed = account == null;
+    }
     debugPrint(
       '[sync-settings] attemptLightweightAuthentication() -> '
       'account=${account?.id}',
@@ -345,9 +387,7 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
   Future<Map<String, String>> _authHeaders() async {
     final GoogleSignInAccount? account = await _currentAccount();
     if (account == null) {
-      throw StateError(
-        'No signed-in Google account available for Calendar sync.',
-      );
+      return _authHeadersForSignedInEmail();
     }
     final Map<String, String>? headers = await account.authorizationClient
         .authorizationHeaders(
@@ -358,6 +398,46 @@ class GoogleCalendarApiImpl implements GoogleCalendarApi {
       throw StateError('Calendar access was not granted.');
     }
     return <String, String>{...headers, 'Content-Type': 'application/json'};
+  }
+
+  /// Device-feedback round #7 fallback for [_authHeaders]: no
+  /// [GoogleSignInAccount] could be restored, so ask for the calendar token
+  /// directly for the signed-in user's email — silently (never a prompt
+  /// here, so it is also safe from the background isolate). On Android this
+  /// is an `AuthorizationClient.authorize` call for that account, which
+  /// succeeds without UI once the user granted `calendar.events` (they did,
+  /// when enabling sync).
+  Future<Map<String, String>> _authHeadersForSignedInEmail() async {
+    final String? email = _signedInEmail();
+    if (email == null) {
+      throw StateError(
+        'No signed-in Google account available for Calendar sync.',
+      );
+    }
+    final ClientAuthorizationTokenData? tokens = await GoogleSignInPlatform
+        .instance
+        .clientAuthorizationTokensForScopes(
+          ClientAuthorizationTokensForScopesParameters(
+            request: AuthorizationRequestDetails(
+              scopes: _kCalendarScopes,
+              userId: null,
+              email: email,
+              promptIfUnauthorized: false,
+            ),
+          ),
+        );
+    debugPrint(
+      '[sync-settings] email-based calendar authorization -> '
+      'granted=${tokens != null}',
+    );
+    if (tokens == null) {
+      throw StateError('Calendar access was not granted.');
+    }
+    return <String, String>{
+      'Authorization': 'Bearer ${tokens.accessToken}',
+      'X-Goog-AuthUser': '0',
+      'Content-Type': 'application/json',
+    };
   }
 
   void _throwIfError(http.Response response) {

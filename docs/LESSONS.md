@@ -569,3 +569,16 @@
 - `kosher_dart`: `getYomTovIndex` מחזיר אינדקס אחד ליום — ראש חודש שחל בחנוכה
   צריך בדיקה נפרדת עם `isRoshChodesh`. וקבוע 35 משמש גם `SHUSHAN_PURIM_KATAN`
   וגם `ISRU_CHAG` (אותו ערך) — הספרייה מחזירה אותו רק לשושן פורים קטן.
+
+## 2026-10-11 — סנכרון Google: לא לסמוך על שחזור חשבון שקט, ולאבחן מהשרת
+- `google_sign_in` 7: `attemptLightweightAuthentication()` יכול להחזיר null במכשיר
+  אמיתי גם כשהמשתמש מחובר ל-Firebase. מטמון בזיכרון (`_cachedAccount`) עוזר רק עד
+  ההפעלה הבאה. בשביל טוקן יומן לא צריך `GoogleSignInAccount`: מבקשים
+  `clientAuthorizationTokensForScopes` עם האימייל של משתמש Firebase
+  (`promptIfUnauthorized: false`), וב-Android זה `AuthorizationClient.authorize`
+  שקט לחשבון הזה.
+- אבחון: הסנכרון שומר את השגיאה האחרונה ב-`users/{uid}.googleLastSyncError`.
+  `diagnose-sync.yml` קורא אותה עם חשבון השירות — מהיר יותר ומדויק יותר מלבקש
+  מהמשתמש לוגים מהטלפון.
+- `flutter test`/`pub get` משנים את `pubspec.lock` מקומית (ה-lock ב-main נוצר עם Dart
+  חדש יותר מזה של CI). לבדוק `git status` לפני commit ולהבין כל שינוי ב-lock.

@@ -5,6 +5,23 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-11 — סבב משוב מכשיר #7: סנכרון Google לא עבד אחרי הפעלה מחדש
+
+- דיווח: במסך ההגדרות הסנכרון "תקוע" ואף פעם לא בוצע סנכרון.
+- אבחון בלי לבקש מהמשתמש לוגים: workflow חדש לקריאה בלבד (`diagnose-sync.yml` →
+  `tool/diagnose_sync.py`) הראה ב-Firestore: `googleSyncEnabled=true`, אין sync token,
+  אין `googleLastSyncedAt`, והשגיאה האחרונה "No signed-in Google account available
+  for Calendar sync".
+- שורש: אחרי הפעלה מחדש של האפליקציה `attemptLightweightAuthentication()` מחזיר null
+  במכשיר של המשתמש, והחשבון שנשמר ב-`_cachedAccount` (סבב #5) לא שורד הפעלה מחדש —
+  כך שכל סנכרון (גם ברקע) נכשל מההפעלה הראשונה ואילך.
+- תיקון (`google_calendar_api_impl.dart`): כשאין חשבון משוחזר, מבקשים את טוקן היומן
+  ישירות לפי האימייל של המשתמש המחובר (`clientAuthorizationTokensForScopes` עם
+  `email`, בלי חלון) — עובד גם ב-isolate של הרקע. ניסיון השחזור השקט מוגבל ל-10
+  שניות ולא חוזר על עצמו בכל בקשה. נוספה תלות ישירה
+  `google_sign_in_platform_interface` (כבר הייתה טרנזיטיבית, אותה גרסה).
+- טסט חדש: `test/data/sync/google_calendar_api_impl_auth_test.dart` (3 טסטים).
+
 ## 2026-10-11 — M8 הושלם (חגים ופרשת השבוע)
 
 - `JewishDayInfo` (domain) עוטף את `kosher_dart`: חגים, ערבי חג וחול המועד, צומות,
