@@ -341,4 +341,11 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get settingsInIsraelSubtitle =>
       'כבוי: לוח חו״ל (יום טוב שני של גלויות וסדר הפרשות בחו״ל)';
+
+  @override
+  String get calendarPullSyncDoneMessage => 'הסנכרון עם Google הושלם';
+
+  @override
+  String get calendarPullSyncDisabledMessage =>
+      'הסנכרון עם Google כבוי. אפשר להפעיל אותו בהגדרות.';
 }

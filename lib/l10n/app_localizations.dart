@@ -705,6 +705,18 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'כבוי: לוח חו״ל (יום טוב שני של גלויות וסדר הפרשות בחו״ל)'**
   String get settingsInIsraelSubtitle;
+
+  /// Snackbar after pulling the calendar down ran a Google Calendar sync successfully.
+  ///
+  /// In he, this message translates to:
+  /// **'הסנכרון עם Google הושלם'**
+  String get calendarPullSyncDoneMessage;
+
+  /// Snackbar when the user pulls the calendar down to sync but Google Calendar sync is turned off.
+  ///
+  /// In he, this message translates to:
+  /// **'הסנכרון עם Google כבוי. אפשר להפעיל אותו בהגדרות.'**
+  String get calendarPullSyncDisabledMessage;
 }
 
 class _AppLocalizationsDelegate

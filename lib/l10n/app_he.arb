@@ -451,5 +451,13 @@
   "settingsInIsraelSubtitle": "כבוי: לוח חו״ל (יום טוב שני של גלויות וסדר הפרשות בחו״ל)",
   "@settingsInIsraelSubtitle": {
     "description": "Explains the Israel/diaspora calendar switch in Settings (M8)."
+  },
+  "calendarPullSyncDoneMessage": "הסנכרון עם Google הושלם",
+  "@calendarPullSyncDoneMessage": {
+    "description": "Snackbar after pulling the calendar down ran a Google Calendar sync successfully."
+  },
+  "calendarPullSyncDisabledMessage": "הסנכרון עם Google כבוי. אפשר להפעיל אותו בהגדרות.",
+  "@calendarPullSyncDisabledMessage": {
+    "description": "Snackbar when the user pulls the calendar down to sync but Google Calendar sync is turned off."
   }
 }

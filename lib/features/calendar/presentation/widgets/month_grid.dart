@@ -77,60 +77,71 @@ class MonthGrid extends ConsumerWidget {
           .add(occurrence);
     }
 
-    return Column(
-      children: <Widget>[
-        const _WeekdayHeaderRow(),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              final double rowHeight =
-                  (constraints.maxHeight * _gridHeightShare / rowCount).clamp(
-                    rem(2.75),
-                    rem(4.5),
-                  );
-              return Column(
-                children: <Widget>[
-                  for (int row = 0; row < rowCount; row++)
-                    SizedBox(
-                      height: rowHeight,
-                      child: Row(
-                        // Stretch so empty (out-of-month) cells, which have
-                        // no child to size them, still fill the row and
-                        // their grid lines line up with the day cells'.
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          for (int col = 0; col < _daysPerWeek; col++)
-                            Expanded(
-                              child: _buildCell(
-                                context,
-                                ref,
-                                cells[row * _daysPerWeek + col],
-                                col: col,
-                                today: today,
-                                selected: selected,
-                                occurrencesByDay: occurrencesByDay,
-                                labelsByDay: labelsByDay,
-                              ),
+    // Device feedback: pulling the screen down syncs with Google (the
+    // shell's RefreshIndicator). The month page itself isn't scrollable, so
+    // it sits in an always-scrollable view exactly one screen tall to let
+    // the pull gesture start anywhere on it.
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints viewport) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: viewport.maxHeight,
+          child: Column(
+            children: <Widget>[
+              const _WeekdayHeaderRow(),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    final double rowHeight =
+                        (constraints.maxHeight * _gridHeightShare / rowCount)
+                            .clamp(rem(2.75), rem(4.5));
+                    return Column(
+                      children: <Widget>[
+                        for (int row = 0; row < rowCount; row++)
+                          SizedBox(
+                            height: rowHeight,
+                            child: Row(
+                              // Stretch so empty (out-of-month) cells, which have
+                              // no child to size them, still fill the row and
+                              // their grid lines line up with the day cells'.
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: <Widget>[
+                                for (int col = 0; col < _daysPerWeek; col++)
+                                  Expanded(
+                                    child: _buildCell(
+                                      context,
+                                      ref,
+                                      cells[row * _daysPerWeek + col],
+                                      col: col,
+                                      today: today,
+                                      selected: selected,
+                                      occurrencesByDay: occurrencesByDay,
+                                      labelsByDay: labelsByDay,
+                                    ),
+                                  ),
+                              ],
                             ),
-                        ],
-                      ),
-                    ),
-                  Expanded(
-                    child: MonthDayAgenda(
-                      date: selected,
-                      labels:
-                          labelsByDay[selected.day] ?? const <JewishDayLabel>[],
-                      occurrences:
-                          occurrencesByDay[selected.day] ??
-                          const <EventOccurrence>[],
-                    ),
-                  ),
-                ],
-              );
-            },
+                          ),
+                        Expanded(
+                          child: MonthDayAgenda(
+                            date: selected,
+                            labels:
+                                labelsByDay[selected.day] ??
+                                const <JewishDayLabel>[],
+                            occurrences:
+                                occurrencesByDay[selected.day] ??
+                                const <EventOccurrence>[],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 

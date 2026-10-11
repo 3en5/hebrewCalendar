@@ -13,7 +13,10 @@ import '../../auth/application/auth_providers.dart';
 import '../../auth/application/demo_mode_provider.dart';
 import '../../event_editor/presentation/event_editor_screen.dart';
 import '../../notifications/application/reminder_providers.dart';
+import '../../../domain/sync/sync_state.dart';
 import '../../settings/application/google_sync_providers.dart';
+import '../../settings/application/google_sync_settings_state.dart';
+import '../../settings/application/google_sync_trigger_service.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../application/calendar_view_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
@@ -146,18 +149,71 @@ class CalendarShellScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: switch (state.viewType) {
-        CalendarViewType.month => const MonthViewBody(),
-        CalendarViewType.week => const WeekViewScreen(),
-        CalendarViewType.day => const DayViewScreen(),
-        CalendarViewType.agenda => const AgendaViewScreen(),
-      },
+      // Device feedback: pulling any view down runs a Google sync. Only
+      // vertical scrolls count (the views page horizontally), from any
+      // depth, so the pull works on the month page and its agenda alike.
+      body: RefreshIndicator(
+        notificationPredicate: (ScrollNotification notification) =>
+            notification.metrics.axis == Axis.vertical,
+        onRefresh: () => _pullToSync(context, ref, l10n, demoMode: demoMode),
+        child: switch (state.viewType) {
+          CalendarViewType.month => const MonthViewBody(),
+          CalendarViewType.week => const WeekViewScreen(),
+          CalendarViewType.day => const DayViewScreen(),
+          CalendarViewType.agenda => const AgendaViewScreen(),
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openEditorForNewEvent(context, state),
         tooltip: l10n.addEventTooltip,
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  /// Pull-to-refresh: runs a Google sync and reports the outcome in a
+  /// snackbar (done / sync is off / the real error).
+  Future<void> _pullToSync(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n, {
+    required bool demoMode,
+  }) async {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    void show(String message, {SnackBarAction? action}) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message), action: action));
+    }
+
+    if (demoMode) {
+      show(l10n.settingsGoogleSyncDisabledDemoMessage);
+      return;
+    }
+    final GoogleSyncTriggerService service = ref.read(
+      googleSyncTriggerServiceProvider,
+    );
+    if (!service.state.enabled) {
+      show(
+        l10n.calendarPullSyncDisabledMessage,
+        action: SnackBarAction(
+          label: l10n.settingsScreenTitle,
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+          ),
+        ),
+      );
+      return;
+    }
+    await service.syncNow();
+    final GoogleSyncSettingsState after = service.state;
+    if (after.status == SyncStatus.error) {
+      show(
+        l10n.settingsGoogleSyncActionFailedMessage(after.errorMessage ?? ''),
+      );
+    } else {
+      show(l10n.calendarPullSyncDoneMessage);
+    }
   }
 
   String _title(
