@@ -349,6 +349,9 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String get settingsDarkModeTitle => 'מצב כהה';
+
+  @override
   String get settingsInIsraelTitle => 'לוח ארץ ישראל';
 
   @override
@@ -443,10 +446,10 @@ class AppLocalizationsHe extends AppLocalizations {
   String get goToDateTooltip => 'מעבר לתאריך';
 
   @override
-  String get goToHebrewDate => 'תאריך עברי…';
+  String get goToHebrewDate => 'דילוג לתאריך עברי';
 
   @override
-  String get goToGregorianDate => 'תאריך לועזי…';
+  String get goToGregorianDate => 'דילוג לתאריך לועזי';
 
   @override
   String get searchTooltip => 'חיפוש';

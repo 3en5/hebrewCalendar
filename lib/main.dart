@@ -13,6 +13,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/font_licenses.dart';
 import 'features/auth/presentation/auth_gate.dart';
 import 'features/settings/application/background_sync_bootstrap.dart';
+import 'features/settings/application/theme_mode_provider.dart';
 import 'l10n/app_localizations.dart';
 
 /// M7 error boundary: a crash anywhere in the widget tree, or an uncaught
@@ -99,16 +100,17 @@ Future<void> _initializeBackgroundSync() async {
 /// App shell (theme, RTL Hebrew localization) plus the auth gate — signed
 /// out shows [SignInScreen], signed in shows the Hebrew month view
 /// (`features/auth/presentation/auth_gate.dart`).
-class HebrewCalendarApp extends StatelessWidget {
+class HebrewCalendarApp extends ConsumerWidget {
   const HebrewCalendarApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       onGenerateTitle: (BuildContext context) =>
           AppLocalizations.of(context).appTitle,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
+      themeMode: ref.watch(themeModeProvider),
       locale: const Locale('he'),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const <LocalizationsDelegate<Object?>>[

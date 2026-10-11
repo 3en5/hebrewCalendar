@@ -460,6 +460,10 @@
     "description": "Tag in the month view's day agenda naming the weekly Torah portion read on that Shabbat (M8).",
     "placeholders": {"name": {"type": "String"}}
   },
+  "settingsDarkModeTitle": "מצב כהה",
+  "@settingsDarkModeTitle": {
+    "description": "Settings switch for dark mode, as in PowerWatch (follows the system until changed)."
+  },
   "settingsInIsraelTitle": "לוח ארץ ישראל",
   "@settingsInIsraelTitle": {
     "description": "Settings switch (M8): whether holidays and the parsha follow the Israel calendar."
@@ -530,9 +534,9 @@
   },
   "goToDateTooltip": "מעבר לתאריך",
   "@goToDateTooltip": {"description": "App bar button opening the go-to-date sheet (M12)."},
-  "goToHebrewDate": "תאריך עברי…",
+  "goToHebrewDate": "דילוג לתאריך עברי",
   "@goToHebrewDate": {"description": "Go-to-date option: pick a Hebrew date (M12)."},
-  "goToGregorianDate": "תאריך לועזי…",
+  "goToGregorianDate": "דילוג לתאריך לועזי",
   "@goToGregorianDate": {"description": "Go-to-date option: pick a Gregorian date (M12)."},
   "searchTooltip": "חיפוש",
   "@searchTooltip": {"description": "App bar button opening event search (M13)."},

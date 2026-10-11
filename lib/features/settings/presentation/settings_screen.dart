@@ -12,6 +12,7 @@ import '../application/app_version_provider.dart';
 import '../application/google_sync_providers.dart';
 import '../application/google_sync_settings_state.dart';
 import '../application/google_sync_trigger_service.dart';
+import '../application/theme_mode_provider.dart';
 import 'about_screen.dart';
 import 'widgets/backup_section.dart';
 import 'widgets/google_sync_section.dart';
@@ -63,6 +64,19 @@ class SettingsScreen extends ConsumerWidget {
               value: ref.watch(inIsraelProvider),
               onChanged: (bool value) =>
                   ref.read(inIsraelProvider.notifier).set(value),
+            ),
+          ),
+          // The "מצב כהה" switch, as in PowerWatch. Until it is flipped the
+          // app follows the system, so it shows the current brightness.
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.dark_mode_outlined),
+            title: Text(l10n.settingsDarkModeTitle),
+            trailing: Switch(
+              key: const ValueKey<String>('dark-mode-switch'),
+              value: Theme.of(context).brightness == Brightness.dark,
+              onChanged: (bool value) =>
+                  ref.read(themeModeProvider.notifier).setDark(value),
             ),
           ),
           SizedBox(height: spacingMd),

@@ -718,6 +718,12 @@ abstract class AppLocalizations {
   /// **'פרשת {name}'**
   String monthAgendaParshaTag(String name);
 
+  /// Settings switch for dark mode, as in PowerWatch (follows the system until changed).
+  ///
+  /// In he, this message translates to:
+  /// **'מצב כהה'**
+  String get settingsDarkModeTitle;
+
   /// Settings switch (M8): whether holidays and the parsha follow the Israel calendar.
   ///
   /// In he, this message translates to:
@@ -859,13 +865,13 @@ abstract class AppLocalizations {
   /// Go-to-date option: pick a Hebrew date (M12).
   ///
   /// In he, this message translates to:
-  /// **'תאריך עברי…'**
+  /// **'דילוג לתאריך עברי'**
   String get goToHebrewDate;
 
   /// Go-to-date option: pick a Gregorian date (M12).
   ///
   /// In he, this message translates to:
-  /// **'תאריך לועזי…'**
+  /// **'דילוג לתאריך לועזי'**
   String get goToGregorianDate;
 
   /// App bar button opening event search (M13).
