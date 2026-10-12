@@ -264,6 +264,10 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String get settingsGoogleSyncCancelledMessage =>
+      'החיבור ל-Google בוטל. אם הופיע מסך \"Google לא אימתה את האפליקציה\", לוחצים \"מתקדם\" ואז \"המשך ל-לוח עברי\", ומאשרים גישה ליומן.';
+
+  @override
   String get settingsGoogleSyncAccessDeniedMessage =>
       'לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.';
 

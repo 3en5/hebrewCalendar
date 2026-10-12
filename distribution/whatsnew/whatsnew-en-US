@@ -1,1 +1,1 @@
-New: sync progress. While syncing you see what is happening, e.g. "updating the calendar: 340 of 2,944", in Settings and under the calendar bar.
+Fix: if the Google connection screen is closed midway, the app now explains how to continue instead of a technical error. Also: sync progress.

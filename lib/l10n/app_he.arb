@@ -327,6 +327,10 @@
       }
     }
   },
+  "settingsGoogleSyncCancelledMessage": "החיבור ל-Google בוטל. אם הופיע מסך \"Google לא אימתה את האפליקציה\", לוחצים \"מתקדם\" ואז \"המשך ל-לוח עברי\", ומאשרים גישה ליומן.",
+  "@settingsGoogleSyncCancelledMessage": {
+    "description": "Shown when connecting Google Calendar was cancelled, e.g. by leaving Google's unverified-app warning; explains how to continue."
+  },
   "settingsGoogleSyncAccessDeniedMessage": "לא ניתנה הרשאה ליומן Google. אי אפשר להפעיל סנכרון.",
   "@settingsGoogleSyncAccessDeniedMessage": {
     "description": "Snackbar shown when the user denies the Google Calendar access request while enabling sync (M5a)."

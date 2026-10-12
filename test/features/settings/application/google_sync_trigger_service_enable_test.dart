@@ -80,6 +80,22 @@ void main() {
     await service.stop();
   });
 
+  test('backing out of Google\'s consent / unverified-app screen explains how '
+      'to continue instead of showing the raw exception', () async {
+    await service.start();
+    api.nextRequestAccessError = Exception(
+      'GoogleSignInException(code GoogleSignInExceptionCode.unknownError, '
+      'SDK reported an exception: 16: [16] Cancelled by user., null)',
+    );
+
+    await service.enable();
+
+    expect(service.state.status, SyncStatus.error);
+    expect(service.state.errorMessage, contains('מתקדם'));
+    expect(service.state.errorMessage, isNot(contains('Exception')));
+    await service.stop();
+  });
+
   test('a plain decline (requestAccess() returns false, not an exception) '
       'stays quiet — idle, no error message', () async {
     await service.start();

@@ -574,6 +574,12 @@ abstract class AppLocalizations {
   /// **'שגיאת סנכרון: {message}'**
   String settingsGoogleSyncErrorPrefix(String message);
 
+  /// Shown when connecting Google Calendar was cancelled, e.g. by leaving Google's unverified-app warning; explains how to continue.
+  ///
+  /// In he, this message translates to:
+  /// **'החיבור ל-Google בוטל. אם הופיע מסך \"Google לא אימתה את האפליקציה\", לוחצים \"מתקדם\" ואז \"המשך ל-לוח עברי\", ומאשרים גישה ליומן.'**
+  String get settingsGoogleSyncCancelledMessage;
+
   /// Snackbar shown when the user denies the Google Calendar access request while enabling sync (M5a).
   ///
   /// In he, this message translates to:

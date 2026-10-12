@@ -258,7 +258,12 @@ class GoogleSyncTriggerService {
       _state = _state.copyWith(
         authorizing: false,
         status: SyncStatus.error,
-        errorMessage: error.toString(),
+        // Device report 2026-10-12: backing out of Google's "app not
+        // verified" screen reaches here as "[16] Cancelled by user" — say
+        // how to get past that screen instead of the raw exception.
+        errorMessage: isUserCancellation(error)
+            ? AppLocalizationsHe().settingsGoogleSyncCancelledMessage
+            : error.toString(),
       );
       _emit();
       return false;
@@ -433,4 +438,12 @@ class GoogleSyncTriggerService {
     }
     await _controller.close();
   }
+}
+
+/// Whether [error] from Google sign-in / authorization means the user backed
+/// out (closed the consent screen, or "back to safety" on Google's
+/// unverified-app warning) rather than a real failure.
+bool isUserCancellation(Object error) {
+  final String text = error.toString().toLowerCase();
+  return text.contains('cancel') || text.contains('[16]');
 }
