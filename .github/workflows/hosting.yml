@@ -2,11 +2,12 @@ name: Website (Firebase Hosting)
 
 # Publishes site/ (homepage, privacy policy, data deletion: needed for the
 # Google OAuth verification and the Play listing) to
-# https://hebrewcalendar-68363.web.app. Runs when site/ changes on main, or
-# manually from any branch. The site holds no user data.
+# https://hebrewcalendar-68363.web.app. Runs when site/ changes on main or a
+# claude/* work branch (a manual run needs the workflow on main first), or
+# manually. The site holds no user data.
 on:
   push:
-    branches: [main]
+    branches: [main, 'claude/**']
     paths:
       - site/**
       - firebase.json
