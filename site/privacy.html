@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="assets/icon.png">
+<title>מדיניות פרטיות · לוח עברי</title>
+</head>
+<body>
+<header class="wrap"><a href="index.html"><img class="logo" src="assets/kalfapp_logo.png" alt="KALFAPP"></a></header>
+<main class="wrap doc">
+  <h1>מדיניות פרטיות</h1>
+  <p class="tag">לוח עברי · עודכן ב-12 באוקטובר 2026</p>
+  <p>האפליקציה "לוח עברי" (il.co.natanor.kalfapp.hebrewcalendar) פותחה על ידי נתן-אור, במסגרת KALFAPP, פרויקט התנדבותי. הדף הזה מסביר אילו נתונים האפליקציה משתמשת בהם, למה, ואיך אפשר למחוק אותם.</p>
+
+  <h2>אילו נתונים נאספים ולמה</h2>
+  <ul>
+    <li><b>חשבון Google:</b> כשנכנסים עם Google, האפליקציה מקבלת את השם, כתובת המייל ותמונת הפרופיל שלך. הם משמשים רק כדי לזהות את החשבון שלך ולשמור את האירועים שלך תחתיו.</li>
+    <li><b>האירועים שלך:</b> מה שאתה יוצר ביומן (כותרת, תיאור, מקום, תאריך עברי ושעות, חזרתיות, תזכורות, צבע וכתובות מייל של משתתפים שהזמנת). הם נשמרים ב-Google Firebase (Cloud Firestore) תחת החשבון שלך, וכללי האבטחה מאפשרים גישה אליהם רק לך.</li>
+    <li><b>יומן Google (רק אם הפעלת סנכרון):</b> באישורך, האפליקציה מקבלת הרשאה לקרוא ולכתוב אירועים ביומן הראשי שלך ב-Google Calendar (הרשאת calendar.events). היא משתמשת בה רק לסנכרון: מציגה ביומן העברי את האירועים שכבר יש לך ב-Google, וכותבת ל-Google את האירועים שיצרת באפליקציה, כולל שינויים ומחיקות. עותק של האירועים המסונכרנים נשמר בחשבון שלך ב-Firebase כדי שהיומן יעבוד גם בלי חיבור. כשאתה מזמין משתתפים לאירוע, Google שולחת להם את הזימון.</li>
+    <li><b>במכשיר בלבד:</b> העדפות (מצב כהה, לוח ארץ ישראל או חו"ל) והתראות שנקבעות בטלפון עצמו.</li>
+  </ul>
+
+  <h2>מה לא נעשה בנתונים</h2>
+  <ul>
+    <li>אין פרסומות, אין כלי מעקב ואין כלי ניתוח (analytics).</li>
+    <li>הנתונים לא נמכרים ולא מועברים לאף אחד. הם מעובדים רק אצל Google (Firebase ו-Google Calendar), שמספקת את השירות.</li>
+    <li>הנתונים מיומן Google לא משמשים לשום מטרה מלבד הסנכרון שהפעלת, ולא נקראים על ידי אדם.</li>
+  </ul>
+  <p class="note">השימוש של האפליקציה במידע שמתקבל מ-Google APIs, והעברתו, עומדים ב-<a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, כולל דרישות ה-Limited Use.</p>
+
+  <h2>אבטחה</h2>
+  <p>כל התקשורת מוצפנת (HTTPS). הנתונים נשמרים ב-Firebase, וכללי האבטחה מאפשרים לכל משתמש לגשת רק לנתונים שלו.</p>
+
+  <h2 id="delete">ניתוק ומחיקת נתונים</h2>
+  <ul>
+    <li><b>הפסקת הסנכרון:</b> בהגדרות האפליקציה מכבים את "סנכרון עם Google Calendar". אפשר גם לבטל את הגישה של האפליקציה בכל רגע ב-<a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+    <li><b>מחיקת אירועים:</b> כל אירוע אפשר למחוק מתוך האפליקציה. מחיקה של אירוע שסונכרן מוחקת אותו גם מ-Google Calendar.</li>
+    <li><b>מחיקת החשבון וכל הנתונים:</b> שלח מייל ל-<a href="mailto:natanor.kalfa@gmail.com?subject=מחיקת%20נתונים%20-%20לוח%20עברי">natanor.kalfa@gmail.com</a> מכתובת ה-Google שאיתה נכנסת. כל הנתונים שלך ב-Firebase יימחקו תוך 30 יום. האירועים שנמצאים ב-Google Calendar שלך נשארים שם, כי הם שלך ונמצאים בחשבון ה-Google שלך.</li>
+  </ul>
+
+  <h2>ילדים</h2>
+  <p>האפליקציה אינה מיועדת לילדים מתחת לגיל 13.</p>
+
+  <h2>שינויים ויצירת קשר</h2>
+  <p>אם המדיניות תשתנה, הגרסה המעודכנת תפורסם בדף הזה. לשאלות: <a href="mailto:natanor.kalfa@gmail.com">natanor.kalfa@gmail.com</a></p>
+
+  <section class="en" id="en">
+    <h1>Privacy Policy</h1>
+    <p class="tag">Hebrew Calendar · Updated October 12, 2026</p>
+    <p>"Hebrew Calendar" (il.co.natanor.kalfapp.hebrewcalendar) is developed by Natan-Or as part of KALFAPP, a volunteer project. This page explains what data the app uses, why, and how to delete it.</p>
+    <h2>Data we use and why</h2>
+    <ul>
+      <li><b>Google account:</b> when you sign in with Google, the app receives your name, email address and profile photo, used only to identify your account and store your events under it.</li>
+      <li><b>Your events:</b> what you create in the calendar (title, description, location, Hebrew date and times, recurrence, reminders, color, and the email addresses of participants you invite), stored in Google Firebase (Cloud Firestore) under your account; security rules allow only you to access them.</li>
+      <li><b>Google Calendar (only if you turn sync on):</b> with your consent the app gets permission to read and write events in your primary Google Calendar (the calendar.events scope). It is used only for sync: showing the events you already have in Google in the Hebrew calendar, and writing the events you create in the app to Google, including changes and deletions. A copy of synced events is kept in your Firebase account so the calendar works offline. When you invite participants, Google sends them the invitation.</li>
+      <li><b>On the device only:</b> preferences (dark mode, Israel or diaspora calendar) and reminders scheduled on the phone.</li>
+    </ul>
+    <h2>What we do not do</h2>
+    <ul>
+      <li>No ads, no tracking, no analytics.</li>
+      <li>Data is never sold or shared. It is processed only by Google (Firebase and Google Calendar), which provides the service.</li>
+      <li>Google Calendar data is used for nothing but the sync you turned on, and is not read by humans.</li>
+    </ul>
+    <p class="note">Hebrew Calendar's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+    <h2>Security</h2>
+    <p>All traffic is encrypted (HTTPS). Data is stored in Firebase, and security rules let each user access only their own data.</p>
+    <h2>Disconnecting and deleting data</h2>
+    <ul>
+      <li><b>Stop syncing:</b> turn off "Sync with Google Calendar" in the app's settings. You can also revoke the app's access at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+      <li><b>Delete events:</b> any event can be deleted in the app; deleting a synced event also deletes it from Google Calendar.</li>
+      <li><b>Delete your account and all data:</b> email <a href="mailto:natanor.kalfa@gmail.com?subject=Delete%20my%20data%20-%20Hebrew%20Calendar">natanor.kalfa@gmail.com</a> from the Google address you signed in with. All your data in Firebase will be deleted within 30 days. Events in your Google Calendar stay there, as they are yours and live in your Google account.</li>
+    </ul>
+    <h2>Children</h2>
+    <p>The app is not directed at children under 13.</p>
+    <h2>Changes and contact</h2>
+    <p>Any change to this policy will be published on this page. Questions: <a href="mailto:natanor.kalfa@gmail.com">natanor.kalfa@gmail.com</a></p>
+  </section>
+</main>
+<footer class="wrap">
+  <a href="index.html">דף הבית</a> · <a href="privacy.html">מדיניות פרטיות</a> · <a href="privacy.html#delete">מחיקת נתונים</a> · <a href="mailto:natanor.kalfa@gmail.com">יצירת קשר</a>
+  <div>לוח עברי · חלק ממשפחת האפליקציות של KALFAPP</div>
+</footer>
+</body>
+</html>

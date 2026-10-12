@@ -231,3 +231,6 @@
 | `test/test_support/fake_background_sync_scheduler.dart` | `FakeBackgroundSyncScheduler` (M5b): test double בזיכרון ל-`BackgroundSyncScheduler` — סופר קריאות `registerPeriodic`/`cancel` במקום לגעת בפלאגין `workmanager` האמיתי |
 | `test/test_support/fake_backup_service.dart` | `FakeBackupService` (M7): test double ל-`BackupService` — תוצאות/מוני-קריאות ניתנים להגדרה ל-`exportToFile`/`shareBackup`/`importFromFile`, ללא נגיעה ב-`file_picker`/`share_plus`; override קבוע בטסטי widget של `BackupSection`/`SettingsScreen` |
 | `test/test_support/fake_hanging_sync_settings_store.dart` | `FakeHangingSyncSettingsStore` (סבב משוב מכשיר #1, תיקון #2): test double ל-`SyncSettingsStore` שה-`load()` שלו לעולם לא מסתיים — מדמה את כשל המכשיר האמיתי (Firestore read שנתקע/נכשל) כדי לאמת שה-timeout וה-retry עובדים |
+| `site/` | האתר הציבורי (Firebase Hosting): `index.html` דף הבית, `privacy.html` מדיניות פרטיות ומחיקת נתונים, `style.css`, `assets/` |
+| `.github/workflows/hosting.yml` | פרסום `site/` ל-https://hebrewcalendar-68363.web.app (ידני מכל ענף, אוטומטי מ-main) |
+| `docs/OAUTH_VERIFICATION.md` | חומרים ושלבים לאימות ה-OAuth אצל Google: כתובות, הסבר ל-scope, תסריט לסרטון |

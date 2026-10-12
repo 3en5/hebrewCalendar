@@ -1,0 +1,27 @@
+:root{--ink:#28344a;--muted:#5f6e80;--blue:#0f8fe0;--cyan:#18b9c9;--bg:#ffffff;--soft:#eaf4fd;--card:#f5f9fe;--line:#dbe7f3}
+@media (prefers-color-scheme:dark){:root{--ink:#e8eef6;--muted:#a9b8c8;--bg:#0f1826;--soft:#13233a;--card:#162538;--line:#24384f}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:Rubik,system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.7;font-size:17px}
+a{color:var(--blue)}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px}
+header{padding:28px 0 8px;text-align:center}
+header img.logo{height:56px}
+.hero{text-align:center;padding:24px 0 8px}
+.hero img.icon{width:96px;height:96px;border-radius:22px;box-shadow:0 6px 20px #0f8fe033}
+h1{font-size:2.6em;margin:.3em 0 .1em;background:linear-gradient(90deg,var(--blue),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.2}
+.tag{font-size:1.25em;color:var(--muted);margin:0 0 1em}
+.btn{display:inline-block;background:linear-gradient(90deg,var(--blue),var(--cyan));color:#fff;text-decoration:none;padding:12px 26px;border-radius:999px;font-weight:600}
+.shots{display:flex;gap:14px;justify-content:center;margin:28px 0;flex-wrap:wrap}
+.shots img{width:30%;min-width:150px;max-width:240px;border-radius:16px;box-shadow:0 6px 24px #0a28501f}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:20px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.card h3{margin:.1em 0 .3em;font-size:1.1em}
+.card p{margin:0;color:var(--muted)}
+h2{font-size:1.5em;margin:1.6em 0 .4em}
+.doc h2{font-size:1.25em;border-bottom:1px solid var(--line);padding-bottom:.2em}
+.doc{padding-bottom:20px}
+.en{direction:ltr;text-align:left;border-top:2px solid var(--line);margin-top:40px;padding-top:10px}
+footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 40px;color:var(--muted);font-size:.9em;text-align:center}
+footer a{margin:0 8px}
+.note{background:var(--soft);border-radius:12px;padding:12px 16px}
