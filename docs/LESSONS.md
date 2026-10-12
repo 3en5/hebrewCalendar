@@ -606,3 +606,10 @@
 - אירוע שנמחק ב-Google מגיע ב-incremental sync כמעט בלי שדות (בלי extendedProperties), לכן
   מזהים אותו לפי המזהה שלו.
 
+## 2026-10-12 — קריאה של מסמך שלא קיים נדחית ב-rules
+- כלל `allow read: if resource.data.ownerUid == request.auth.uid` דוחה (permission-denied) קריאה
+  של מסמך שלא קיים, כי `resource` הוא null. M17 קרא את הסדרה שמאחורי כל יצוא שלנו ב-Google,
+  ויצוא ישן של סדרה שנמחקה הפיל את כל הסנכרון. תיקון: `getById` מחזיר null על permission-denied,
+  ושינוי אחד מ-Google שנכשל נרשם ומדולג במקום לעצור את כל הסנכרון.
+- כותרת ריקה מ-Google נדחית ע"י ה-rules (title.size() > 0) — שומרים את הכותרת הקיימת.
+

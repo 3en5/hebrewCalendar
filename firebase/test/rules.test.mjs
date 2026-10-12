@@ -144,6 +144,10 @@ describe('events/{eventId}', () => {
     })));
   });
 
+  test('reading an event that does not exist is refused (the app treats it as not found)', async () => {
+    await assertFails(getDoc(doc(alice(), 'events/missing')));
+  });
+
   test('leap-Adar and day-30 choices (M15) are accepted', async () => {
     await assertSucceeds(setDoc(doc(alice(), 'events/adar'), event({
       recurrence: {

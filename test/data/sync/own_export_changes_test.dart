@@ -254,6 +254,50 @@ void main() {
     expect(after.googleSync.dirty, isFalse);
   });
 
+  test('an own export whose app event no longer exists is ignored, and a '
+      'Google copy cleared of its title keeps the app title', () async {
+    final Event created = await repository.create(
+      Event(
+        id: '',
+        ownerUid: 'uid-1',
+        calendarId: 'default',
+        title: 'פגישה',
+        hebrewDate: _next,
+        createdAt: _now,
+        updatedAt: _now,
+      ),
+    );
+    await engine.runSync();
+    final Event exported = (await repository.getById(created.id))!;
+    final RemoteEventSnapshot remote =
+        api.events[exported.googleSync.googleEventId]!;
+    final RemoteEventSnapshot orphan = RemoteEventSnapshot(
+      googleEventId: 'orphan-1',
+      etag: 'e',
+      updatedAt: _now,
+      isCancelled: false,
+      summary: 'ישן',
+      start: DateTime(2026, 12, 1),
+      end: DateTime(2026, 12, 2),
+      hebcalEventId: 'deleted-series',
+      hebcalOccurrence: occurrenceKeyFor(_next),
+    );
+    api.scriptedPages.add(
+      GoogleEventsPage(
+        events: <RemoteEventSnapshot>[
+          orphan,
+          _edited(remote, summary: ''),
+        ],
+        nextSyncToken: 't',
+      ),
+    );
+
+    await engine.runSync();
+
+    expect((await repository.getById(created.id))!.title, 'פגישה');
+    expect(await repository.getAllForSync(), hasLength(1));
+  });
+
   test('an imported timed Google event keeps its start and end time', () async {
     api.events['g-1'] = RemoteEventSnapshot(
       googleEventId: 'g-1',

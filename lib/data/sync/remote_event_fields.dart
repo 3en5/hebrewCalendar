@@ -48,7 +48,9 @@ Event withRemoteContent(
   final EventTimeOfDay? startTime = remoteStartTime(remote);
   final EventTimeOfDay? endTime = remoteEndTime(remote);
   return base.copyWith(
-    title: remote.summary,
+    // An event needs a title (the rules refuse an empty one): a Google
+    // event cleared of its title keeps the app's.
+    title: remote.summary.trim().isEmpty ? null : remote.summary,
     description: remote.description,
     location: remote.location,
     colorId: remote.colorId,

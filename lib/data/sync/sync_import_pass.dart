@@ -7,6 +7,8 @@
 /// `sync_planner.dart`'s import decisions.
 library;
 
+import 'package:flutter/foundation.dart' show debugPrint;
+
 import '../../domain/event/event.dart';
 import '../../domain/event/event_repository.dart';
 import '../../domain/hebrew_date/hebrew_date_engine.dart';
@@ -102,7 +104,7 @@ class SyncImportPass {
     );
     for (final RemoteEventSnapshot snapshot in page.events) {
       if (snapshot.isOwnExport) {
-        await ownChanges.applyOwnExport(snapshot);
+        await _guarded(() => ownChanges.applyOwnExport(snapshot));
       }
     }
 
@@ -130,7 +132,7 @@ class SyncImportPass {
     for (final RemoteEventSnapshot snapshot in importCandidates) {
       if (snapshot.isCancelled &&
           !localByGoogleId.containsKey(snapshot.googleEventId)) {
-        await ownChanges.applyUnmatchedCancellation(snapshot);
+        await _guarded(() => ownChanges.applyUnmatchedCancellation(snapshot));
       }
     }
 
@@ -148,6 +150,16 @@ class SyncImportPass {
       nextSyncToken: page.nextSyncToken,
       ownExportsLookup: ownExportsLookup,
     );
+  }
+
+  /// One Google change that can't be applied must not stop the whole pass
+  /// (device report 2026-10-12): it is logged and skipped.
+  Future<void> _guarded(Future<Object?> Function() apply) async {
+    try {
+      await apply();
+    } catch (error) {
+      debugPrint('[sync] skipped a Google change to an app event: $error');
+    }
   }
 
   Future<void> _apply(SyncAction action) async {

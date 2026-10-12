@@ -194,9 +194,19 @@ class FirestoreEventRepository implements EventRepository {
 
   @override
   Future<Event?> getById(String id) async {
-    final DocumentSnapshot<Map<String, dynamic>> snapshot = await _events
-        .doc(id)
-        .get();
+    final DocumentSnapshot<Map<String, dynamic>> snapshot;
+    try {
+      snapshot = await _events.doc(id).get();
+    } on FirebaseException catch (error) {
+      // The rules allow reading an event only through its `ownerUid`, so a
+      // read of an event that no longer exists (e.g. an old Google export
+      // of a deleted series) is refused rather than returned empty — for
+      // this user that means "not found" (device report 2026-10-12).
+      if (error.code == 'permission-denied') {
+        return null;
+      }
+      rethrow;
+    }
     final Map<String, dynamic>? data = snapshot.data();
     if (data == null) {
       return null;
