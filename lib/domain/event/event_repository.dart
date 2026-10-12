@@ -138,4 +138,12 @@ abstract class EventRepository {
   /// [PendingGoogleDeletion] (it is already gone remotely; queuing one would
   /// try to delete it again next push).
   Future<void> applyRemoteDelete(String id);
+
+  /// M17: writes [event] exactly as given — the sync engine's path for
+  /// applying a change made in Google to one of the app's own events (an
+  /// edited or deleted occurrence of a series, an edited single event).
+  /// An empty [Event.id] creates a new event and returns it with its id.
+  /// Never marks the event dirty, never queues a deletion and never fires
+  /// [localEdits]: the change came from Google, nothing needs pushing back.
+  Future<Event> putSyncedEvent(Event event);
 }

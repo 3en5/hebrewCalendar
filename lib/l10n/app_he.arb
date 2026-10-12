@@ -44,6 +44,42 @@
   "@eventHebrewDateLabel": {
     "description": "Label for the Hebrew date field/picker in the event editor."
   },
+  "eventPickByGregorianDate": "בחירה לפי תאריך לועזי",
+  "@eventPickByGregorianDate": {
+    "description": "Tooltip of the button that sets the event's Hebrew date from a Gregorian date (M16)."
+  },
+  "eventSunsetQuestion": "היום העברי מתחיל בשקיעה. אם זה היה בערב או בלילה, התאריך העברי הוא של היום הבא.",
+  "@eventSunsetQuestion": {
+    "description": "Explains the before/after sunset choice after picking a Gregorian date (M16)."
+  },
+  "eventBeforeSunset": "לפני השקיעה: {date}",
+  "@eventBeforeSunset": {
+    "description": "Button: the Gregorian day was before sunset, so this Hebrew date (M16).",
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "eventAfterSunset": "אחרי השקיעה: {date}",
+  "@eventAfterSunset": {
+    "description": "Button: the Gregorian day was after sunset, so the next Hebrew date (M16).",
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "eventLeapAdarLabel": "בשנה מעוברת",
+  "@eventLeapAdarLabel": {
+    "description": "Label of the leap-year Adar choice for a yearly event in Adar (M15)."
+  },
+  "eventLeapAdarI": "אדר א׳",
+  "@eventLeapAdarI": {"description": "Leap-year Adar choice: Adar I (M15)."},
+  "eventLeapAdarII": "אדר ב׳",
+  "@eventLeapAdarII": {"description": "Leap-year Adar choice: Adar II (M15)."},
+  "eventLeapAdarBoth": "שניהם",
+  "@eventLeapAdarBoth": {"description": "Leap-year Adar choice: both Adars (M15)."},
+  "eventShortMonthLabel": "כשאין ל׳ בחודש",
+  "@eventShortMonthLabel": {
+    "description": "Label of the choice for a yearly event on day 30 in a 29-day month (M15)."
+  },
+  "eventShortMonthNext": "א׳ בחודש הבא",
+  "@eventShortMonthNext": {"description": "Day-30 choice: the 1st of the next month (M15, default)."},
+  "eventShortMonthLast": "כ״ט בחודש",
+  "@eventShortMonthLast": {"description": "Day-30 choice: the 29th of the same month (M15)."},
   "eventStartTimeLabel": "שעת התחלה",
   "@eventStartTimeLabel": {
     "description": "Label for the event start time field."

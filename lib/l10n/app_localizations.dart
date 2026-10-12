@@ -160,6 +160,72 @@ abstract class AppLocalizations {
   /// **'תאריך עברי'**
   String get eventHebrewDateLabel;
 
+  /// Tooltip of the button that sets the event's Hebrew date from a Gregorian date (M16).
+  ///
+  /// In he, this message translates to:
+  /// **'בחירה לפי תאריך לועזי'**
+  String get eventPickByGregorianDate;
+
+  /// Explains the before/after sunset choice after picking a Gregorian date (M16).
+  ///
+  /// In he, this message translates to:
+  /// **'היום העברי מתחיל בשקיעה. אם זה היה בערב או בלילה, התאריך העברי הוא של היום הבא.'**
+  String get eventSunsetQuestion;
+
+  /// Button: the Gregorian day was before sunset, so this Hebrew date (M16).
+  ///
+  /// In he, this message translates to:
+  /// **'לפני השקיעה: {date}'**
+  String eventBeforeSunset(String date);
+
+  /// Button: the Gregorian day was after sunset, so the next Hebrew date (M16).
+  ///
+  /// In he, this message translates to:
+  /// **'אחרי השקיעה: {date}'**
+  String eventAfterSunset(String date);
+
+  /// Label of the leap-year Adar choice for a yearly event in Adar (M15).
+  ///
+  /// In he, this message translates to:
+  /// **'בשנה מעוברת'**
+  String get eventLeapAdarLabel;
+
+  /// Leap-year Adar choice: Adar I (M15).
+  ///
+  /// In he, this message translates to:
+  /// **'אדר א׳'**
+  String get eventLeapAdarI;
+
+  /// Leap-year Adar choice: Adar II (M15).
+  ///
+  /// In he, this message translates to:
+  /// **'אדר ב׳'**
+  String get eventLeapAdarII;
+
+  /// Leap-year Adar choice: both Adars (M15).
+  ///
+  /// In he, this message translates to:
+  /// **'שניהם'**
+  String get eventLeapAdarBoth;
+
+  /// Label of the choice for a yearly event on day 30 in a 29-day month (M15).
+  ///
+  /// In he, this message translates to:
+  /// **'כשאין ל׳ בחודש'**
+  String get eventShortMonthLabel;
+
+  /// Day-30 choice: the 1st of the next month (M15, default).
+  ///
+  /// In he, this message translates to:
+  /// **'א׳ בחודש הבא'**
+  String get eventShortMonthNext;
+
+  /// Day-30 choice: the 29th of the same month (M15).
+  ///
+  /// In he, this message translates to:
+  /// **'כ״ט בחודש'**
+  String get eventShortMonthLast;
+
   /// Label for the event start time field.
   ///
   /// In he, this message translates to:

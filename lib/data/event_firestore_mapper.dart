@@ -183,6 +183,8 @@ Map<String, dynamic> _recurrenceToMap(RecurrenceRule recurrence) =>
       'exceptions': recurrence.exceptions
           .map(_hebrewDateToMap)
           .toList(growable: false),
+      'leapAdar': recurrence.leapAdar?.name,
+      'shortMonth': recurrence.shortMonth?.name,
     };
 
 RecurrenceRule _recurrenceFromMap(Map<String, dynamic>? map) {
@@ -202,7 +204,20 @@ RecurrenceRule _recurrenceFromMap(Map<String, dynamic>? map) {
           (dynamic exception) => _hebrewDateFromMap(_asStringMap(exception)!),
         )
         .toList(),
+    leapAdar: _enumOrNull(LeapAdarPolicy.values, map['leapAdar']),
+    shortMonth: _enumOrNull(ShortMonthPolicy.values, map['shortMonth']),
   );
+}
+
+/// The enum value named [raw], or null when absent/unknown (a field written
+/// by a newer app version must not break reading the event).
+T? _enumOrNull<T extends Enum>(List<T> values, Object? raw) {
+  for (final T value in values) {
+    if (value.name == raw) {
+      return value;
+    }
+  }
+  return null;
 }
 
 /// Firestore returns nested maps as `Map<String, dynamic>` on every

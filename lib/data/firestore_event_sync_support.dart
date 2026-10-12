@@ -28,6 +28,7 @@ import '../domain/sync/export_candidate.dart';
 import '../domain/sync/remote_event_snapshot.dart';
 import '../domain/sync/sync_state.dart';
 import 'event_firestore_mapper.dart';
+import 'sync/remote_event_fields.dart';
 
 class FirestoreEventSyncSupport {
   FirestoreEventSyncSupport({
@@ -238,6 +239,8 @@ class FirestoreEventSyncSupport {
       attendees: snapshot.attendees,
       hebrewDate: hebrewDate,
       allDay: snapshot.isAllDay,
+      startTime: remoteStartTime(snapshot),
+      endTime: remoteEndTime(snapshot),
       createdAt: createdAt,
       updatedAt: snapshot.updatedAt,
       source: EventSource.google,
@@ -245,6 +248,15 @@ class FirestoreEventSyncSupport {
     );
     await docRef.set(eventToFirestoreData(event: toStore, engine: _engine));
     return toStore;
+  }
+
+  Future<Event> putSyncedEvent(Event event) async {
+    final DocumentReference<Map<String, dynamic>> docRef = event.id.isEmpty
+        ? _events.doc()
+        : _events.doc(event.id);
+    final Event stored = event.copyWith(id: docRef.id, ownerUid: _ownerUid);
+    await docRef.set(eventToFirestoreData(event: stored, engine: _engine));
+    return stored;
   }
 
   Future<void> applyRemoteDelete(String id) async {

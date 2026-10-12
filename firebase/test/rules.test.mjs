@@ -136,6 +136,27 @@ describe('events/{eventId}', () => {
     await assertFails(setDoc(ref, event({ source: 'other' })));
     await assertFails(setDoc(ref, event({ colorId: 7 })));
     await assertFails(setDoc(ref, event({ colorId: '123' })));
+    await assertFails(setDoc(ref, event({
+      recurrence: { type: 'hebrewYearly', until: null, exceptions: [], leapAdar: 'adarIII' },
+    })));
+    await assertFails(setDoc(ref, event({
+      recurrence: { type: 'hebrewYearly', until: null, exceptions: [], shortMonth: 'skip' },
+    })));
+  });
+
+  test('leap-Adar and day-30 choices (M15) are accepted', async () => {
+    await assertSucceeds(setDoc(doc(alice(), 'events/adar'), event({
+      recurrence: {
+        type: 'hebrewYearly', until: null, exceptions: [],
+        leapAdar: 'both', shortMonth: 'lastDay',
+      },
+    })));
+    await assertSucceeds(setDoc(doc(alice(), 'events/adar2'), event({
+      recurrence: {
+        type: 'hebrewYearly', until: null, exceptions: [],
+        leapAdar: null, shortMonth: null,
+      },
+    })));
   });
 
   test('M11: participants are accepted, up to 50', async () => {

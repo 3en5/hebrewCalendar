@@ -9,11 +9,13 @@ library;
 
 import '../../domain/event/event.dart';
 import '../../domain/event/event_repository.dart';
+import '../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../domain/sync/remote_event_snapshot.dart';
 import '../../domain/sync/sync_action.dart';
 import '../../domain/sync/sync_planner.dart';
 import '../../domain/sync/sync_state.dart';
 import 'google_calendar_api.dart';
+import 'own_export_changes.dart';
 
 /// The outcome of one import pass: the sync token to persist for next time,
 /// and a lookup of every one of *our own* exports the feed happened to
@@ -38,9 +40,11 @@ class SyncImportPass {
   SyncImportPass({
     required GoogleCalendarApi api,
     required EventRepository repository,
+    required HebrewDateEngine engine,
     DateTime Function() now = DateTime.now,
   }) : _api = api,
        _repository = repository,
+       _engine = engine,
        _now = now;
 
   /// How many local writes an import pass runs in parallel.
@@ -52,6 +56,7 @@ class SyncImportPass {
 
   final GoogleCalendarApi _api;
   final EventRepository _repository;
+  final HebrewDateEngine _engine;
   final DateTime Function() _now;
 
   Future<SyncImportPassResult> run({required String? syncToken}) async {
@@ -87,15 +92,17 @@ class SyncImportPass {
     // closed before it ever finished, so nothing was imported).
     // An incremental sync usually brings a handful of changes: look those
     // up one by one rather than reading every local event.
-    // M11: Google never sends our own exports back as imports, but their
-    // guests' replies live there — copy them onto the local event.
+    // Our own exports are never imported as new events, but changes made
+    // to them in Google are applied (M17), and their guests' replies are
+    // copied onto the local event (M11).
+    final OwnExportChanges ownChanges = OwnExportChanges(
+      repository: _repository,
+      engine: _engine,
+      now: _now,
+    );
     for (final RemoteEventSnapshot snapshot in page.events) {
-      final String? localId = snapshot.hebcalEventId;
-      if (snapshot.isOwnExport &&
-          !snapshot.isCancelled &&
-          localId != null &&
-          snapshot.attendees.isNotEmpty) {
-        await _repository.updateAttendeeResponses(localId, snapshot.attendees);
+      if (snapshot.isOwnExport) {
+        await ownChanges.applyOwnExport(snapshot);
       }
     }
 
@@ -115,6 +122,15 @@ class SyncImportPass {
         if (local != null) {
           localByGoogleId[snapshot.googleEventId] = local;
         }
+      }
+    }
+
+    // A deletion in Google usually arrives without our markers; one with no
+    // matching single event may be an instance of one of our series (M17).
+    for (final RemoteEventSnapshot snapshot in importCandidates) {
+      if (snapshot.isCancelled &&
+          !localByGoogleId.containsKey(snapshot.googleEventId)) {
+        await ownChanges.applyUnmatchedCancellation(snapshot);
       }
     }
 

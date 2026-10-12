@@ -176,7 +176,7 @@ void main() {
             to: to,
             engine: _engine,
           );
-          // Expect exactly 3 occurrences: 5786 (plain Adar), 5787 (leap -> Adar I), 5788.
+          // Expect exactly 3 occurrences: 5786 (plain Adar), 5787 (leap -> Adar II, the M15 default), 5788.
           expect(occurrences, hasLength(3));
           final List<ExportCandidate> candidates = <ExportCandidate>[
             for (final EventOccurrence occurrence in occurrences)
@@ -200,7 +200,7 @@ void main() {
               const HebrewDate(year: 5786, month: HebrewMonth.adar, day: 14),
             ),
             occurrenceKeyFor(
-              const HebrewDate(year: 5787, month: HebrewMonth.adarI, day: 14),
+              const HebrewDate(year: 5787, month: HebrewMonth.adarII, day: 14),
             ),
             occurrenceKeyFor(
               const HebrewDate(year: 5788, month: HebrewMonth.adar, day: 14),

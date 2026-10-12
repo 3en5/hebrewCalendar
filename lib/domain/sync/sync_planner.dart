@@ -8,6 +8,7 @@
 library;
 
 import '../event/event.dart';
+import '../event/event_source.dart';
 import '../hebrew_date/hebrew_date.dart';
 import 'export_candidate.dart';
 import 'remote_event_snapshot.dart';
@@ -118,11 +119,20 @@ SyncAction _planSingleImport(RemoteEventSnapshot remote, Event? local) {
   if (local == null) {
     return CreateLocalAction(remote: remote);
   }
-  if (remote.updatedAt.isAfter(local.updatedAt)) {
+  if (remote.updatedAt.isAfter(local.updatedAt) ||
+      _lacksImportedTimes(local, remote)) {
     return UpdateLocalAction(existingEventId: local.id, remote: remote);
   }
   return const SkipAction(SkipReason.localIsNewer);
 }
+
+/// M17: imports before M17 stored timed Google events without their start
+/// time. Such a copy is refreshed even when it isn't older than Google's.
+bool _lacksImportedTimes(Event local, RemoteEventSnapshot remote) =>
+    local.source == EventSource.google &&
+    !remote.isAllDay &&
+    remote.start != null &&
+    local.startTime == null;
 
 /// Re-resolves a single event/occurrence after the engine's push hit a 412
 /// (etag precondition failed — someone else changed it since we last read

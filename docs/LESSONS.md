@@ -597,3 +597,12 @@
   --static`) ולרשום כל אחד עם `weight:` ב-pubspec.
 - קובץ גופן שמובנה באפליקציה ברישיון OFL — לרשום את הרישיון ב-`LicenseRegistry`.
 
+## 2026-10-12 — SharedPreferences בטסטים, ו-etag של Google
+- תחת `flutter test` קריאה ל-`SharedPreferences.getInstance()` בלי mock לא מסתיימת (לא זורקת),
+  וכל קוד שמחכה לה נתקע — `pumpAndSettle` נגמר בזמן. פתרון: `test/flutter_test_config.dart`
+  עם `SharedPreferences.setMockInitialValues({})`.
+- Google מחליף etag גם כשמוזמן עונה לזימון. "האירוע נערך ב-Google" צריך להיקבע לפי השוואת
+  תוכן, לא לפי etag.
+- אירוע שנמחק ב-Google מגיע ב-incremental sync כמעט בלי שדות (בלי extendedProperties), לכן
+  מזהים אותו לפי המזהה שלו.
+

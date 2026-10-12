@@ -42,6 +42,44 @@ class AppLocalizationsHe extends AppLocalizations {
   String get eventHebrewDateLabel => 'תאריך עברי';
 
   @override
+  String get eventPickByGregorianDate => 'בחירה לפי תאריך לועזי';
+
+  @override
+  String get eventSunsetQuestion =>
+      'היום העברי מתחיל בשקיעה. אם זה היה בערב או בלילה, התאריך העברי הוא של היום הבא.';
+
+  @override
+  String eventBeforeSunset(String date) {
+    return 'לפני השקיעה: $date';
+  }
+
+  @override
+  String eventAfterSunset(String date) {
+    return 'אחרי השקיעה: $date';
+  }
+
+  @override
+  String get eventLeapAdarLabel => 'בשנה מעוברת';
+
+  @override
+  String get eventLeapAdarI => 'אדר א׳';
+
+  @override
+  String get eventLeapAdarII => 'אדר ב׳';
+
+  @override
+  String get eventLeapAdarBoth => 'שניהם';
+
+  @override
+  String get eventShortMonthLabel => 'כשאין ל׳ בחודש';
+
+  @override
+  String get eventShortMonthNext => 'א׳ בחודש הבא';
+
+  @override
+  String get eventShortMonthLast => 'כ״ט בחודש';
+
+  @override
   String get eventStartTimeLabel => 'שעת התחלה';
 
   @override

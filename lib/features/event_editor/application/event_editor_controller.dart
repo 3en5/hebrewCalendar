@@ -155,7 +155,14 @@ class EventEditorController extends Notifier<EventEditorState> {
         : state.copyWith(recurrenceType: type);
   }
 
-  /// Sets (or, when [until] is null, clears) the "repeat until" date.
+  /// M15: which Adar a yearly event anchored in Adar uses in a leap year.
+  void setLeapAdar(LeapAdarPolicy policy) =>
+      state = state.copyWith(recurrenceLeapAdar: policy);
+
+  /// M15: where a yearly event anchored on day 30 falls in a short month.
+  void setShortMonth(ShortMonthPolicy policy) =>
+      state = state.copyWith(recurrenceShortMonth: policy);
+
   void setColorId(String? colorId) => state = colorId == null
       ? state.copyWith(clearColorId: true)
       : state.copyWith(colorId: colorId);
@@ -186,6 +193,7 @@ class EventEditorController extends Notifier<EventEditorState> {
         .toList(),
   );
 
+  /// Sets (or, when [until] is null, clears) the "repeat until" date.
   void setRecurrenceUntil(HebrewDate? until) {
     state = until == null
         ? state.copyWith(clearRecurrenceUntil: true)
@@ -243,6 +251,8 @@ class EventEditorController extends Notifier<EventEditorState> {
             ? null
             : state.recurrenceUntil,
         exceptions: state.recurrenceExceptions,
+        leapAdar: state.recurrenceLeapAdar,
+        shortMonth: state.recurrenceShortMonth,
       ),
     );
 

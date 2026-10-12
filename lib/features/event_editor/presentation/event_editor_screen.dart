@@ -14,6 +14,7 @@ import 'widgets/hebrew_date_picker_field.dart';
 import 'widgets/recurrence_type_selector.dart';
 import 'widgets/recurrence_until_field.dart';
 import 'widgets/reminder_selector.dart';
+import 'widgets/yearly_options_section.dart';
 
 /// Create/edit screen for a single event (Google-Calendar-like, RTL).
 ///
@@ -226,6 +227,18 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
               selected: state.recurrenceType,
               onChanged: _controller.setRecurrenceType,
             ),
+            if (state.recurrenceType == RecurrenceType.hebrewYearly &&
+                YearlyOptionsSection.appliesTo(state.hebrewDate))
+              YearlyOptionsSection(
+                anchor: state.hebrewDate,
+                rule: RecurrenceRule(
+                  type: state.recurrenceType,
+                  leapAdar: state.recurrenceLeapAdar,
+                  shortMonth: state.recurrenceShortMonth,
+                ),
+                onLeapAdarChanged: _controller.setLeapAdar,
+                onShortMonthChanged: _controller.setShortMonth,
+              ),
             if (state.recurrenceType != RecurrenceType.none)
               RecurrenceUntilField(
                 until: state.recurrenceUntil,

@@ -28,6 +28,7 @@ import '../../../core/auth/google_sign_in_gate.dart';
 import '../../../data/firestore_event_repository.dart';
 import '../../../data/sync/firestore_sync_settings_store.dart';
 import '../../../data/sync/google_calendar_api_impl.dart';
+import '../../../data/sync/full_resync_flag.dart';
 import '../../../data/sync/sync_engine.dart';
 import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import 'background_sync_runner.dart';
@@ -79,6 +80,7 @@ void callbackDispatcher() {
           api: GoogleCalendarApiImpl(allowInteractiveAuth: false),
           settingsStore: FirestoreSyncSettingsStore(uid: user.uid),
           engine: const HebrewDateEngine(),
+          fullResync: const PrefsFullResyncFlag(),
         ),
       );
 

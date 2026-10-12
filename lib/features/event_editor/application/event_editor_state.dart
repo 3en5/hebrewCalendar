@@ -22,6 +22,8 @@ class EventEditorState {
     this.recurrenceType = RecurrenceType.none,
     this.recurrenceUntil,
     this.recurrenceExceptions = const <HebrewDate>[],
+    this.recurrenceLeapAdar,
+    this.recurrenceShortMonth,
     this.colorId,
     this.attendees = const <EventAttendee>[],
     this.errors = const <EventValidationErrorType>[],
@@ -45,6 +47,8 @@ class EventEditorState {
     recurrenceType: event.recurrence.type,
     recurrenceUntil: event.recurrence.until,
     recurrenceExceptions: event.recurrence.exceptions,
+    recurrenceLeapAdar: event.recurrence.leapAdar,
+    recurrenceShortMonth: event.recurrence.shortMonth,
     colorId: event.colorId,
     attendees: event.attendees,
   );
@@ -72,6 +76,14 @@ class EventEditorState {
   /// never silently drops previously-recorded exceptions.
   final List<HebrewDate> recurrenceExceptions;
 
+  /// M15: the leap-year Adar choice for a yearly event anchored in Adar
+  /// (null = the default, `RecurrenceRule.effectiveLeapAdar`).
+  final LeapAdarPolicy? recurrenceLeapAdar;
+
+  /// M15: the choice for a yearly event anchored on day 30 (null = the
+  /// default, `RecurrenceRule.effectiveShortMonth`).
+  final ShortMonthPolicy? recurrenceShortMonth;
+
   /// M10: Google Calendar color id, null for the default color.
   final String? colorId;
 
@@ -97,6 +109,8 @@ class EventEditorState {
     RecurrenceType? recurrenceType,
     HebrewDate? recurrenceUntil,
     bool clearRecurrenceUntil = false,
+    LeapAdarPolicy? recurrenceLeapAdar,
+    ShortMonthPolicy? recurrenceShortMonth,
     String? colorId,
     bool clearColorId = false,
     List<EventAttendee>? attendees,
@@ -116,6 +130,8 @@ class EventEditorState {
         ? null
         : (recurrenceUntil ?? this.recurrenceUntil),
     recurrenceExceptions: recurrenceExceptions,
+    recurrenceLeapAdar: recurrenceLeapAdar ?? this.recurrenceLeapAdar,
+    recurrenceShortMonth: recurrenceShortMonth ?? this.recurrenceShortMonth,
     colorId: clearColorId ? null : (colorId ?? this.colorId),
     attendees: attendees ?? this.attendees,
     errors: errors ?? this.errors,

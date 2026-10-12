@@ -17,6 +17,7 @@ import '../../../data/sync/firestore_sync_settings_store.dart';
 import '../../../data/sync/google_calendar_api.dart';
 import '../../../data/sync/google_calendar_api_impl.dart';
 import '../../../data/sync/in_memory_sync_settings_store.dart';
+import '../../../data/sync/full_resync_flag.dart';
 import '../../../data/sync/sync_engine.dart';
 import '../../../domain/auth/app_user.dart';
 import '../../../domain/hebrew_date/hebrew_date_engine.dart';
@@ -75,6 +76,7 @@ final Provider<SyncEngine> syncEngineProvider = Provider<SyncEngine>((Ref ref) {
     api: ref.watch(googleCalendarApiProvider),
     settingsStore: ref.watch(syncSettingsStoreProvider),
     engine: ref.watch(hebrewDateEngineProvider),
+    fullResync: const PrefsFullResyncFlag(),
   );
 });
 

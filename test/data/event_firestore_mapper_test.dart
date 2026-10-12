@@ -156,10 +156,38 @@ void main() {
           <String, dynamic>{'year': 5787, 'month': 'tishrei', 'day': 10},
           <String, dynamic>{'year': 5788, 'month': 'tishrei', 'day': 10},
         ],
+        'leapAdar': null,
+        'shortMonth': null,
       });
       final Event restored = eventFromFirestoreData(original.id, data);
       expect(restored, original);
       expect(restored.recurrence.exceptions, hasLength(2));
+    });
+
+    test('round-trips the leap-Adar and day-30 choices (M15)', () {
+      final Event original = Event(
+        id: 'evt-adar',
+        ownerUid: 'uid-1',
+        calendarId: 'default',
+        title: 'אזכרה',
+        hebrewDate: const HebrewDate(
+          year: 5786,
+          month: HebrewMonth.adar,
+          day: 10,
+        ),
+        recurrence: const RecurrenceRule(
+          type: RecurrenceType.hebrewYearly,
+          leapAdar: LeapAdarPolicy.both,
+          shortMonth: ShortMonthPolicy.lastDay,
+        ),
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      );
+      final Map<String, dynamic> data = eventToFirestoreData(
+        event: original,
+        engine: _engine,
+      );
+      expect(eventFromFirestoreData(original.id, data), original);
     });
 
     test('isRecurring is false for a non-recurring (none) event', () {
@@ -202,6 +230,8 @@ void main() {
         'type': 'none',
         'until': null,
         'exceptions': <Map<String, dynamic>>[],
+        'leapAdar': null,
+        'shortMonth': null,
       });
 
       final Event restored = eventFromFirestoreData(original.id, data);

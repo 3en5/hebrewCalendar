@@ -13,6 +13,7 @@ import '../domain/hebrew_date/hebrew_date_engine.dart';
 import '../domain/sync/export_candidate.dart';
 import '../domain/sync/remote_event_snapshot.dart';
 import '../domain/sync/sync_state.dart';
+import 'sync/remote_event_fields.dart';
 
 /// In-memory [EventRepository]: the only implementation until Firebase
 /// wiring lands in M2b, and the permanent implementation used by widget
@@ -234,6 +235,16 @@ class InMemoryEventRepository implements EventRepository {
   }
 
   @override
+  Future<Event> putSyncedEvent(Event event) async {
+    final Event stored = event.id.isEmpty
+        ? event.copyWith(id: _idGenerator())
+        : event;
+    _events[stored.id] = stored;
+    _notify();
+    return stored;
+  }
+
+  @override
   Future<Event> upsertFromGoogle(
     RemoteEventSnapshot snapshot, {
     String? existingEventId,
@@ -270,8 +281,10 @@ class InMemoryEventRepository implements EventRepository {
               updatedAt: snapshot.updatedAt,
               source: EventSource.google,
               googleSync: syncState,
-              clearStartTime: snapshot.isAllDay,
-              clearEndTime: snapshot.isAllDay,
+              startTime: remoteStartTime(snapshot),
+              clearStartTime: remoteStartTime(snapshot) == null,
+              endTime: remoteEndTime(snapshot),
+              clearEndTime: remoteEndTime(snapshot) == null,
             );
     _events[upserted.id] = upserted;
     _notify();

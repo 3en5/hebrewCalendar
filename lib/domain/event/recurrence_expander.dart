@@ -9,18 +9,19 @@
 ///
 /// 1. **Adar mapping policy** ([RecurrenceType.hebrewYearly] only): a leap
 ///    Hebrew year has both Adar I and Adar II where a non-leap year has a
-///    single plain Adar. A yearly event anchored in Adar I or in a non-leap
-///    year's plain Adar recurs in Adar I in every subsequent leap year and
-///    in plain Adar in every subsequent non-leap year; an event anchored in
-///    Adar II recurs in Adar II in leap years and in plain Adar in non-leap
-///    years. (There is no reasonable way to place an "Adar II anniversary"
-///    in a non-leap year's Adar I, since a non-leap year never has one.)
-/// 2. **Day-30 policy** ([RecurrenceType.hebrewYearly] and
-///    [RecurrenceType.hebrewMonthly]): Cheshvan and Kislev alternate between
-///    29 and 30 days depending on the year. An event anchored on day 30 of
-///    a month falls on that month's last day (29) in a year/month where the
-///    month is short — it does not skip, roll into the next month, or fire
-///    twice; exactly one occurrence per Hebrew month/year, ever.
+///    single plain Adar. A yearly event anchored in any Adar recurs in plain
+///    Adar in non-leap years, and in leap years per
+///    [RecurrenceRule.effectiveLeapAdar] (M15): Adar I, Adar II, or both.
+///    The default is Adar II, except for an anchor in Adar I, which stays
+///    in Adar I.
+/// 2. **Day-30 policy**: Cheshvan and Kislev alternate between 29 and 30
+///    days, and Adar I (30 days) maps to a 29-day Adar in non-leap years.
+///    A [RecurrenceType.hebrewYearly] event anchored on day 30 follows
+///    [RecurrenceRule.effectiveShortMonth] (M15) in a year where the month
+///    is short: the 1st of the next month (default) or the 29th.
+///    A [RecurrenceType.hebrewMonthly] event anchored on day 30 always
+///    falls on the month's last day (29) in a short month, so it fires
+///    exactly once per Hebrew month.
 ///
 /// [RecurrenceType.weekly] and [RecurrenceType.daily] have no such
 /// Hebrew-calendar ambiguity: they step by a fixed number of Gregorian days
@@ -149,36 +150,64 @@ List<HebrewDate> _yearlyOccurrences(
 ) {
   final List<HebrewDate> results = <HebrewDate>[];
   for (int year = from.year; year <= to.year; year++) {
-    final HebrewMonth month = _yearlyEffectiveMonth(base.month, year, engine);
-    final int lastDay = engine.daysInMonth(year, month);
-    final int day = base.day > lastDay ? lastDay : base.day;
-    final HebrewDate occurrence = HebrewDate(
-      year: year,
-      month: month,
-      day: day,
-    );
-    if (_isEligible(occurrence, base, rule, from, to)) {
-      results.add(occurrence);
+    for (final HebrewMonth month in _yearlyEffectiveMonths(
+      base.month,
+      rule,
+      year,
+      engine,
+    )) {
+      final HebrewDate occurrence = _yearlyDay(base, rule, year, month, engine);
+      if (_isEligible(occurrence, base, rule, from, to)) {
+        results.add(occurrence);
+      }
     }
   }
   return results;
 }
 
-/// Implements the Adar mapping policy documented on this library.
-HebrewMonth _yearlyEffectiveMonth(
+/// Implements the Adar mapping policy documented on this library: the
+/// month(s) a yearly event anchored in [baseMonth] falls in during [year].
+List<HebrewMonth> _yearlyEffectiveMonths(
   HebrewMonth baseMonth,
+  RecurrenceRule rule,
   int year,
   HebrewDateEngine engine,
 ) {
-  final bool leap = engine.isLeapYear(year);
-  switch (baseMonth) {
-    case HebrewMonth.adar:
-    case HebrewMonth.adarI:
-      return leap ? HebrewMonth.adarI : HebrewMonth.adar;
-    case HebrewMonth.adarII:
-      return leap ? HebrewMonth.adarII : HebrewMonth.adar;
-    default:
-      return baseMonth;
+  if (baseMonth != HebrewMonth.adar &&
+      baseMonth != HebrewMonth.adarI &&
+      baseMonth != HebrewMonth.adarII) {
+    return <HebrewMonth>[baseMonth];
+  }
+  if (!engine.isLeapYear(year)) {
+    return const <HebrewMonth>[HebrewMonth.adar];
+  }
+  switch (rule.effectiveLeapAdar(baseMonth)) {
+    case LeapAdarPolicy.adarI:
+      return const <HebrewMonth>[HebrewMonth.adarI];
+    case LeapAdarPolicy.adarII:
+      return const <HebrewMonth>[HebrewMonth.adarII];
+    case LeapAdarPolicy.both:
+      return const <HebrewMonth>[HebrewMonth.adarI, HebrewMonth.adarII];
+  }
+}
+
+/// The day-30 policy for a yearly occurrence in [month] of [year].
+HebrewDate _yearlyDay(
+  HebrewDate base,
+  RecurrenceRule rule,
+  int year,
+  HebrewMonth month,
+  HebrewDateEngine engine,
+) {
+  final int lastDay = engine.daysInMonth(year, month);
+  if (base.day <= lastDay) {
+    return HebrewDate(year: year, month: month, day: base.day);
+  }
+  switch (rule.effectiveShortMonth) {
+    case ShortMonthPolicy.lastDay:
+      return HebrewDate(year: year, month: month, day: lastDay);
+    case ShortMonthPolicy.nextMonthFirst:
+      return engine.nextMonth(HebrewDate(year: year, month: month, day: 1));
   }
 }
 

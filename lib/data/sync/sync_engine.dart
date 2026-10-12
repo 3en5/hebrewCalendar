@@ -21,6 +21,7 @@ import '../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../domain/sync/sync_run_result.dart';
 import '../../domain/sync/sync_settings_store.dart';
 import 'google_calendar_api.dart';
+import 'full_resync_flag.dart';
 import 'sync_export_pass.dart';
 import 'sync_import_pass.dart';
 
@@ -33,8 +34,15 @@ class SyncEngine {
     DateTime Function() now = DateTime.now,
     Duration exportWindow = kShortExportWindow,
     Duration longExportWindow = kLongExportWindow,
+    FullResyncFlag? fullResync,
   }) : _settingsStore = settingsStore,
-       _importPass = SyncImportPass(api: api, repository: repository, now: now),
+       _fullResync = fullResync,
+       _importPass = SyncImportPass(
+         api: api,
+         repository: repository,
+         engine: engine,
+         now: now,
+       ),
        _exportPass = SyncExportPass(
          api: api,
          repository: repository,
@@ -46,6 +54,7 @@ class SyncEngine {
        _now = now;
 
   final SyncSettingsStore _settingsStore;
+  final FullResyncFlag? _fullResync;
   final SyncImportPass _importPass;
   final SyncExportPass _exportPass;
   final DateTime Function() _now;
@@ -88,13 +97,17 @@ class SyncEngine {
         return const SyncRunResult.disabled();
       }
       try {
+        final bool fullResync = await _fullResync?.isPending() ?? false;
         final SyncImportPassResult importResult = await _importPass.run(
-          syncToken: settings.syncToken,
+          syncToken: fullResync ? null : settings.syncToken,
         );
         await _settingsStore.saveSyncToken(importResult.nextSyncToken);
         await _exportPass.run(ownExportsLookup: importResult.ownExportsLookup);
         await _settingsStore.saveLastSyncedAt(_now());
         await _settingsStore.saveLastError(null);
+        if (fullResync) {
+          await _fullResync?.markDone();
+        }
         return const SyncRunResult.success();
       } catch (error) {
         final bool permanent = _isPermanentFailure(error);
