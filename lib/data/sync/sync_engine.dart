@@ -19,6 +19,7 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import '../../domain/event/event_repository.dart';
 import '../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../domain/sync/sync_run_result.dart';
+import '../../domain/sync/sync_progress.dart';
 import '../../domain/sync/sync_settings_store.dart';
 import 'google_calendar_api.dart';
 import 'full_resync_flag.dart';
@@ -81,7 +82,9 @@ class SyncEngine {
   /// settings/token, so overlapping calls just do redundant work rather
   /// than corrupting state. A second call while one is already in flight
   /// (see [_inFlight]) is a no-op that returns immediately instead.
-  Future<SyncRunResult> runSync() async {
+  ///
+  /// [onProgress] receives the pass's progress (device request 2026-10-12).
+  Future<SyncRunResult> runSync({SyncProgressCallback? onProgress}) async {
     if (_inFlight) {
       return const SyncRunResult.concurrentSkip();
     }
@@ -100,9 +103,13 @@ class SyncEngine {
         final bool fullResync = await _fullResync?.isPending() ?? false;
         final SyncImportPassResult importResult = await _importPass.run(
           syncToken: fullResync ? null : settings.syncToken,
+          onProgress: onProgress,
         );
         await _settingsStore.saveSyncToken(importResult.nextSyncToken);
-        await _exportPass.run(ownExportsLookup: importResult.ownExportsLookup);
+        await _exportPass.run(
+          ownExportsLookup: importResult.ownExportsLookup,
+          onProgress: onProgress,
+        );
         await _settingsStore.saveLastSyncedAt(_now());
         await _settingsStore.saveLastError(null);
         if (fullResync) {

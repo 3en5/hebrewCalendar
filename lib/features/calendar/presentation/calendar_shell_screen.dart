@@ -29,6 +29,7 @@ import 'event_search_screen.dart';
 import 'month_view_body.dart';
 import 'week_view_screen.dart';
 import 'widgets/go_to_date_sheet.dart';
+import 'widgets/sync_progress_strip.dart';
 
 enum _OverflowAction { settings, about, signOut }
 
@@ -184,16 +185,25 @@ class CalendarShellScreen extends ConsumerWidget {
       // Device feedback: pulling any view down runs a Google sync. Only
       // vertical scrolls count (the views page horizontally), from any
       // depth, so the pull works on the month page and its agenda alike.
-      body: RefreshIndicator(
-        notificationPredicate: (ScrollNotification notification) =>
-            notification.metrics.axis == Axis.vertical,
-        onRefresh: () => _pullToSync(context, ref, l10n, demoMode: demoMode),
-        child: switch (state.viewType) {
-          CalendarViewType.month => const MonthViewBody(),
-          CalendarViewType.week => const WeekViewScreen(),
-          CalendarViewType.day => const DayViewScreen(),
-          CalendarViewType.agenda => const AgendaViewScreen(),
-        },
+      body: Column(
+        children: <Widget>[
+          // Device request 2026-10-12: show a running sync's progress.
+          if (!demoMode) const SyncProgressStrip(),
+          Expanded(
+            child: RefreshIndicator(
+              notificationPredicate: (ScrollNotification notification) =>
+                  notification.metrics.axis == Axis.vertical,
+              onRefresh: () =>
+                  _pullToSync(context, ref, l10n, demoMode: demoMode),
+              child: switch (state.viewType) {
+                CalendarViewType.month => const MonthViewBody(),
+                CalendarViewType.week => const WeekViewScreen(),
+                CalendarViewType.day => const DayViewScreen(),
+                CalendarViewType.agenda => const AgendaViewScreen(),
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openEditorForNewEvent(context, state),

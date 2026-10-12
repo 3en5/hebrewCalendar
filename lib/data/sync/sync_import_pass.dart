@@ -15,6 +15,7 @@ import '../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../domain/sync/remote_event_snapshot.dart';
 import '../../domain/sync/sync_action.dart';
 import '../../domain/sync/sync_planner.dart';
+import '../../domain/sync/sync_progress.dart';
 import '../../domain/sync/sync_state.dart';
 import 'google_calendar_api.dart';
 import 'own_export_changes.dart';
@@ -61,7 +62,11 @@ class SyncImportPass {
   final HebrewDateEngine _engine;
   final DateTime Function() _now;
 
-  Future<SyncImportPassResult> run({required String? syncToken}) async {
+  Future<SyncImportPassResult> run({
+    required String? syncToken,
+    SyncProgressCallback? onProgress,
+  }) async {
+    onProgress?.call(const SyncProgress(SyncPhase.downloading));
     GoogleEventsPage page;
     try {
       page = await _api.listChangedEvents(syncToken: syncToken);
@@ -102,9 +107,23 @@ class SyncImportPass {
       engine: _engine,
       now: _now,
     );
-    for (final RemoteEventSnapshot snapshot in page.events) {
-      if (snapshot.isOwnExport) {
-        await _guarded(() => ownChanges.applyOwnExport(snapshot));
+    final List<RemoteEventSnapshot> ownExports = <RemoteEventSnapshot>[
+      for (final RemoteEventSnapshot snapshot in page.events)
+        if (snapshot.isOwnExport) snapshot,
+    ];
+    // Progress counts our own exports, then the imports (their total is
+    // known once they are planned, below).
+    int done = 0;
+    int total = ownExports.length + importCandidates.length;
+    void report() => onProgress?.call(
+      SyncProgress(SyncPhase.applying, done: done, total: total),
+    );
+    report();
+    for (final RemoteEventSnapshot snapshot in ownExports) {
+      await _guarded(() => ownChanges.applyOwnExport(snapshot));
+      done++;
+      if (done % _kApplyChunkSize == 0) {
+        report();
       }
     }
 
@@ -140,10 +159,19 @@ class SyncImportPass {
       remoteEvents: importCandidates,
       localEventsByGoogleId: localByGoogleId,
     );
+    final List<SyncAction> writes = <SyncAction>[
+      for (final SyncAction action in actions)
+        if (action is! SkipAction) action,
+    ];
+    total = ownExports.length + writes.length;
+    report();
     // Writes go out a chunk at a time in parallel rather than strictly one
     // by one (each Firestore write waits for the server's acknowledgement).
-    for (int i = 0; i < actions.length; i += _kApplyChunkSize) {
-      await Future.wait(actions.skip(i).take(_kApplyChunkSize).map(_apply));
+    for (int i = 0; i < writes.length; i += _kApplyChunkSize) {
+      final Iterable<SyncAction> chunk = writes.skip(i).take(_kApplyChunkSize);
+      await Future.wait(chunk.map(_apply));
+      done += chunk.length;
+      report();
     }
 
     return SyncImportPassResult(

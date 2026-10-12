@@ -5,6 +5,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../domain/sync/sync_state.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/google_sync_settings_state.dart';
+import 'sync_progress_view.dart';
 
 /// The M5a settings screen's "סנכרון עם יומן Google" section (task brief
 /// §3): enable/disable switch, last-sync time, manual sync button with a
@@ -192,6 +193,10 @@ class GoogleSyncSection extends StatelessWidget {
                     : l10n.settingsGoogleSyncNowButton,
               ),
             ),
+            if (_isSyncing) ...<Widget>[
+              SizedBox(height: spacingSm),
+              SyncProgressView(progress: state.progress),
+            ],
           ],
         ),
       ),

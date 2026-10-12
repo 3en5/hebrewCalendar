@@ -29,6 +29,7 @@ import '../../domain/sync/occurrence_key.dart';
 import '../../domain/sync/remote_event_snapshot.dart';
 import '../../domain/sync/sync_action.dart';
 import '../../domain/sync/sync_planner.dart';
+import '../../domain/sync/sync_progress.dart';
 import '../../domain/sync/sync_state.dart';
 import 'event_sync_mapper.dart';
 import 'google_calendar_api.dart';
@@ -80,9 +81,14 @@ class SyncExportPass {
   /// exports"). Keyed by `'$eventId|$occurrenceKey'`.
   Future<void> run({
     required Map<String, GoogleSyncState> ownExportsLookup,
+    SyncProgressCallback? onProgress,
   }) async {
     await _flushPendingDeletions();
     final List<Event> events = await _repository.getDirtyForSync();
+    int done = 0;
+    onProgress?.call(
+      SyncProgress(SyncPhase.uploading, done: done, total: events.length),
+    );
     final DateTime start = _now();
     final HebrewDate from = _engine.fromGregorian(start);
     final Set<String> pushed = <String>{};
@@ -99,6 +105,9 @@ class SyncExportPass {
         );
         await _exportRecurring(event, from, to, ownExportsLookup);
       }
+      onProgress?.call(
+        SyncProgress(SyncPhase.uploading, done: ++done, total: events.length),
+      );
     }
     await _topUpRecurring(from, start, pushed, ownExportsLookup);
   }

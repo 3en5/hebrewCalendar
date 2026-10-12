@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import '../../../data/sync/google_calendar_api.dart';
 import '../../../data/sync/sync_engine.dart';
 import '../../../domain/event/event_repository.dart';
+import '../../../domain/sync/sync_progress.dart';
 import '../../../domain/sync/sync_run_result.dart';
 import '../../../domain/sync/sync_settings_store.dart';
 import '../../../domain/sync/sync_state.dart';
@@ -354,13 +355,14 @@ class GoogleSyncTriggerService {
     _emit();
     SyncRunResult result;
     try {
-      result = await _engine.runSync();
+      result = await _engine.runSync(onProgress: _onProgress);
     } catch (error) {
       // Round #9: an exception escaping the pass used to leave the screen on
       // "מסנכרן..." forever (callers run this unawaited).
       result = SyncRunResult.failure(error.toString(), permanent: false);
     }
     _lastRunAt = _now();
+    _state = _state.copyWith(clearProgress: true);
     if (result.wasConcurrentSkip) {
       // Another pass (e.g. the app-open trigger) is still running; it will
       // report its own outcome. Don't stamp a last-sync time it hasn't earned.
@@ -379,6 +381,14 @@ class GoogleSyncTriggerService {
     }
     _emit();
     return result;
+  }
+
+  void _onProgress(SyncProgress progress) {
+    if (_disposed || _state.status != SyncStatus.syncing) {
+      return;
+    }
+    _state = _state.copyWith(progress: progress);
+    _emit();
   }
 
   void _subscribeToLocalChanges() {

@@ -5,6 +5,12 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-12 — מחוון התקדמות לסנכרון (בקשת משתמש, אושר)
+
+- `SyncEngine.runSync(onProgress:)` מדווח: מוריד מ-Google → מעדכן ביומן X מתוך Y → שולח ל-Google
+  X מתוך Y. `GoogleSyncSettingsState.progress` מעביר את זה ל-UI: בכרטיס הסנכרון בהגדרות ובפס דק
+  מתחת לסרגל היומן (`SyncProgressStrip`). סנכרון רקע (WorkManager) לא מוצג.
+
 ## 2026-10-12 — תיקון: "permission-denied" שעצר את הסנכרון (דיווח מכשיר)
 
 - אחרי גרסת M17 הסנכרון נכשל ב-`cloud_firestore/permission-denied`. סיבה: קריאת סדרה שנמחקה

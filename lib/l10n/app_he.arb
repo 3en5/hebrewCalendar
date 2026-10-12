@@ -496,6 +496,20 @@
     "description": "Tag in the month view's day agenda naming the weekly Torah portion read on that Shabbat (M8).",
     "placeholders": {"name": {"type": "String"}}
   },
+  "syncProgressStarting": "מתחיל סנכרון",
+  "@syncProgressStarting": {"description": "Sync progress: the pass is starting."},
+  "syncProgressDownloading": "מוריד שינויים מ-Google",
+  "@syncProgressDownloading": {"description": "Sync progress: fetching changes from Google (count not known yet)."},
+  "syncProgressApplying": "מעדכן ביומן: {done} מתוך {total}",
+  "@syncProgressApplying": {
+    "description": "Sync progress: writing Google's changes into the app.",
+    "placeholders": {"done": {"type": "String"}, "total": {"type": "String"}}
+  },
+  "syncProgressUploading": "שולח ל-Google: {done} מתוך {total}",
+  "@syncProgressUploading": {
+    "description": "Sync progress: sending the app's changes to Google.",
+    "placeholders": {"done": {"type": "String"}, "total": {"type": "String"}}
+  },
   "settingsDarkModeTitle": "מצב כהה",
   "@settingsDarkModeTitle": {
     "description": "Settings switch for dark mode, as in PowerWatch (follows the system until changed)."

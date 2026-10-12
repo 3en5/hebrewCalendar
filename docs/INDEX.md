@@ -93,6 +93,10 @@
 | `lib/data/sync/sync_import_pass.dart` | `SyncImportPass` (M5a): חצי ה"משיכה" — מביא אירועים שהשתנו (`syncToken`, ריענון מלא אחרי 410), מפריד יצוא-עצמי (`extendedProperties`) מאירועים חיצוניים, מפעיל את `planImportActions` ובונה `ownExportsLookup` (dedup) |
 | `lib/data/sync/sync_export_pass.dart` | `SyncExportPass` (M5a): חצי ה"דחיפה" — מרוקן מחיקות ממתינות, בונה `ExportCandidate` לכל אירוע מלוכלך (`dirty`) — בודד לאירוע לא-חוזר, אחד למופע לאירוע חוזר בחלון המתגלגל (5 שנים לשנתי/חודשי, 2 לשבועי/יומי) — מפעיל את `planExportActions`, מטפל ב-412 דרך `resolveConflict`, ומשלים מופעים חסרים לסדרות שלא נערכו (`_topUpRecurring`) |
 | `lib/data/sync/own_export_changes.dart` | `OwnExportChanges` (M17): שינויים ב-Google באירועים שהאפליקציה ייצאה — מופע שנערך הופך לאירוע בודד, מופע שנמחק הופך לחריג, אירוע בודד שנערך מתעדכן |
+| `lib/domain/sync/sync_progress.dart` | `SyncPhase`/`SyncProgress` — התקדמות סנכרון (הורדה, עדכון ביומן X מתוך Y, שליחה ל-Google X מתוך Y) |
+| `lib/features/settings/presentation/widgets/sync_progress_view.dart` | `SyncProgressView`: טקסט ההתקדמות ופס שמתמלא; בכרטיס הסנכרון ובמסך היומן |
+| `lib/features/calendar/presentation/widgets/sync_progress_strip.dart` | פס התקדמות דק מתחת לסרגל היומן בזמן סנכרון |
+| `test/data/sync/sync_progress_test.dart` | טסטים להתקדמות הסנכרון |
 | `lib/data/sync/remote_event_fields.dart` | המרת שדות אירוע Google לאירוע מקומי: שעות (`remoteStartTime`/`remoteEndTime`) ו-`withRemoteContent` |
 | `lib/data/sync/full_resync_flag.dart` | `FullResyncFlag`/`PrefsFullResyncFlag` — בקשה חד-פעמית לרשימה מלאה מ-Google (M17: השלמת שעות לאירועים מיובאים) |
 | `test/data/sync/own_export_changes_test.dart` | טסטים ל-M17 ולשעות של אירועים מיובאים |

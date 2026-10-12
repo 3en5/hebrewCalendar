@@ -387,6 +387,22 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String get syncProgressStarting => 'מתחיל סנכרון';
+
+  @override
+  String get syncProgressDownloading => 'מוריד שינויים מ-Google';
+
+  @override
+  String syncProgressApplying(String done, String total) {
+    return 'מעדכן ביומן: $done מתוך $total';
+  }
+
+  @override
+  String syncProgressUploading(String done, String total) {
+    return 'שולח ל-Google: $done מתוך $total';
+  }
+
+  @override
   String get settingsDarkModeTitle => 'מצב כהה';
 
   @override

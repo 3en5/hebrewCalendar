@@ -1,3 +1,4 @@
+import '../../../domain/sync/sync_progress.dart';
 import '../../../domain/sync/sync_state.dart';
 
 /// Pure UI-facing snapshot of the Google Calendar sync feature's state
@@ -13,6 +14,7 @@ class GoogleSyncSettingsState {
     this.errorMessage,
     this.initialLoadFailed = false,
     this.authorizing = false,
+    this.progress,
   });
 
   final bool enabled;
@@ -37,6 +39,10 @@ class GoogleSyncSettingsState {
   /// authorization attempt.
   final bool authorizing;
 
+  /// How far the running pass is, while [status] is [SyncStatus.syncing]
+  /// (device request 2026-10-12); null when no pass is running.
+  final SyncProgress? progress;
+
   GoogleSyncSettingsState copyWith({
     bool? enabled,
     SyncStatus? status,
@@ -46,6 +52,8 @@ class GoogleSyncSettingsState {
     bool clearErrorMessage = false,
     bool? initialLoadFailed,
     bool? authorizing,
+    SyncProgress? progress,
+    bool clearProgress = false,
   }) => GoogleSyncSettingsState(
     enabled: enabled ?? this.enabled,
     status: status ?? this.status,
@@ -57,5 +65,6 @@ class GoogleSyncSettingsState {
         : (errorMessage ?? this.errorMessage),
     initialLoadFailed: initialLoadFailed ?? this.initialLoadFailed,
     authorizing: authorizing ?? this.authorizing,
+    progress: clearProgress ? null : (progress ?? this.progress),
   );
 }

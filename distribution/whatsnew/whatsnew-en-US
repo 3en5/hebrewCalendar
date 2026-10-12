@@ -1,1 +1,1 @@
-Fix: Google sync stopped with a permission error; it works again. Also: week and day views open at 7 AM.
+New: sync progress. While syncing you see what is happening, e.g. "updating the calendar: 340 of 2,944", in Settings and under the calendar bar.

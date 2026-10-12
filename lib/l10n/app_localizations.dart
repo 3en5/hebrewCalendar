@@ -784,6 +784,30 @@ abstract class AppLocalizations {
   /// **'פרשת {name}'**
   String monthAgendaParshaTag(String name);
 
+  /// Sync progress: the pass is starting.
+  ///
+  /// In he, this message translates to:
+  /// **'מתחיל סנכרון'**
+  String get syncProgressStarting;
+
+  /// Sync progress: fetching changes from Google (count not known yet).
+  ///
+  /// In he, this message translates to:
+  /// **'מוריד שינויים מ-Google'**
+  String get syncProgressDownloading;
+
+  /// Sync progress: writing Google's changes into the app.
+  ///
+  /// In he, this message translates to:
+  /// **'מעדכן ביומן: {done} מתוך {total}'**
+  String syncProgressApplying(String done, String total);
+
+  /// Sync progress: sending the app's changes to Google.
+  ///
+  /// In he, this message translates to:
+  /// **'שולח ל-Google: {done} מתוך {total}'**
+  String syncProgressUploading(String done, String total);
+
   /// Settings switch for dark mode, as in PowerWatch (follows the system until changed).
   ///
   /// In he, this message translates to:
