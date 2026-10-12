@@ -38,31 +38,40 @@ class EventBlock extends StatelessWidget {
               horizontal: spacingXs,
               vertical: spacingXs / 2,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  event.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: captionRem,
-                    fontWeight: FontWeight.w600,
-                    color: colors.foreground,
-                  ),
-                ),
-                if (timeLabel != null)
-                  Text(
-                    timeLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: captionRem,
-                      color: colors.foreground,
+            // A short (e.g. one-hour) block can be lower than its title +
+            // time: lay them out at their natural height and clip, instead
+            // of overflowing.
+            child: ClipRect(
+              child: OverflowBox(
+                alignment: AlignmentDirectional.topStart,
+                maxHeight: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      event.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: captionRem,
+                        fontWeight: FontWeight.w600,
+                        color: colors.foreground,
+                      ),
                     ),
-                  ),
-              ],
+                    if (timeLabel != null)
+                      Text(
+                        timeLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: captionRem,
+                          color: colors.foreground,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

@@ -25,7 +25,7 @@ const int _defaultDurationMinutes = 60;
 /// and the tapped hour; tapping an event block calls [onEventTap] instead —
 /// the block's own `InkWell` is hit-tested first since it's painted above
 /// the slot's `GestureDetector` in the `Stack`, so the two never conflict.
-class HourGrid extends StatelessWidget {
+class HourGrid extends StatefulWidget {
   const HourGrid({
     required this.columns,
     required this.onEmptySlotTap,
@@ -38,8 +38,29 @@ class HourGrid extends StatelessWidget {
   final void Function(EventOccurrence occurrence) onEventTap;
 
   @override
+  State<HourGrid> createState() => _HourGridState();
+}
+
+/// The hour the grid opens scrolled to, like Google Calendar — the night
+/// hours are rarely used, so they start out of view.
+const int _initialHour = 7;
+
+class _HourGridState extends State<HourGrid> {
+  late final ScrollController _scroll = ScrollController(
+    initialScrollOffset: hourRowHeight * _initialHour,
+  );
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final List<DayOccurrences> columns = widget.columns;
     return SingleChildScrollView(
+      controller: _scroll,
       child: SizedBox(
         height: hourRowHeight * _hoursPerDay,
         child: Row(
@@ -50,8 +71,8 @@ class HourGrid extends StatelessWidget {
               Expanded(
                 child: _DayColumn(
                   column: column,
-                  onEmptySlotTap: onEmptySlotTap,
-                  onEventTap: onEventTap,
+                  onEmptySlotTap: widget.onEmptySlotTap,
+                  onEventTap: widget.onEventTap,
                 ),
               ),
           ],

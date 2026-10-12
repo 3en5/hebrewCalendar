@@ -111,6 +111,7 @@ class HebrewCalendarApp extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ref.watch(themeModeProvider),
+      debugShowCheckedModeBanner: false,
       locale: const Locale('he'),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const <LocalizationsDelegate<Object?>>[

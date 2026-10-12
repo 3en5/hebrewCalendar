@@ -33,6 +33,8 @@
 | `.github/workflows/firestore.yml` | בודק את `firebase/firestore.rules` מול ה-Firestore emulator בכל שינוי, ופורס rules ו-indexes לפרויקט אחרי מיזוג ל-`main` |
 | `firebase/test/rules.test.mjs`, `package.json` | בדיקות ה-Security Rules (`@firebase/rules-unit-testing`, `node:test`). ה-fixture תואם לפלט של `event_firestore_mapper.dart`. בודק בידוד בין משתמשים, ולידציית שדות, איסור העברת בעלות, ו-catch-all |
 | `tool/brand/make_brand_assets.py`, `tool/brand/icon.svg` | יוצר מקוד את אייקון האפליקציה בסגנון KALFAPP (legacy ו-adaptive, לכל הצפיפויות) ואת תמונות החנות (`icon.png`, `featureGraphic.png` עם לוגו KALFAPP). `icon.svg` הוא רפרנס של אותו ציור (ARCHITECTURE.md §13) |
+| `tool/screenshots/capture_store_screens_test.dart` | מצלם את מסכי האפליקציה האמיתיים עם אירועים לדוגמה (1080x2400) ל-`build/store_raw/`. לא רץ ב-CI |
+| `tool/brand/make_store_screenshots.py` | ממסגר את המסכים לתמונות חנות בסגנון KALFAPP (כותרת, הסבר, מסגרת טלפון) ל-`distribution/listings/images/phoneScreenshots/` |
 | `assets/fonts/` | גופן Rubik (OFL) במשקלים סטטיים 400/500/600/700 + `OFL-Rubik.txt` |
 | `assets/brand/kalfapp_logo.png` | לוגו KALFAPP (ממשפחת PowerWatch), מוצג במסך "אודות" ובגרפיקה לחנות |
 | `distribution/listings/<lang>/*.txt`, `distribution/listings/images/` | דף האפליקציה ב-Play: כותרת, תיאור קצר ומלא לכל שפה (iw-IL, en-US), אייקון, גרפיקה ראשית וצילומי מסך (`phoneScreenshots/`, אופציונלי) |
