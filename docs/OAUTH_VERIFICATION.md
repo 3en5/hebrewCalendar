@@ -33,3 +33,7 @@ Hebrew Calendar is an Android calendar organized around the Hebrew (Jewish) date
 7. לפתוח את Google Calendar ולהראות שהאירוע הופיע שם.
 8. למחוק את האירוע באפליקציה, לסנכרן, ולהראות שהוא נמחק גם ב-Google Calendar.
 9. להראות בהגדרות את כיבוי הסנכרון ואת הקישור למדיניות הפרטיות (מסך אודות).
+
+## הסרטון (2026-10-13)
+- הועלה ל-YouTube: https://www.youtube.com/watch?v=TEMbhFNJrY4 (2:17, ערוך עם כתוביות באנגלית; הקובץ הערוך נבנה ב-ffmpeg מהקלטת המסך).
+- להגשה משתמשים בכתובת ה-watch (לא shorts). פרטיות: לא רשום (Unlisted).
