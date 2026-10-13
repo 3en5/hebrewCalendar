@@ -14,6 +14,7 @@ import '../../application/month_events_provider.dart';
 import '../../../zmanim/application/zmanim_settings.dart';
 import '../../../zmanim/presentation/shabbat_times.dart';
 import 'day_cell.dart';
+import 'day_swipe_area.dart';
 import 'month_day_agenda.dart';
 
 /// Sunday-first single-letter weekday abbreviations (א׳..ש׳). Saturday uses
@@ -40,7 +41,8 @@ const double _gridHeightShare = 0.64;
 /// RTL-laid-out via the ambient Hebrew [Directionality], week starts
 /// Sunday), and below it [MonthDayAgenda] for the selected day — the
 /// shell's focused date when it falls in this month. Tapping a day selects
-/// it. Days borrowed from adjacent months render as empty cells.
+/// it; swiping the agenda moves a day ([DaySwipeArea]). Days borrowed from
+/// adjacent months render as empty cells.
 class MonthGrid extends ConsumerWidget {
   const MonthGrid({required this.displayedMonth, super.key});
 
@@ -130,14 +132,17 @@ class MonthGrid extends ConsumerWidget {
                             ),
                           ),
                         Expanded(
-                          child: MonthDayAgenda(
+                          child: DaySwipeArea(
                             date: selected,
-                            labels:
-                                labelsByDay[selected.day] ??
-                                const <JewishDayLabel>[],
-                            occurrences:
-                                occurrencesByDay[selected.day] ??
-                                const <EventOccurrence>[],
+                            child: MonthDayAgenda(
+                              date: selected,
+                              labels:
+                                  labelsByDay[selected.day] ??
+                                  const <JewishDayLabel>[],
+                              occurrences:
+                                  occurrencesByDay[selected.day] ??
+                                  const <EventOccurrence>[],
+                            ),
                           ),
                         ),
                       ],
