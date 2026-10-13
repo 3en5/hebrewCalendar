@@ -16,12 +16,37 @@ enum CalendarDisplayMode {
 
 const String _kDisplayModePrefsKey = 'calendar_display_mode_v1';
 
-/// The display choice, kept per device (a view preference, not user data).
+/// The stored choice, read once before the first frame by
+/// [preloadCalendarDisplayMode] so the app opens straight in the last
+/// display, without a flash of the Hebrew grid. Null until preloaded.
+CalendarDisplayMode? _preloaded;
+
+/// Reads the last display choice before `runApp` (main.dart). Bounded and
+/// best effort: on any failure the provider's own async load still runs.
+Future<void> preloadCalendarDisplayMode() async {
+  try {
+    final SharedPreferences prefs = await SharedPreferences.getInstance()
+        .timeout(const Duration(seconds: 2));
+    final String? stored = prefs.getString(_kDisplayModePrefsKey);
+    _preloaded = CalendarDisplayMode.values
+        .where((CalendarDisplayMode m) => m.name == stored)
+        .firstOrNull;
+  } catch (_) {
+    // Keep null: the notifier falls back to its async load.
+  }
+}
+
+/// The display choice, kept per device (a view preference, not user data)
+/// and restored on every start: the app always opens in the last display.
 class CalendarDisplayModeNotifier extends Notifier<CalendarDisplayMode> {
   bool _changed = false;
 
   @override
   CalendarDisplayMode build() {
+    final CalendarDisplayMode? preloaded = _preloaded;
+    if (preloaded != null) {
+      return preloaded;
+    }
     unawaited(_load());
     return CalendarDisplayMode.hebrew;
   }
@@ -46,6 +71,7 @@ class CalendarDisplayModeNotifier extends Notifier<CalendarDisplayMode> {
 
   Future<void> set(CalendarDisplayMode mode) async {
     _changed = true;
+    _preloaded = mode;
     state = mode;
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();

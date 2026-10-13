@@ -123,6 +123,19 @@ void main() {
     expect(find.text('נובמבר 2026'), findsOneWidget);
   });
 
+  test('a preloaded choice applies from the first read', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'calendar_display_mode_v1': 'gregorian',
+    });
+    await preloadCalendarDisplayMode();
+    final ProviderContainer c = ProviderContainer();
+    addTearDown(c.dispose);
+    // No await: the stored choice is there synchronously.
+    expect(c.read(calendarDisplayModeProvider), CalendarDisplayMode.gregorian);
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await preloadCalendarDisplayMode();
+  });
+
   test('the choice is kept per device', () async {
     final ProviderContainer first = ProviderContainer();
     await first
