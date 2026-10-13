@@ -152,10 +152,12 @@ jobs:
             --build-name="${{ steps.version.outputs.name }}" \
             --build-number="${{ steps.version.outputs.code }}"
 
-      # Kept a week (not 30 days): the Play upload below reads the AAB from
-      # disk, so the artifact is only a short-lived copy (Actions storage
-      # quota, 2026-10-13).
+      # Only for `track = none`, where the artifact is the run's whole output
+      # (a manual Play upload). Otherwise the Play upload below reads the AAB
+      # from disk and Play keeps it, so a copy here only uses Actions storage
+      # (the account quota filled up and failed a release, 2026-10-13).
       - name: Upload App Bundle artifact
+        if: ${{ inputs.track == 'none' }}
         uses: actions/upload-artifact@v4
         with:
           name: hebrew-calendar-release-aab

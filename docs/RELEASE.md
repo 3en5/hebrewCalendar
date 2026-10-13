@@ -100,8 +100,8 @@ keyPassword=<סיסמת המפתח>
      `il.co.natanor.kalfapp.hebrewcalendar`.
    - מפענח את ה-keystore וכותב `android/key.properties`.
    - מחשב `versionName` ו-`versionCode` (סעיף 5) ובונה App Bundle חתום.
-3. ה-AAB תמיד נשמר כ-artifact: Actions ← ההרצה ← Artifacts ←
-   `hebrew-calendar-release-aab` (נשמר 7 ימים). כש-`track` שונה מ-`none`, הוא גם מועלה
+3. כש-`track = none`, ה-AAB נשמר כ-artifact (7 ימים): Actions ← ההרצה ← Artifacts ←
+   `hebrew-calendar-release-aab`. כש-`track` שונה מ-`none`, הוא לא נשמר ב-GitHub אלא מועלה
    ל-Play עם הערות הגרסה מ-`distribution/whatsnew/`. צריך לעדכן אותן לפני כל
    שחרור, בעברית (`whatsnew-iw-IL`) ובאנגלית (`whatsnew-en-US`), עד 500 תווים
    כל אחת.
