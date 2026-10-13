@@ -96,6 +96,8 @@
 | `lib/domain/sync/sync_progress.dart` | `SyncPhase`/`SyncProgress` — התקדמות סנכרון (הורדה, עדכון ביומן X מתוך Y, שליחה ל-Google X מתוך Y) |
 | `lib/features/settings/presentation/widgets/sync_progress_view.dart` | `SyncProgressView`: טקסט ההתקדמות ופס שמתמלא; בכרטיס הסנכרון ובמסך היומן |
 | `lib/features/calendar/presentation/widgets/sync_progress_strip.dart` | פס התקדמות דק מתחת לסרגל היומן בזמן סנכרון |
+| `lib/features/calendar/presentation/widgets/location_actions.dart` | M20: מיקום האירוע בפרטי האירוע עם כפתורי Google Maps ו-Waze (`url_launcher`) |
+| `test/features/calendar/presentation/location_actions_test.dart` | טסט לקישורי Maps/Waze |
 | `test/data/sync/sync_progress_test.dart` | טסטים להתקדמות הסנכרון |
 | `lib/data/sync/remote_event_fields.dart` | המרת שדות אירוע Google לאירוע מקומי: שעות (`remoteStartTime`/`remoteEndTime`) ו-`withRemoteContent` |
 | `lib/data/sync/full_resync_flag.dart` | `FullResyncFlag`/`PrefsFullResyncFlag` — בקשה חד-פעמית לרשימה מלאה מ-Google (M17: השלמת שעות לאירועים מיובאים) |

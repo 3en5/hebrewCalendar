@@ -104,6 +104,12 @@
   "@eventTitleHint": {"description": "Hint of the large title field in the compact editor."},
   "eventColorRow": "צבע: {name}",
   "@eventColorRow": {"description": "The color row of the compact editor.", "placeholders": {"name": {"type": "String"}}},
+  "locationOpenInMaps": "פתח ב-Google Maps",
+  "@locationOpenInMaps": {"description": "Opens the event's location in Google Maps (M20)."},
+  "locationNavigateWaze": "נווט עם Waze",
+  "@locationNavigateWaze": {"description": "Navigates to the event's location with Waze (M20)."},
+  "locationOpenFailed": "לא הצלחתי לפתוח את המפה",
+  "@locationOpenFailed": {"description": "Shown when no app could open the location link."},
   "eventStartTimeLabel": "שעת התחלה",
   "@eventStartTimeLabel": {
     "description": "Label for the event start time field."

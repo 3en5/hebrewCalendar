@@ -145,6 +145,15 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String get locationOpenInMaps => 'פתח ב-Google Maps';
+
+  @override
+  String get locationNavigateWaze => 'נווט עם Waze';
+
+  @override
+  String get locationOpenFailed => 'לא הצלחתי לפתוח את המפה';
+
+  @override
   String get eventStartTimeLabel => 'שעת התחלה';
 
   @override

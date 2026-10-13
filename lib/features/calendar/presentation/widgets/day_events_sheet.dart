@@ -18,6 +18,7 @@ import '../../../event_editor/application/event_repository_provider.dart';
 import '../../../event_editor/presentation/event_editor_screen.dart';
 import '../../../event_editor/presentation/recurring_scope_dialog.dart';
 import '../../application/hebrew_date_engine_provider.dart';
+import 'location_actions.dart';
 
 /// Bottom sheet listing the event occurrences on a single Hebrew day (title,
 /// time), with edit and delete actions — the Google-Calendar-like "day
@@ -71,7 +72,7 @@ class _DayEventTile extends ConsumerWidget {
         ? l10n.eventAllDayLabel
         : (_event.startTime?.toString() ?? '');
 
-    return ListTile(
+    final Widget tile = ListTile(
       contentPadding: EdgeInsetsDirectional.zero,
       title: Text(_event.title),
       subtitle: Text(
@@ -94,6 +95,17 @@ class _DayEventTile extends ConsumerWidget {
           ),
         ],
       ),
+    );
+    final String location = _event.location.trim();
+    if (location.isEmpty) {
+      return tile;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        tile,
+        LocationActions(location: location),
+      ],
     );
   }
 

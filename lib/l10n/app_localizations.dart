@@ -298,6 +298,24 @@ abstract class AppLocalizations {
   /// **'צבע: {name}'**
   String eventColorRow(String name);
 
+  /// Opens the event's location in Google Maps (M20).
+  ///
+  /// In he, this message translates to:
+  /// **'פתח ב-Google Maps'**
+  String get locationOpenInMaps;
+
+  /// Navigates to the event's location with Waze (M20).
+  ///
+  /// In he, this message translates to:
+  /// **'נווט עם Waze'**
+  String get locationNavigateWaze;
+
+  /// Shown when no app could open the location link.
+  ///
+  /// In he, this message translates to:
+  /// **'לא הצלחתי לפתוח את המפה'**
+  String get locationOpenFailed;
+
   /// Label for the event start time field.
   ///
   /// In he, this message translates to:
