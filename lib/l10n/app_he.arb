@@ -267,6 +267,14 @@
   "@recurrenceTypeGregorianYearly": {"description": "Recurrence: every Gregorian year on the same date (M22)."},
   "recurrenceTypeGregorianMonthly": "כל חודש (לועזי)",
   "@recurrenceTypeGregorianMonthly": {"description": "Recurrence: every Gregorian month on the same day (M22)."},
+  "calendarDisplayHebrew": "תצוגה עברית",
+  "@calendarDisplayHebrew": {"description": "Display switch: Hebrew months (M23)."},
+  "calendarDisplayGregorian": "תצוגה לועזית",
+  "@calendarDisplayGregorian": {"description": "Display switch: Gregorian months (M23)."},
+  "calendarDisplayTooltip": "החלפה בין תצוגה עברית ללועזית",
+  "@calendarDisplayTooltip": {"description": "Tooltip of the tappable month title (M23)."},
+  "settingsGregorianDisplaySubtitle": "חודשים לועזיים, התאריך העברי בקטן",
+  "@settingsGregorianDisplaySubtitle": {"description": "Settings: subtitle of the Gregorian display switch (M23)."},
   "recurrenceTypeWeekly": "כל שבוע",
   "@recurrenceTypeWeekly": {
     "description": "Recurrence type chip label: repeats every week."

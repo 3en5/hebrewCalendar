@@ -322,6 +322,19 @@ class AppLocalizationsHe extends AppLocalizations {
   String get recurrenceTypeGregorianMonthly => 'כל חודש (לועזי)';
 
   @override
+  String get calendarDisplayHebrew => 'תצוגה עברית';
+
+  @override
+  String get calendarDisplayGregorian => 'תצוגה לועזית';
+
+  @override
+  String get calendarDisplayTooltip => 'החלפה בין תצוגה עברית ללועזית';
+
+  @override
+  String get settingsGregorianDisplaySubtitle =>
+      'חודשים לועזיים, התאריך העברי בקטן';
+
+  @override
   String get recurrenceTypeWeekly => 'כל שבוע';
 
   @override

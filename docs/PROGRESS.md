@@ -5,6 +5,10 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-13 — M23: תצוגה לועזית (בקשת משתמש, אושר)
+
+- `calendarDisplayModeProvider` (נשמר במכשיר), `CalendarTitle` (כותרת לחיצה עם תפריט עברית/לועזית), `month_grid_data.dart` (נתוני עמוד חודש עברי או לועזי, עד 3 חודשים עבריים בחודש לועזי), `DayCell.gregorianPrimary`, כותרות יום/שבוע ואג'נדה מתחלפות, מתג בהגדרות. 468 טסטים.
+
 ## 2026-10-13 — M22: חזרה לפי התאריך הלועזי (אושר עם ברירות המחדל, סקיצה 16)
 
 - `RecurrenceType.gregorianYearly`/`gregorianMonthly` (`recurrence_expander.dart` `_gregorianOccurrences`), חלון יצוא ארוך, תוויות בחלון החזרתיות, כללי Firestore + טסט כללים. 464 טסטים, 19 טסטי כללים. כללי האבטחה ייפרסו עם המיזוג ל-main.

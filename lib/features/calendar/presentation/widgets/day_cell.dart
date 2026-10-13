@@ -24,6 +24,7 @@ class DayCell extends StatelessWidget {
     required this.isSelected,
     required this.isShabbat,
     required this.drawEndLine,
+    this.gregorianPrimary = false,
     this.eventColors = const <Color>[],
     this.label,
     this.shabbatTime,
@@ -36,6 +37,10 @@ class DayCell extends StatelessWidget {
 
   /// The corresponding Gregorian day of month, shown as a secondary hint.
   final int gregorianDay;
+
+  /// The Gregorian display (M23): the Gregorian day is the big numeral and
+  /// the Hebrew day the small corner hint.
+  final bool gregorianPrimary;
 
   final bool isToday;
 
@@ -86,7 +91,9 @@ class DayCell extends StatelessWidget {
                 top: spacingXs / 2,
                 end: spacingXs,
                 child: Text(
-                  '$gregorianDay',
+                  gregorianPrimary
+                      ? hebrewDayNumeral(hebrewDay)
+                      : '$gregorianDay',
                   style: TextStyle(
                     fontSize: rem(0.5625),
                     color: colorScheme.onSurfaceVariant,
@@ -104,7 +111,9 @@ class DayCell extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
                             _DayNumeral(
-                              hebrewDay: hebrewDay,
+                              text: gregorianPrimary
+                                  ? '$gregorianDay'
+                                  : hebrewDayNumeral(hebrewDay),
                               isToday: isToday,
                               isSelected: isSelected,
                             ),
@@ -153,12 +162,12 @@ BorderDirectional monthGridLineBorder(
 
 class _DayNumeral extends StatelessWidget {
   const _DayNumeral({
-    required this.hebrewDay,
+    required this.text,
     required this.isToday,
     required this.isSelected,
   });
 
-  final int hebrewDay;
+  final String text;
   final bool isToday;
   final bool isSelected;
 
@@ -191,7 +200,7 @@ class _DayNumeral extends StatelessWidget {
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(
-          hebrewDayNumeral(hebrewDay),
+          text,
           maxLines: 1,
           softWrap: false,
           style: TextStyle(

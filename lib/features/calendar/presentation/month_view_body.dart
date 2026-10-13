@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../domain/hebrew_date/hebrew_date_engine.dart';
+import '../application/calendar_display_mode_provider.dart';
 import '../application/calendar_view_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
 import 'paged_focus_sync.dart';
 import 'widgets/month_grid.dart';
+import 'widgets/month_grid_data.dart' show addGregorianMonths;
 
 /// The Hebrew month body (M3b): a Google-Calendar-like grid the user swipes
 /// through to move between Hebrew months. `CalendarShellScreen`'s body when
@@ -20,14 +22,33 @@ import 'widgets/month_grid.dart';
 /// already gives every other month-stepping call site), so switching to the
 /// day/week view, or creating an event via the shell's FAB, after paging a
 /// few months still lands on the day the user was actually looking at.
-class MonthViewBody extends ConsumerStatefulWidget {
+///
+/// M23: in the Gregorian display the pages are Gregorian months. Switching
+/// the display rebuilds the pager around the focused day (the owner's
+/// "pivot"), so the selected day stays selected.
+class MonthViewBody extends ConsumerWidget {
   const MonthViewBody({super.key});
 
   @override
-  ConsumerState<MonthViewBody> createState() => _MonthViewBodyState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final CalendarDisplayMode mode = ref.watch(calendarDisplayModeProvider);
+    return _MonthPager(
+      key: ValueKey<CalendarDisplayMode>(mode),
+      gregorian: mode == CalendarDisplayMode.gregorian,
+    );
+  }
 }
 
-class _MonthViewBodyState extends ConsumerState<MonthViewBody> {
+class _MonthPager extends ConsumerStatefulWidget {
+  const _MonthPager({required this.gregorian, super.key});
+
+  final bool gregorian;
+
+  @override
+  ConsumerState<_MonthPager> createState() => _MonthPagerState();
+}
+
+class _MonthPagerState extends ConsumerState<_MonthPager> {
   late final PagedFocusSync _sync;
 
   @override
@@ -37,8 +58,9 @@ class _MonthViewBodyState extends ConsumerState<MonthViewBody> {
     _sync = PagedFocusSync(
       initialFocus: ref.read(calendarViewProvider).focusedDate,
       roundToGranularity: (HebrewDate date) => date,
-      stepDate: (HebrewDate anchor, int delta) =>
-          engine.addMonths(anchor, delta),
+      stepDate: (HebrewDate anchor, int delta) => widget.gregorian
+          ? addGregorianMonths(engine, anchor, delta)
+          : engine.addMonths(anchor, delta),
       onPageDateChanged: (HebrewDate date) =>
           ref.read(calendarViewProvider.notifier).setFocusedDate(date),
       onAnchorChangedExternally: () => setState(() {}),
@@ -62,7 +84,10 @@ class _MonthViewBodyState extends ConsumerState<MonthViewBody> {
       itemCount: PagedFocusSync.pageWindow * 2 + 1,
       onPageChanged: _sync.onPageChanged,
       itemBuilder: (BuildContext context, int index) {
-        return MonthGrid(displayedMonth: _sync.dateForPage(index));
+        return MonthGrid(
+          displayedMonth: _sync.dateForPage(index),
+          gregorian: widget.gregorian,
+        );
       },
     );
   }

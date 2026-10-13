@@ -628,6 +628,30 @@ abstract class AppLocalizations {
   /// **'כל חודש (לועזי)'**
   String get recurrenceTypeGregorianMonthly;
 
+  /// Display switch: Hebrew months (M23).
+  ///
+  /// In he, this message translates to:
+  /// **'תצוגה עברית'**
+  String get calendarDisplayHebrew;
+
+  /// Display switch: Gregorian months (M23).
+  ///
+  /// In he, this message translates to:
+  /// **'תצוגה לועזית'**
+  String get calendarDisplayGregorian;
+
+  /// Tooltip of the tappable month title (M23).
+  ///
+  /// In he, this message translates to:
+  /// **'החלפה בין תצוגה עברית ללועזית'**
+  String get calendarDisplayTooltip;
+
+  /// Settings: subtitle of the Gregorian display switch (M23).
+  ///
+  /// In he, this message translates to:
+  /// **'חודשים לועזיים, התאריך העברי בקטן'**
+  String get settingsGregorianDisplaySubtitle;
+
   /// Recurrence type chip label: repeats every week.
   ///
   /// In he, this message translates to:

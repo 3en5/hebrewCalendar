@@ -7,6 +7,7 @@ import '../../../core/theme/dimens.dart';
 import '../../../domain/sync/sync_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/demo_mode_provider.dart';
+import '../../calendar/application/calendar_display_mode_provider.dart';
 import '../../calendar/application/jewish_day_labels_provider.dart';
 import '../../zmanim/presentation/zmanim_settings_section.dart';
 import '../application/app_version_provider.dart';
@@ -65,6 +66,26 @@ class SettingsScreen extends ConsumerWidget {
               value: ref.watch(inIsraelProvider),
               onChanged: (bool value) =>
                   ref.read(inIsraelProvider.notifier).set(value),
+            ),
+          ),
+          // M23: the Gregorian display (also switched from the month title).
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.calendar_month_outlined),
+            title: Text(l10n.calendarDisplayGregorian),
+            subtitle: Text(l10n.settingsGregorianDisplaySubtitle),
+            trailing: Switch(
+              key: const ValueKey<String>('gregorian-display-switch'),
+              value:
+                  ref.watch(calendarDisplayModeProvider) ==
+                  CalendarDisplayMode.gregorian,
+              onChanged: (bool value) => ref
+                  .read(calendarDisplayModeProvider.notifier)
+                  .set(
+                    value
+                        ? CalendarDisplayMode.gregorian
+                        : CalendarDisplayMode.hebrew,
+                  ),
             ),
           ),
           // The "מצב כהה" switch, as in PowerWatch. Until it is flipped the

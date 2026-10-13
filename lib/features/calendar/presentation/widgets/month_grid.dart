@@ -9,12 +9,11 @@ import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../../domain/hebrew_date/jewish_day_info.dart';
 import '../../application/calendar_view_provider.dart';
 import '../../application/hebrew_date_engine_provider.dart';
-import '../../application/jewish_day_labels_provider.dart';
-import '../../application/month_events_provider.dart';
 import '../../../zmanim/application/zmanim_settings.dart';
 import '../../../zmanim/presentation/shabbat_times.dart';
 import 'day_cell.dart';
 import 'day_swipe_area.dart';
+import 'month_grid_data.dart';
 import 'month_day_agenda.dart';
 
 /// Sunday-first single-letter weekday abbreviations (א׳..ש׳). Saturday uses
@@ -44,46 +43,36 @@ const double _gridHeightShare = 0.64;
 /// it; swiping the agenda moves a day ([DaySwipeArea]). Days borrowed from
 /// adjacent months render as empty cells.
 class MonthGrid extends ConsumerWidget {
-  const MonthGrid({required this.displayedMonth, super.key});
+  const MonthGrid({
+    required this.displayedMonth,
+    this.gregorian = false,
+    super.key,
+  });
 
   /// The month being displayed. Its `day` is the fallback selected day when
   /// the shell's focused date is in a different month (a neighbor page).
+  /// In the Gregorian display, any day of the Gregorian month shown.
   final HebrewDate displayedMonth;
+
+  /// Lay the page out by Gregorian months, the Gregorian day first (M23).
+  final bool gregorian;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
     final HebrewDate today = engine.fromGregorian(DateTime.now());
-    // Provider keys use the month's first day: `displayedMonth.day` follows
-    // the selected day, and keying on it re-ran the month's queries on every
-    // tap (round #10).
-    final HebrewDate firstOfMonth = HebrewDate(
-      year: displayedMonth.year,
-      month: displayedMonth.month,
-      day: 1,
-    );
     final HebrewDate focused = ref.watch(
       calendarViewProvider.select((CalendarViewState s) => s.focusedDate),
     );
-    final HebrewDate selected = _isSameMonth(focused, displayedMonth)
+    final MonthGridData data = gregorian
+        ? gregorianMonthData(ref, engine, displayedMonth)
+        : hebrewMonthData(ref, engine, displayedMonth);
+    final HebrewDate selected = data.contains(focused)
         ? focused
         : displayedMonth;
-    final List<HebrewDate?> cells = _buildCells(engine, displayedMonth);
+    final List<HebrewDate?> cells = data.cells;
     final int rowCount = cells.length ~/ _daysPerWeek;
-    final List<EventOccurrence> monthOccurrences =
-        ref.watch(monthEventsProvider(firstOfMonth)).value ??
-        const <EventOccurrence>[];
-    final Map<int, List<JewishDayLabel>> labelsByDay = ref.watch(
-      monthDayLabelsProvider(firstOfMonth),
-    );
     final ZmanimSettings zmanimSettings = ref.watch(zmanimSettingsProvider);
-    final Map<int, List<EventOccurrence>> occurrencesByDay =
-        <int, List<EventOccurrence>>{};
-    for (final EventOccurrence occurrence in monthOccurrences) {
-      occurrencesByDay
-          .putIfAbsent(occurrence.occurrenceDate.day, () => <EventOccurrence>[])
-          .add(occurrence);
-    }
 
     // Device feedback: pulling the screen down syncs with Google (the
     // shell's RefreshIndicator). The month page itself isn't scrollable, so
@@ -123,8 +112,7 @@ class MonthGrid extends ConsumerWidget {
                                       col: col,
                                       today: today,
                                       selected: selected,
-                                      occurrencesByDay: occurrencesByDay,
-                                      labelsByDay: labelsByDay,
+                                      data: data,
                                       zmanimSettings: zmanimSettings,
                                     ),
                                   ),
@@ -137,10 +125,10 @@ class MonthGrid extends ConsumerWidget {
                             child: MonthDayAgenda(
                               date: selected,
                               labels:
-                                  labelsByDay[selected.day] ??
+                                  data.labels[selected] ??
                                   const <JewishDayLabel>[],
                               occurrences:
-                                  occurrencesByDay[selected.day] ??
+                                  data.occurrences[selected] ??
                                   const <EventOccurrence>[],
                             ),
                           ),
@@ -164,8 +152,7 @@ class MonthGrid extends ConsumerWidget {
     required int col,
     required HebrewDate today,
     required HebrewDate selected,
-    required Map<int, List<EventOccurrence>> occurrencesByDay,
-    required Map<int, List<JewishDayLabel>> labelsByDay,
+    required MonthGridData data,
     required ZmanimSettings zmanimSettings,
   }) {
     final bool drawEndLine = col < _daysPerWeek - 1;
@@ -177,55 +164,26 @@ class MonthGrid extends ConsumerWidget {
       );
     }
     final HebrewDateEngine engine = ref.read(hebrewDateEngineProvider);
-    final DateTime gregorian = engine.toGregorian(cellDate);
+    final DateTime gregorianDate = engine.toGregorian(cellDate);
     return DayCell(
       hebrewDay: cellDate.day,
-      gregorianDay: gregorian.day,
+      gregorianDay: gregorianDate.day,
+      gregorianPrimary: gregorian,
       isToday: cellDate == today,
       isSelected: cellDate == selected,
       isShabbat: col == _daysPerWeek - 1,
       drawEndLine: drawEndLine,
       eventColors: <Color>[
         for (final EventOccurrence o
-            in occurrencesByDay[cellDate.day] ?? const <EventOccurrence>[])
+            in data.occurrences[cellDate] ?? const <EventOccurrence>[])
           eventColor(o.event.colorId, Theme.of(context).colorScheme),
       ],
       // Labels are ordered most important first, parsha last.
-      label: labelsByDay[cellDate.day]?.first,
-      shabbatTime: shabbatTimeFor(zmanimSettings, gregorian),
+      label: data.labels[cellDate]?.first,
+      shabbatTime: shabbatTimeFor(zmanimSettings, gregorianDate),
       onTap: () =>
           ref.read(calendarViewProvider.notifier).setFocusedDate(cellDate),
     );
-  }
-
-  static bool _isSameMonth(HebrewDate a, HebrewDate b) =>
-      a.year == b.year && a.month == b.month;
-
-  /// Builds the grid cells for [month] as whole Sunday-to-Saturday weeks,
-  /// only as many as the month spans (5 or 6): `null` for the leading/trailing slots outside the
-  /// month, which render as empty cells (device feedback: adjacent-month
-  /// days cluttered the view).
-  static List<HebrewDate?> _buildCells(
-    HebrewDateEngine engine,
-    HebrewDate month,
-  ) {
-    final HebrewDate firstOfMonth = HebrewDate(
-      year: month.year,
-      month: month.month,
-      day: 1,
-    );
-    final int firstWeekday = engine.weekdayIndex(firstOfMonth);
-    final int daysInMonth = engine.daysInMonth(month.year, month.month);
-
-    final List<HebrewDate?> cells = <HebrewDate?>[
-      for (int i = 0; i < firstWeekday; i++) null,
-      for (int day = 1; day <= daysInMonth; day++)
-        HebrewDate(year: month.year, month: month.month, day: day),
-    ];
-    while (cells.length % _daysPerWeek != 0) {
-      cells.add(null);
-    }
-    return cells;
   }
 }
 

@@ -6,6 +6,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../../domain/hebrew_date/hebrew_numerals.dart';
+import '../../application/calendar_display_mode_provider.dart';
 import '../../application/hebrew_date_engine_provider.dart';
 import 'weekday_names.dart';
 
@@ -49,11 +50,24 @@ class CalendarDayHeader extends ConsumerWidget {
     final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final String weekdayName = hebrewWeekdayNames[engine.weekdayIndex(date)];
+    // M23: the Gregorian display puts the Gregorian date first and the
+    // Hebrew date in the small secondary place.
+    final bool gregorianFirst =
+        ref.watch(calendarDisplayModeProvider) == CalendarDisplayMode.gregorian;
+    final DateTime civil = engine.toGregorian(date);
+    final String hebrewLabel =
+        '${hebrewDayNumeral(date.day)} '
+        '${engine.monthName(date.month)} ${hebrewYearNumeral(date.year)}';
 
     if (mode == CalendarDayHeaderMode.full) {
-      final String label =
-          '$weekdayName, ${hebrewDayNumeral(date.day)} '
-          '${engine.monthName(date.month)} ${hebrewYearNumeral(date.year)}';
+      final String label = gregorianFirst
+          ? '$weekdayName, ${DateFormat.yMMMMd('he').format(civil)}'
+          : '$weekdayName, $hebrewLabel';
+      final String? secondary = gregorianFirst
+          ? hebrewLabel
+          : showGregorian
+          ? DateFormat('dd/MM/yy').format(civil)
+          : null;
       return Padding(
         padding: EdgeInsetsDirectional.symmetric(
           horizontal: spacingMd,
@@ -63,10 +77,9 @@ class CalendarDayHeader extends ConsumerWidget {
           TextSpan(
             text: label,
             children: <InlineSpan>[
-              if (showGregorian)
+              if (secondary != null)
                 TextSpan(
-                  text:
-                      ' (${DateFormat('dd/MM/yy').format(engine.toGregorian(date))})',
+                  text: ' ($secondary)',
                   // Markedly smaller than the Hebrew date: 15% then another
                   // 30% (device requests 2026-10-13).
                   style: TextStyle(
@@ -89,7 +102,12 @@ class CalendarDayHeader extends ConsumerWidget {
       );
     }
 
-    final int gregorianDay = engine.toGregorian(date).day;
+    final String bigDay = gregorianFirst
+        ? '${civil.day}'
+        : hebrewDayNumeral(date.day);
+    final String smallDay = gregorianFirst
+        ? hebrewDayNumeral(date.day)
+        : '${civil.day}';
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -116,7 +134,7 @@ class CalendarDayHeader extends ConsumerWidget {
                     )
                   : null,
               child: Text(
-                hebrewDayNumeral(date.day),
+                bigDay,
                 style: TextStyle(
                   fontSize: bodyRem,
                   fontWeight: FontWeight.w600,
@@ -128,7 +146,7 @@ class CalendarDayHeader extends ConsumerWidget {
             ),
             SizedBox(height: spacingXs),
             Text(
-              '$gregorianDay',
+              smallDay,
               style: TextStyle(
                 fontSize: captionRem,
                 color: colorScheme.onSurfaceVariant,

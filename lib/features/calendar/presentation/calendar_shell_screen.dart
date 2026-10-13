@@ -2,12 +2,8 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/theme/dimens.dart';
-import '../../../domain/hebrew_date/hebrew_date.dart';
-import '../../../domain/hebrew_date/hebrew_date_engine.dart';
-import '../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../auth/application/demo_mode_provider.dart';
@@ -22,12 +18,12 @@ import '../../settings/application/google_sync_trigger_service.dart';
 import '../../settings/presentation/about_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../application/calendar_view_provider.dart';
-import '../application/hebrew_date_engine_provider.dart';
 import 'agenda_view_screen.dart';
 import 'day_view_screen.dart';
 import 'event_search_screen.dart';
 import 'month_view_body.dart';
 import 'week_view_screen.dart';
+import 'widgets/calendar_title.dart';
 import 'widgets/go_to_date_sheet.dart';
 import 'widgets/sync_progress_strip.dart';
 
@@ -50,7 +46,6 @@ class CalendarShellScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final CalendarViewState state = ref.watch(calendarViewProvider);
-    final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
     final AppLocalizations l10n = AppLocalizations.of(context);
     final bool demoMode = ref.watch(demoModeProvider);
 
@@ -89,28 +84,11 @@ class CalendarShellScreen extends ConsumerWidget {
       });
     }
 
-    final String? gregorianSubtitle = _gregorianSubtitle(state, engine);
-
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(_title(state, engine, l10n)),
-            // Device feedback: the day cells show the secondary Gregorian
-            // day number, but the app bar showed no Gregorian context at
-            // all — add the Gregorian month/year range the displayed Hebrew
-            // month spans (e.g. "יוני–יולי 2026").
-            if (gregorianSubtitle != null)
-              Text(
-                gregorianSubtitle,
-                style: TextStyle(
-                  fontSize: captionRem,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-          ],
-        ),
+        // The month/year, with the other calendar's span below; tapping it
+        // switches between the Hebrew and Gregorian displays (M23).
+        title: const CalendarTitle(),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.search),
@@ -258,49 +236,6 @@ class CalendarShellScreen extends ConsumerWidget {
     } else {
       show(l10n.calendarPullSyncDoneMessage);
     }
-  }
-
-  String _title(
-    CalendarViewState state,
-    HebrewDateEngine engine,
-    AppLocalizations l10n,
-  ) {
-    if (state.viewType == CalendarViewType.agenda) {
-      return l10n.calendarViewAgenda;
-    }
-    // Month/week/day all show the focused date's Hebrew month/year in the
-    // app bar, matching Google Calendar's own top bar.
-    return '${engine.monthName(state.focusedDate.month)} '
-        '${hebrewYearNumeral(state.focusedDate.year)}';
-  }
-
-  /// The Gregorian month/year range the focused Hebrew month spans, in the
-  /// app locale (e.g. "יוני 2026", "יוני–יולי 2026", "דצמבר 2026–ינואר 2027").
-  /// Null for the agenda view, whose title is not month-scoped.
-  String? _gregorianSubtitle(CalendarViewState state, HebrewDateEngine engine) {
-    if (state.viewType == CalendarViewType.agenda) {
-      return null;
-    }
-    final HebrewDate focused = state.focusedDate;
-    final DateTime first = engine.toGregorian(
-      HebrewDate(year: focused.year, month: focused.month, day: 1),
-    );
-    final DateTime last = engine.toGregorian(
-      HebrewDate(
-        year: focused.year,
-        month: focused.month,
-        day: engine.daysInMonth(focused.year, focused.month),
-      ),
-    );
-    final DateFormat monthFormat = DateFormat.MMMM('he');
-    if (first.year == last.year) {
-      return first.month == last.month
-          ? '${monthFormat.format(first)} ${first.year}'
-          : '${monthFormat.format(first)}–${monthFormat.format(last)} '
-                '${first.year}';
-    }
-    return '${monthFormat.format(first)} ${first.year}–'
-        '${monthFormat.format(last)} ${last.year}';
   }
 
   Future<void> _confirmSignOut(

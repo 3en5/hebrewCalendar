@@ -13,6 +13,7 @@ import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../../domain/hebrew_date/jewish_day_info.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../application/calendar_display_mode_provider.dart';
 import '../../application/hebrew_date_engine_provider.dart';
 import '../../../zmanim/presentation/day_features_carousel.dart';
 import 'day_events_sheet.dart';
@@ -45,14 +46,22 @@ class MonthDayAgenda extends ConsumerWidget {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final ThemeData theme = Theme.of(context);
 
-    final String hebrewLabel = l10n.monthAgendaDayHeader(
-      hebrewWeekdayNames[engine.weekdayIndex(date)],
+    final String weekday = hebrewWeekdayNames[engine.weekdayIndex(date)];
+    final DateTime civil = engine.toGregorian(date);
+    final String hebrewDay = l10n.monthAgendaDayHeader(
+      weekday,
       hebrewDayNumeral(date.day),
       engine.monthName(date.month),
     );
-    final String gregorianLabel = DateFormat.yMMMMd(
-      'he',
-    ).format(engine.toGregorian(date));
+    // M23: the Gregorian display swaps the bold and the secondary date.
+    final bool gregorianFirst =
+        ref.watch(calendarDisplayModeProvider) == CalendarDisplayMode.gregorian;
+    final String hebrewLabel = gregorianFirst
+        ? 'יום $weekday, ${DateFormat.MMMMd('he').format(civil)}'
+        : hebrewDay;
+    final String gregorianLabel = gregorianFirst
+        ? '${hebrewDayNumeral(date.day)} ${engine.monthName(date.month)}'
+        : DateFormat.yMMMMd('he').format(civil);
 
     // KALFAPP style (ARCHITECTURE.md §13): the agenda sits in a light-blue
     // rounded card, like PowerWatch's summary card.
