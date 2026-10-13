@@ -196,8 +196,10 @@ class _DayFeaturesCarouselState extends ConsumerState<DayFeaturesCarousel> {
       child: Row(
         children: <Widget>[
           // RTL: the row starts on the right, so "back" is the right arrow.
+          // Both point outward, toward the hidden chips; the chevrons mirror
+          // in RTL (matchTextDirection), hence chevron_left on the right.
           _Arrow(
-            icon: Icons.chevron_right,
+            icon: Icons.chevron_left,
             enabled: _canBack,
             onTap: () => _step(-1),
           ),
@@ -250,7 +252,7 @@ class _DayFeaturesCarouselState extends ConsumerState<DayFeaturesCarousel> {
             ),
           ),
           _Arrow(
-            icon: Icons.chevron_left,
+            icon: Icons.chevron_right,
             enabled: _canForward,
             onTap: () => _step(1),
           ),

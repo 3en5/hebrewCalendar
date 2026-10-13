@@ -67,13 +67,14 @@ class CalendarDayHeader extends ConsumerWidget {
                 TextSpan(
                   text:
                       ' (${DateFormat('dd/MM/yy').format(engine.toGregorian(date))})',
-                  // 15% smaller than the Hebrew date (device request
-                  // 2026-10-13).
+                  // Markedly smaller than the Hebrew date: 15% then another
+                  // 30% (device requests 2026-10-13).
                   style: TextStyle(
                     fontSize:
                         (Theme.of(context).textTheme.titleMedium?.fontSize ??
                             bodyRem) *
-                        0.85,
+                        0.85 *
+                        0.7,
                     fontWeight: FontWeight.w400,
                     color: colorScheme.onSurfaceVariant,
                   ),
