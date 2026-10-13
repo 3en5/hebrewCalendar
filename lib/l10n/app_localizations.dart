@@ -316,6 +316,162 @@ abstract class AppLocalizations {
   /// **'לא הצלחתי לפתוח את המפה'**
   String get locationOpenFailed;
 
+  /// Zman: dawn (16.1 degrees).
+  ///
+  /// In he, this message translates to:
+  /// **'עלות השחר'**
+  String get zmanAlos;
+
+  /// Zman: sunrise.
+  ///
+  /// In he, this message translates to:
+  /// **'זריחה'**
+  String get zmanSunrise;
+
+  /// Zman: latest Shema, Magen Avraham.
+  ///
+  /// In he, this message translates to:
+  /// **'סוף זמן ק״ש (מג״א)'**
+  String get zmanShmaMga;
+
+  /// Zman: latest Shema, GRA.
+  ///
+  /// In he, this message translates to:
+  /// **'סוף זמן ק״ש (גר״א)'**
+  String get zmanShmaGra;
+
+  /// Zman: latest Shacharit, GRA.
+  ///
+  /// In he, this message translates to:
+  /// **'סוף זמן תפילה (גר״א)'**
+  String get zmanTfilaGra;
+
+  /// Zman: midday.
+  ///
+  /// In he, this message translates to:
+  /// **'חצות'**
+  String get zmanChatzos;
+
+  /// Zman: earliest Mincha.
+  ///
+  /// In he, this message translates to:
+  /// **'מנחה גדולה'**
+  String get zmanMinchaGedola;
+
+  /// Zman: Mincha Ketana.
+  ///
+  /// In he, this message translates to:
+  /// **'מנחה קטנה'**
+  String get zmanMinchaKetana;
+
+  /// Zman: Plag HaMincha.
+  ///
+  /// In he, this message translates to:
+  /// **'פלג המנחה'**
+  String get zmanPlag;
+
+  /// Zman: sunset.
+  ///
+  /// In he, this message translates to:
+  /// **'שקיעה'**
+  String get zmanSunset;
+
+  /// Zman: nightfall.
+  ///
+  /// In he, this message translates to:
+  /// **'צאת הכוכבים'**
+  String get zmanTzais;
+
+  /// Friday candle lighting time.
+  ///
+  /// In he, this message translates to:
+  /// **'הדלקת נרות'**
+  String get zmanCandleLighting;
+
+  /// Saturday end of Shabbat time.
+  ///
+  /// In he, this message translates to:
+  /// **'צאת שבת'**
+  String get zmanHavdalah;
+
+  /// Day view zmanim panel title.
+  ///
+  /// In he, this message translates to:
+  /// **'זמני היום · {place}'**
+  String zmanimPanelTitle(String place);
+
+  /// Place label when the phone's position is used.
+  ///
+  /// In he, this message translates to:
+  /// **'המיקום שלי'**
+  String get zmanimDevicePosition;
+
+  /// Settings section title for the times of day (M21).
+  ///
+  /// In he, this message translates to:
+  /// **'זמני היום'**
+  String get zmanimSettingsTitle;
+
+  /// Settings: city for the times of day.
+  ///
+  /// In he, this message translates to:
+  /// **'עיר'**
+  String get zmanimCity;
+
+  /// Settings: use the phone's position.
+  ///
+  /// In he, this message translates to:
+  /// **'מיקום מהטלפון'**
+  String get zmanimUseDevice;
+
+  /// Settings: subtitle of the phone-position switch.
+  ///
+  /// In he, this message translates to:
+  /// **'במקום עיר קבועה'**
+  String get zmanimUseDeviceSubtitle;
+
+  /// Shown when the position could not be read.
+  ///
+  /// In he, this message translates to:
+  /// **'לא הצלחתי לקבל את המיקום. אפשר לאשר הרשאת מיקום או לבחור עיר.'**
+  String get zmanimUseDeviceFailed;
+
+  /// Settings: candle lighting minutes.
+  ///
+  /// In he, this message translates to:
+  /// **'הדלקת נרות'**
+  String get zmanimCandleSetting;
+
+  /// Candle lighting offset.
+  ///
+  /// In he, this message translates to:
+  /// **'{minutes} דקות לפני השקיעה'**
+  String zmanimCandleMinutes(int minutes);
+
+  /// Candle lighting: the city's custom.
+  ///
+  /// In he, this message translates to:
+  /// **'לפי מנהג העיר ({minutes} דקות)'**
+  String zmanimCandleCityCustom(int minutes);
+
+  /// Settings: end-of-Shabbat method.
+  ///
+  /// In he, this message translates to:
+  /// **'צאת שבת'**
+  String get zmanimHavdalahSetting;
+
+  /// End of Shabbat: 8.5 degrees.
+  ///
+  /// In he, this message translates to:
+  /// **'צאת הכוכבים (8.5° מתחת לאופק)'**
+  String get zmanimHavdalahDegrees;
+
+  /// End of Shabbat: 72 minutes (Rabbeinu Tam).
+  ///
+  /// In he, this message translates to:
+  /// **'72 דקות אחרי השקיעה (ר״ת)'**
+  String get zmanimHavdalah72;
+
   /// Label for the event start time field.
   ///
   /// In he, this message translates to:

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../../domain/hebrew_date/jewish_day_info.dart';
+import '../../../zmanim/presentation/shabbat_times.dart';
 
 /// Maximum number of event dots drawn under the day numeral; a busier day
 /// still shows this many (the full list is in the agenda below the grid).
@@ -11,7 +12,8 @@ const int _maxDots = 3;
 /// A single day cell in the month grid (owner-approved "variant B" design):
 /// thin grid lines, the Hebrew day in gematria centered, the Gregorian day
 /// small in the top-end corner, the day's main holiday/parsha [label] (M8)
-/// in small text, and one dot per event underneath. Today is
+/// in small text, Friday's candle lighting or Saturday's end of Shabbat
+/// (M21), and one dot per event underneath. Today is
 /// a filled `primary` circle; the selected day gets a tinted background
 /// (and a ring, when it isn't also today). Shabbat cells are lightly tinted.
 class DayCell extends StatelessWidget {
@@ -24,6 +26,7 @@ class DayCell extends StatelessWidget {
     required this.drawEndLine,
     this.eventColors = const <Color>[],
     this.label,
+    this.shabbatTime,
     this.onTap,
     super.key,
   });
@@ -51,6 +54,9 @@ class DayCell extends StatelessWidget {
 
   /// The day's most important holiday/parsha label, if any.
   final JewishDayLabel? label;
+
+  /// Friday's candle lighting or Saturday's end of Shabbat (M21).
+  final ShabbatTime? shabbatTime;
 
   final VoidCallback? onTap;
 
@@ -109,6 +115,8 @@ class DayCell extends StatelessWidget {
                                 width: constraints.maxWidth - spacingXs,
                                 child: _DayLabel(label: label!),
                               ),
+                            if (shabbatTime != null)
+                              ShabbatTimeLine(shabbatTime: shabbatTime!),
                             SizedBox(height: spacingXs / 2),
                             _EventDots(
                               hebrewDay: hebrewDay,

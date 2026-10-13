@@ -98,6 +98,15 @@
 | `lib/features/calendar/presentation/widgets/sync_progress_strip.dart` | פס התקדמות דק מתחת לסרגל היומן בזמן סנכרון |
 | `lib/features/calendar/presentation/widgets/location_actions.dart` | M20: מיקום האירוע בפרטי האירוע עם כפתורי Google Maps ו-Waze (`url_launcher`) |
 | `test/features/calendar/presentation/location_actions_test.dart` | טסט לקישורי Maps/Waze |
+| `lib/domain/zmanim/zmanim.dart` | M21: `computeZmanim` — זמני היום, הדלקת נרות וצאת שבת (`kosher_dart`) |
+| `lib/domain/zmanim/zmanim_location.dart` | M21: `ZmanimLocation` ורשימת הערים עם מנהג הדלקת הנרות |
+| `lib/features/zmanim/application/zmanim_settings.dart` | M21: `ZmanimSettings`/`zmanimSettingsProvider` — העדפות זמני היום במכשיר, מיקום מהטלפון (`geolocator`) |
+| `lib/features/zmanim/presentation/zmanim_panel.dart` | M21: `ZmanimPanel` — שורת "זמני היום" המתקפלת בתצוגת יום |
+| `lib/features/zmanim/presentation/shabbat_times.dart` | M21: `shabbatTimeFor` + שורה בתא החודש ותגית בפירוט היום (הדלקת נרות / צאת שבת) |
+| `lib/features/zmanim/presentation/zmanim_settings_section.dart` | M21: סעיף "זמני היום" בהגדרות |
+| `test/domain/zmanim/zmanim_test.dart` | טסטים לחישוב הזמנים |
+| `test/features/zmanim/zmanim_settings_test.dart` | טסטים להעדפות ולזמן השבת |
+| `test/features/zmanim/zmanim_widgets_test.dart` | טסטים לסעיף ההגדרות ולשורה בתצוגת יום |
 | `test/data/sync/sync_progress_test.dart` | טסטים להתקדמות הסנכרון |
 | `lib/data/sync/remote_event_fields.dart` | המרת שדות אירוע Google לאירוע מקומי: שעות (`remoteStartTime`/`remoteEndTime`) ו-`withRemoteContent` |
 | `lib/data/sync/full_resync_flag.dart` | `FullResyncFlag`/`PrefsFullResyncFlag` — בקשה חד-פעמית לרשימה מלאה מ-Google (M17: השלמת שעות לאירועים מיובאים) |

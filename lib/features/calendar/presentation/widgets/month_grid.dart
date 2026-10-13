@@ -11,6 +11,8 @@ import '../../application/calendar_view_provider.dart';
 import '../../application/hebrew_date_engine_provider.dart';
 import '../../application/jewish_day_labels_provider.dart';
 import '../../application/month_events_provider.dart';
+import '../../../zmanim/application/zmanim_settings.dart';
+import '../../../zmanim/presentation/shabbat_times.dart';
 import 'day_cell.dart';
 import 'month_day_agenda.dart';
 
@@ -72,6 +74,7 @@ class MonthGrid extends ConsumerWidget {
     final Map<int, List<JewishDayLabel>> labelsByDay = ref.watch(
       monthDayLabelsProvider(firstOfMonth),
     );
+    final ZmanimSettings zmanimSettings = ref.watch(zmanimSettingsProvider);
     final Map<int, List<EventOccurrence>> occurrencesByDay =
         <int, List<EventOccurrence>>{};
     for (final EventOccurrence occurrence in monthOccurrences) {
@@ -120,6 +123,7 @@ class MonthGrid extends ConsumerWidget {
                                       selected: selected,
                                       occurrencesByDay: occurrencesByDay,
                                       labelsByDay: labelsByDay,
+                                      zmanimSettings: zmanimSettings,
                                     ),
                                   ),
                               ],
@@ -131,6 +135,10 @@ class MonthGrid extends ConsumerWidget {
                             labels:
                                 labelsByDay[selected.day] ??
                                 const <JewishDayLabel>[],
+                            shabbatTime: shabbatTimeFor(
+                              zmanimSettings,
+                              engine.toGregorian(selected),
+                            ),
                             occurrences:
                                 occurrencesByDay[selected.day] ??
                                 const <EventOccurrence>[],
@@ -157,6 +165,7 @@ class MonthGrid extends ConsumerWidget {
     required HebrewDate selected,
     required Map<int, List<EventOccurrence>> occurrencesByDay,
     required Map<int, List<JewishDayLabel>> labelsByDay,
+    required ZmanimSettings zmanimSettings,
   }) {
     final bool drawEndLine = col < _daysPerWeek - 1;
     if (cellDate == null) {
@@ -167,9 +176,10 @@ class MonthGrid extends ConsumerWidget {
       );
     }
     final HebrewDateEngine engine = ref.read(hebrewDateEngineProvider);
+    final DateTime gregorian = engine.toGregorian(cellDate);
     return DayCell(
       hebrewDay: cellDate.day,
-      gregorianDay: engine.toGregorian(cellDate).day,
+      gregorianDay: gregorian.day,
       isToday: cellDate == today,
       isSelected: cellDate == selected,
       isShabbat: col == _daysPerWeek - 1,
@@ -181,6 +191,7 @@ class MonthGrid extends ConsumerWidget {
       ],
       // Labels are ordered most important first, parsha last.
       label: labelsByDay[cellDate.day]?.first,
+      shabbatTime: shabbatTimeFor(zmanimSettings, gregorian),
       onTap: () =>
           ref.read(calendarViewProvider.notifier).setFocusedDate(cellDate),
     );

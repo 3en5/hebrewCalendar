@@ -14,6 +14,7 @@ import '../../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../../domain/hebrew_date/jewish_day_info.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/hebrew_date_engine_provider.dart';
+import '../../../zmanim/presentation/shabbat_times.dart';
 import 'day_cell.dart' show jewishDayLabelColor;
 import 'day_events_sheet.dart';
 import 'weekday_names.dart';
@@ -27,6 +28,7 @@ class MonthDayAgenda extends ConsumerWidget {
     required this.date,
     required this.occurrences,
     this.labels = const <JewishDayLabel>[],
+    this.shabbatTime,
     super.key,
   });
 
@@ -34,6 +36,10 @@ class MonthDayAgenda extends ConsumerWidget {
 
   /// The day's holidays/parsha (M8), shown as tags under the date header.
   final List<JewishDayLabel> labels;
+
+  /// Friday's candle lighting or Saturday's end of Shabbat (M21), shown as
+  /// the first tag.
+  final ShabbatTime? shabbatTime;
 
   /// The occurrences on [date], already in chronological order.
   final List<EventOccurrence> occurrences;
@@ -98,7 +104,7 @@ class MonthDayAgenda extends ConsumerWidget {
               ],
             ),
           ),
-          if (labels.isNotEmpty)
+          if (labels.isNotEmpty || shabbatTime != null)
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(
                 spacingMd,
@@ -110,6 +116,8 @@ class MonthDayAgenda extends ConsumerWidget {
                 spacing: spacingXs,
                 runSpacing: spacingXs,
                 children: <Widget>[
+                  if (shabbatTime != null)
+                    ShabbatTimeTag(shabbatTime: shabbatTime!),
                   for (final JewishDayLabel label in labels)
                     _LabelTag(label: label),
                 ],

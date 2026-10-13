@@ -8,6 +8,7 @@ import '../../../domain/sync/sync_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/demo_mode_provider.dart';
 import '../../calendar/application/jewish_day_labels_provider.dart';
+import '../../zmanim/presentation/zmanim_settings_section.dart';
 import '../application/app_version_provider.dart';
 import '../application/google_sync_providers.dart';
 import '../application/google_sync_settings_state.dart';
@@ -79,6 +80,8 @@ class SettingsScreen extends ConsumerWidget {
                   ref.read(themeModeProvider.notifier).setDark(value),
             ),
           ),
+          SizedBox(height: spacingMd),
+          const ZmanimSettingsSection(),
           SizedBox(height: spacingMd),
           const BackupSection(),
           SizedBox(height: spacingMd),

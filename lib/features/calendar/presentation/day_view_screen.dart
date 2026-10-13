@@ -16,6 +16,7 @@ import 'widgets/all_day_events_row.dart';
 import 'widgets/calendar_day_header.dart';
 import 'widgets/day_occurrences.dart';
 import 'widgets/hour_grid.dart';
+import '../../zmanim/presentation/zmanim_panel.dart';
 
 /// The day body (M3b): a single day's full Hebrew-date header, an all-day
 /// events row, and a scrollable 24-hour grid with that day's timed events —
@@ -91,6 +92,8 @@ class _DayPage extends ConsumerWidget {
           isToday: date == today,
           mode: CalendarDayHeaderMode.full,
         ),
+        // M21 (sketch 10): the times of day, collapsible.
+        ZmanimPanel(day: engine.toGregorian(date)),
         AllDayEventsRow(
           columns: <DayOccurrences>[column],
           onEventTap: (EventOccurrence occurrence) =>

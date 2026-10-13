@@ -154,6 +154,91 @@ class AppLocalizationsHe extends AppLocalizations {
   String get locationOpenFailed => 'לא הצלחתי לפתוח את המפה';
 
   @override
+  String get zmanAlos => 'עלות השחר';
+
+  @override
+  String get zmanSunrise => 'זריחה';
+
+  @override
+  String get zmanShmaMga => 'סוף זמן ק״ש (מג״א)';
+
+  @override
+  String get zmanShmaGra => 'סוף זמן ק״ש (גר״א)';
+
+  @override
+  String get zmanTfilaGra => 'סוף זמן תפילה (גר״א)';
+
+  @override
+  String get zmanChatzos => 'חצות';
+
+  @override
+  String get zmanMinchaGedola => 'מנחה גדולה';
+
+  @override
+  String get zmanMinchaKetana => 'מנחה קטנה';
+
+  @override
+  String get zmanPlag => 'פלג המנחה';
+
+  @override
+  String get zmanSunset => 'שקיעה';
+
+  @override
+  String get zmanTzais => 'צאת הכוכבים';
+
+  @override
+  String get zmanCandleLighting => 'הדלקת נרות';
+
+  @override
+  String get zmanHavdalah => 'צאת שבת';
+
+  @override
+  String zmanimPanelTitle(String place) {
+    return 'זמני היום · $place';
+  }
+
+  @override
+  String get zmanimDevicePosition => 'המיקום שלי';
+
+  @override
+  String get zmanimSettingsTitle => 'זמני היום';
+
+  @override
+  String get zmanimCity => 'עיר';
+
+  @override
+  String get zmanimUseDevice => 'מיקום מהטלפון';
+
+  @override
+  String get zmanimUseDeviceSubtitle => 'במקום עיר קבועה';
+
+  @override
+  String get zmanimUseDeviceFailed =>
+      'לא הצלחתי לקבל את המיקום. אפשר לאשר הרשאת מיקום או לבחור עיר.';
+
+  @override
+  String get zmanimCandleSetting => 'הדלקת נרות';
+
+  @override
+  String zmanimCandleMinutes(int minutes) {
+    return '$minutes דקות לפני השקיעה';
+  }
+
+  @override
+  String zmanimCandleCityCustom(int minutes) {
+    return 'לפי מנהג העיר ($minutes דקות)';
+  }
+
+  @override
+  String get zmanimHavdalahSetting => 'צאת שבת';
+
+  @override
+  String get zmanimHavdalahDegrees => 'צאת הכוכבים (8.5° מתחת לאופק)';
+
+  @override
+  String get zmanimHavdalah72 => '72 דקות אחרי השקיעה (ר״ת)';
+
+  @override
   String get eventStartTimeLabel => 'שעת התחלה';
 
   @override
