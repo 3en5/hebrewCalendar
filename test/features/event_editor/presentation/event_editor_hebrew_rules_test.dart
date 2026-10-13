@@ -40,6 +40,13 @@ Future<Event> _saveAndRead(
   WidgetTester tester,
   InMemoryEventRepository repository,
 ) async {
+  // Close the compact editor's recurrence sheet, if open, before saving.
+  if (find.text('סיום').evaluate().isNotEmpty) {
+    await tester.ensureVisible(find.text('סיום'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('סיום'));
+    await tester.pumpAndSettle();
+  }
   await tester.tap(find.byIcon(Icons.check));
   await tester.pumpAndSettle();
   return (await repository.getAllForSync()).single;
@@ -66,28 +73,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'אזכרה');
 
-    final Finder yearly = find.text(l10n.recurrenceTypeYearly);
-    await tester.dragUntilVisible(
-      yearly,
-      find.byType(ListView),
-      const Offset(0, -100),
-    );
-    // dragUntilVisible can stop inside the cache extent, before the widget
-    // is hit-testable (docs/LESSONS.md): nudge a little further.
-    await tester.drag(find.byType(ListView), const Offset(0, -50));
+    await tester.tap(find.byIcon(Icons.repeat));
     await tester.pumpAndSettle();
-    await tester.tap(yearly);
+    await tester.tap(find.text(l10n.recurrenceTypeYearly));
     await tester.pumpAndSettle();
 
     final Finder both = find.text(l10n.eventLeapAdarBoth);
-    await tester.dragUntilVisible(
-      both,
-      find.byType(ListView),
-      const Offset(0, -100),
-    );
-    // dragUntilVisible can stop inside the cache extent, before the widget
-    // is hit-testable (docs/LESSONS.md): nudge a little further.
-    await tester.drag(find.byType(ListView), const Offset(0, -50));
+    await tester.ensureVisible(both);
     await tester.pumpAndSettle();
     final ChoiceChip adarII = tester.widget<ChoiceChip>(
       find.widgetWithText(ChoiceChip, l10n.eventLeapAdarII),
@@ -122,28 +114,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'יום הולדת');
 
-    final Finder yearly = find.text(l10n.recurrenceTypeYearly);
-    await tester.dragUntilVisible(
-      yearly,
-      find.byType(ListView),
-      const Offset(0, -100),
-    );
-    // dragUntilVisible can stop inside the cache extent, before the widget
-    // is hit-testable (docs/LESSONS.md): nudge a little further.
-    await tester.drag(find.byType(ListView), const Offset(0, -50));
+    await tester.tap(find.byIcon(Icons.repeat));
     await tester.pumpAndSettle();
-    await tester.tap(yearly);
+    await tester.tap(find.text(l10n.recurrenceTypeYearly));
     await tester.pumpAndSettle();
 
     final Finder last = find.text(l10n.eventShortMonthLast);
-    await tester.dragUntilVisible(
-      last,
-      find.byType(ListView),
-      const Offset(0, -100),
-    );
-    // dragUntilVisible can stop inside the cache extent, before the widget
-    // is hit-testable (docs/LESSONS.md): nudge a little further.
-    await tester.drag(find.byType(ListView), const Offset(0, -50));
+    await tester.ensureVisible(last);
     await tester.pumpAndSettle();
     final ChoiceChip next = tester.widget<ChoiceChip>(
       find.widgetWithText(ChoiceChip, l10n.eventShortMonthNext),

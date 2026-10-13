@@ -3,18 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/dimens.dart';
 import '../../../domain/event/event_validation.dart';
-import '../../../domain/event/recurrence_rule.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/event_editor_controller.dart';
 import '../application/event_editor_state.dart';
 import 'widgets/attendees_field.dart';
-import 'widgets/event_color_picker.dart';
+import 'widgets/editor_option_sheets.dart';
 import 'widgets/event_time_section.dart';
 import 'widgets/hebrew_date_picker_field.dart';
-import 'widgets/recurrence_type_selector.dart';
-import 'widgets/recurrence_until_field.dart';
-import 'widgets/reminder_selector.dart';
-import 'widgets/yearly_options_section.dart';
 
 /// Create/edit screen for a single event (Google-Calendar-like, RTL).
 ///
@@ -122,17 +117,23 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                 ),
               ),
             ),
+          // Compact editor (owner-approved sketch 4, 2026-10-13): a large
+          // title, then one row per setting showing its value; the
+          // recurrence, reminder and color rows open choice sheets.
           TextField(
             controller: _titleController,
+            style: Theme.of(context).textTheme.titleLarge,
             decoration: InputDecoration(
-              labelText: l10n.eventFieldTitleLabel,
+              hintText: l10n.eventTitleHint,
+              border: InputBorder.none,
               errorText: _titleErrorText(l10n, state),
             ),
             onChanged: _controller.setTitle,
           ),
-          SizedBox(height: spacingMd),
+          const Divider(),
           SwitchListTile(
             contentPadding: EdgeInsetsDirectional.zero,
+            secondary: const Icon(Icons.schedule),
             title: Text(l10n.eventAllDayLabel),
             value: state.allDay,
             onChanged: _controller.setAllDay,
@@ -141,13 +142,14 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
             date: state.hebrewDate,
             onChanged: _controller.setHebrewDate,
           ),
-          EventTimeSection(
-            allDay: state.allDay,
-            startTime: state.startTime,
-            endTime: state.endTime,
-            onStartTimeChanged: _controller.setStartTime,
-            onEndTimeChanged: _controller.setEndTime,
-          ),
+          if (!state.allDay)
+            EventTimeSection(
+              allDay: state.allDay,
+              startTime: state.startTime,
+              endTime: state.endTime,
+              onStartTimeChanged: _controller.setStartTime,
+              onEndTimeChanged: _controller.setEndTime,
+            ),
           if (state.hasError(EventValidationErrorType.endTimeNotAfterStartTime))
             Padding(
               padding: EdgeInsetsDirectional.only(top: spacingXs),
@@ -156,24 +158,32 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
-          SizedBox(height: spacingMd),
-          TextField(
-            controller: _descriptionController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: l10n.eventFieldDescriptionLabel,
-              errorText:
-                  state.hasError(EventValidationErrorType.descriptionTooLong)
-                  ? l10n.eventValidationDescriptionTooLong
-                  : null,
+          const Divider(),
+          // M9: a single occurrence split off a series is a standalone
+          // event — it has no recurrence of its own to edit.
+          if (!editsSingleOccurrence)
+            _OptionRow(
+              icon: const Icon(Icons.repeat),
+              label: recurrenceTypeLabel(l10n, state.recurrenceType),
+              onTap: () => showRecurrenceSheet(context, widget.args),
             ),
-            onChanged: _controller.setDescription,
+          _OptionRow(
+            icon: const Icon(Icons.notifications_none),
+            label: remindersSummary(l10n, state.reminderMinutesBefore),
+            onTap: () => showRemindersSheet(context, widget.args),
           ),
-          SizedBox(height: spacingMd),
+          _OptionRow(
+            icon: EventColorDot(colorId: state.colorId),
+            label: l10n.eventColorRow(colorLabel(l10n, state.colorId)),
+            onTap: () => showColorSheet(context, widget.args),
+          ),
+          const Divider(),
           TextField(
             controller: _locationController,
             decoration: InputDecoration(
-              labelText: l10n.eventFieldLocationLabel,
+              prefixIcon: const Icon(Icons.place_outlined),
+              hintText: l10n.eventFieldLocationLabel,
+              border: InputBorder.none,
               errorText:
                   state.hasError(EventValidationErrorType.locationTooLong)
                   ? l10n.eventValidationLocationTooLong
@@ -181,71 +191,27 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
             ),
             onChanged: _controller.setLocation,
           ),
-          SizedBox(height: spacingMd),
-          Text(
-            l10n.eventAttendeesLabel,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          SizedBox(height: spacingXs),
           AttendeesField(
             attendees: state.attendees,
             onAdd: _controller.addAttendee,
             onRemove: _controller.removeAttendee,
           ),
-          SizedBox(height: spacingMd),
-          Text(
-            l10n.eventColorLabel,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          SizedBox(height: spacingXs),
-          EventColorPicker(
-            selectedColorId: state.colorId,
-            onChanged: _controller.setColorId,
-          ),
-          SizedBox(height: spacingMd),
-          Text(
-            l10n.eventRemindersLabel,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          SizedBox(height: spacingXs),
-          ReminderSelector(
-            selectedMinutesBefore: state.reminderMinutesBefore.isEmpty
-                ? null
-                : state.reminderMinutesBefore.first,
-            onChanged: _controller.setReminderMinutesBefore,
-          ),
-          // M9: a single occurrence split off a series is a standalone
-          // event — it has no recurrence of its own to edit.
-          if (!editsSingleOccurrence) ...<Widget>[
-            SizedBox(height: spacingMd),
-            Text(
-              l10n.eventRecurrenceLabel,
-              style: Theme.of(context).textTheme.titleSmall,
+          const Divider(),
+          TextField(
+            controller: _descriptionController,
+            minLines: 1,
+            maxLines: 5,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.notes),
+              hintText: l10n.eventFieldDescriptionLabel,
+              border: InputBorder.none,
+              errorText:
+                  state.hasError(EventValidationErrorType.descriptionTooLong)
+                  ? l10n.eventValidationDescriptionTooLong
+                  : null,
             ),
-            SizedBox(height: spacingXs),
-            RecurrenceTypeSelector(
-              selected: state.recurrenceType,
-              onChanged: _controller.setRecurrenceType,
-            ),
-            if (state.recurrenceType == RecurrenceType.hebrewYearly &&
-                YearlyOptionsSection.appliesTo(state.hebrewDate))
-              YearlyOptionsSection(
-                anchor: state.hebrewDate,
-                rule: RecurrenceRule(
-                  type: state.recurrenceType,
-                  leapAdar: state.recurrenceLeapAdar,
-                  shortMonth: state.recurrenceShortMonth,
-                ),
-                onLeapAdarChanged: _controller.setLeapAdar,
-                onShortMonthChanged: _controller.setShortMonth,
-              ),
-            if (state.recurrenceType != RecurrenceType.none)
-              RecurrenceUntilField(
-                until: state.recurrenceUntil,
-                fallbackDate: state.hebrewDate,
-                onChanged: _controller.setRecurrenceUntil,
-              ),
-          ],
+            onChanged: _controller.setDescription,
+          ),
         ],
       ),
     );
@@ -260,4 +226,27 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     }
     return null;
   }
+}
+
+/// One row of the compact editor: an icon, the setting's current value,
+/// and a chevron; tapping opens that setting's choice sheet.
+class _OptionRow extends StatelessWidget {
+  const _OptionRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final Widget icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    contentPadding: EdgeInsetsDirectional.zero,
+    leading: icon,
+    title: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis),
+    trailing: const Icon(Icons.chevron_left),
+    onTap: onTap,
+  );
 }

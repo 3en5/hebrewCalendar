@@ -226,6 +226,78 @@ abstract class AppLocalizations {
   /// **'כ״ט בחודש'**
   String get eventShortMonthLast;
 
+  /// Closes a choice sheet in the event editor.
+  ///
+  /// In he, this message translates to:
+  /// **'סיום'**
+  String get editorSheetDone;
+
+  /// Title of the reminders sheet (several can be chosen).
+  ///
+  /// In he, this message translates to:
+  /// **'תזכורות'**
+  String get eventRemindersSheetTitle;
+
+  /// Adds a custom reminder (number + unit).
+  ///
+  /// In he, this message translates to:
+  /// **'מותאם אישית'**
+  String get eventReminderCustom;
+
+  /// Reminder N hours before.
+  ///
+  /// In he, this message translates to:
+  /// **'{hours, plural, =1{שעה לפני} =2{שעתיים לפני} other{{hours} שעות לפני}}'**
+  String eventReminderHoursBefore(int hours);
+
+  /// Reminder N days before.
+  ///
+  /// In he, this message translates to:
+  /// **'{days, plural, =1{יום לפני} =2{יומיים לפני} other{{days} ימים לפני}}'**
+  String eventReminderDaysBefore(int days);
+
+  /// Reminder N weeks before.
+  ///
+  /// In he, this message translates to:
+  /// **'{weeks, plural, =1{שבוע לפני} =2{שבועיים לפני} other{{weeks} שבועות לפני}}'**
+  String eventReminderWeeksBefore(int weeks);
+
+  /// Custom reminder unit.
+  ///
+  /// In he, this message translates to:
+  /// **'דקות לפני'**
+  String get eventReminderUnitMinutes;
+
+  /// Custom reminder unit.
+  ///
+  /// In he, this message translates to:
+  /// **'שעות לפני'**
+  String get eventReminderUnitHours;
+
+  /// Custom reminder unit.
+  ///
+  /// In he, this message translates to:
+  /// **'ימים לפני'**
+  String get eventReminderUnitDays;
+
+  /// Custom reminder unit.
+  ///
+  /// In he, this message translates to:
+  /// **'שבועות לפני'**
+  String get eventReminderUnitWeeks;
+
+  /// Hint of the large title field in the compact editor.
+  ///
+  /// In he, this message translates to:
+  /// **'הוספת כותרת'**
+  String get eventTitleHint;
+
+  /// The color row of the compact editor.
+  ///
+  /// In he, this message translates to:
+  /// **'צבע: {name}'**
+  String eventColorRow(String name);
+
   /// Label for the event start time field.
   ///
   /// In he, this message translates to:

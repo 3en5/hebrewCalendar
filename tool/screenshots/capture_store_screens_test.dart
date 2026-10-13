@@ -245,6 +245,12 @@ void main() {
     await _shot(tester, '2_week');
   });
 
+  testWidgets('agenda', (WidgetTester tester) async {
+    final ProviderContainer c = await _pumpApp(tester, mode: ThemeMode.light);
+    c.read(calendarViewProvider.notifier).setViewType(CalendarViewType.agenda);
+    await _shot(tester, '8_agenda');
+  });
+
   testWidgets('editor', (WidgetTester tester) async {
     final ProviderContainer c = await _pumpApp(tester, mode: ThemeMode.light);
     // A date in Adar of a leap year, so the leap-year Adar choice shows.
@@ -257,17 +263,16 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'יום הולדת לדוד');
-    final Finder yearly = find.text('כל שנה (עברי)');
-    await tester.dragUntilVisible(
-      yearly,
-      find.byType(ListView),
-      const Offset(0, -200),
-    );
-    await tester.drag(find.byType(ListView), const Offset(0, -120));
+    await tester.tap(find.byIcon(Icons.repeat));
     await tester.pumpAndSettle();
-    await tester.tap(yearly);
+    await tester.tap(find.text('כל שנה (עברי)'));
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView), const Offset(0, -250));
+    await _shot(tester, '3b_editor_recurrence');
+    await tester.ensureVisible(find.text('סיום'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('סיום'));
+    await tester.pumpAndSettle();
+    await tester.testTextInput.receiveAction(TextInputAction.done);
     await _shot(tester, '3_editor');
   });
 

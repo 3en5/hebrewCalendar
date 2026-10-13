@@ -14,6 +14,7 @@ import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_editor_controller.dart';
 import 'package:hebrew_calendar/features/event_editor/application/event_repository_provider.dart';
 import 'package:hebrew_calendar/features/event_editor/presentation/event_editor_screen.dart';
+import 'package:hebrew_calendar/features/event_editor/presentation/widgets/editor_option_sheets.dart';
 import 'package:hebrew_calendar/l10n/app_localizations.dart';
 
 const HebrewDate _fixedDate = HebrewDate(
@@ -39,6 +40,22 @@ Widget _wrap(Widget child, InMemoryEventRepository repository) {
       home: child,
     ),
   );
+}
+
+/// Opens the compact editor's recurrence sheet.
+Future<void> openRecurrenceSheet(WidgetTester tester) async {
+  await tester.ensureVisible(find.byIcon(Icons.repeat));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byIcon(Icons.repeat));
+  await tester.pumpAndSettle();
+}
+
+/// Closes an open choice sheet with its "סיום" button.
+Future<void> closeSheet(WidgetTester tester) async {
+  await tester.ensureVisible(find.text('סיום'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('סיום'));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -125,11 +142,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField).first, 'צבעוני');
-    await tester.dragUntilVisible(
-      find.byKey(const ValueKey<String>('event-color-11')),
-      find.byType(ListView),
-      const Offset(0, -100),
-    );
+    // Compact editor: the color row opens the color sheet.
+    await tester.tap(find.byType(EventColorDot));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey<String>('event-color-11')));
     await tester.pumpAndSettle();
@@ -179,32 +193,17 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField).first, 'שיעור שבועי');
-    // The recurrence section sits below the fold of the editor's ListView.
-    // `dragUntilVisible` stops as soon as a widget enters the sliver's
-    // cache extent, which can be slightly before it's actually within the
-    // visible viewport (hit-testable) — nudge a little further afterwards
-    // so `tap()` lands on it.
-    await tester.dragUntilVisible(
-      find.text('כל שבוע'),
-      find.byType(ListView),
-      const Offset(0, -100),
-    );
-    await tester.drag(find.byType(ListView), const Offset(0, -50));
-    await tester.pumpAndSettle();
+    // Compact editor: the recurrence row opens the recurrence sheet.
+    await openRecurrenceSheet(tester);
     await tester.tap(find.text('כל שבוע'));
     await tester.pumpAndSettle();
-
-    await tester.dragUntilVisible(
-      find.text('עד תאריך'),
-      find.byType(ListView),
-      const Offset(0, -100),
-    );
-    await tester.drag(find.byType(ListView), const Offset(0, -50));
+    await tester.ensureVisible(find.text('עד תאריך'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('עד תאריך'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('אישור'));
     await tester.pumpAndSettle();
+    await closeSheet(tester);
 
     await tester.tap(find.byIcon(Icons.check));
     await tester.pumpAndSettle();
@@ -224,8 +223,8 @@ void main() {
       // Regression test for the "form cut off, no scrolling" device report:
       // render at a small real-device-like surface (360x640, e.g. a compact
       // phone) instead of flutter test's roomy default (800x600) and prove
-      // the bottom-most field ("עד תאריך", only shown once a recurrence type
-      // is picked) can still be scrolled into view and tapped.
+      // the recurrence sheet's last field ("עד תאריך", only shown once a
+      // recurrence type is picked) can still be scrolled into view and tapped.
       final Size originalSize = tester.view.physicalSize;
       final double originalRatio = tester.view.devicePixelRatio;
       tester.view.physicalSize = const Size(360, 640);
@@ -245,25 +244,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // The recurrence type chips sit below the fold on this small surface.
-      await tester.dragUntilVisible(
-        find.text('כל שבוע'),
-        find.byType(ListView),
-        const Offset(0, -100),
-      );
-      await tester.drag(find.byType(ListView), const Offset(0, -50));
-      await tester.pumpAndSettle();
+      // Compact editor: the recurrence sheet, then its last field.
+      await openRecurrenceSheet(tester);
       await tester.tap(find.text('כל שבוע'));
       await tester.pumpAndSettle();
-
-      // Now the very last field, "עד תאריך", must also be reachable and
-      // tappable (not cut off past the bottom of the screen).
-      await tester.dragUntilVisible(
-        find.text('עד תאריך'),
-        find.byType(ListView),
-        const Offset(0, -100),
-      );
-      await tester.drag(find.byType(ListView), const Offset(0, -50));
+      await tester.ensureVisible(find.text('עד תאריך'));
       await tester.pumpAndSettle();
 
       final Finder untilField = find.text('עד תאריך');

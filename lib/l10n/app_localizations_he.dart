@@ -80,6 +80,71 @@ class AppLocalizationsHe extends AppLocalizations {
   String get eventShortMonthLast => 'כ״ט בחודש';
 
   @override
+  String get editorSheetDone => 'סיום';
+
+  @override
+  String get eventRemindersSheetTitle => 'תזכורות';
+
+  @override
+  String get eventReminderCustom => 'מותאם אישית';
+
+  @override
+  String eventReminderHoursBefore(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours שעות לפני',
+      two: 'שעתיים לפני',
+      one: 'שעה לפני',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String eventReminderDaysBefore(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days ימים לפני',
+      two: 'יומיים לפני',
+      one: 'יום לפני',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String eventReminderWeeksBefore(int weeks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      weeks,
+      locale: localeName,
+      other: '$weeks שבועות לפני',
+      two: 'שבועיים לפני',
+      one: 'שבוע לפני',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get eventReminderUnitMinutes => 'דקות לפני';
+
+  @override
+  String get eventReminderUnitHours => 'שעות לפני';
+
+  @override
+  String get eventReminderUnitDays => 'ימים לפני';
+
+  @override
+  String get eventReminderUnitWeeks => 'שבועות לפני';
+
+  @override
+  String get eventTitleHint => 'הוספת כותרת';
+
+  @override
+  String eventColorRow(String name) {
+    return 'צבע: $name';
+  }
+
+  @override
   String get eventStartTimeLabel => 'שעת התחלה';
 
   @override

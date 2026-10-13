@@ -146,6 +146,27 @@ class EventEditorController extends Notifier<EventEditorState> {
     );
   }
 
+  /// Compact editor (2026-10-13): turns the reminder [minutes] before the
+  /// event on or off; the list stays sorted.
+  void toggleReminder(int minutes) {
+    final List<int> current = state.reminderMinutesBefore;
+    final List<int> next = current.contains(minutes)
+        ? current.where((int m) => m != minutes).toList()
+        : (<int>[...current, minutes]..sort());
+    state = state.copyWith(reminderMinutesBefore: next);
+  }
+
+  /// Adds a (custom) reminder [minutes] before the event, if not already set.
+  void addReminder(int minutes) {
+    if (minutes < 0 || state.reminderMinutesBefore.contains(minutes)) {
+      return;
+    }
+    state = state.copyWith(
+      reminderMinutesBefore: <int>[...state.reminderMinutesBefore, minutes]
+        ..sort(),
+    );
+  }
+
   /// Sets the recurrence type (M3a). Switching to [RecurrenceType.none]
   /// also clears any "repeat until" date — it would otherwise linger
   /// invisibly and reappear if the user picks a repeating type again.
