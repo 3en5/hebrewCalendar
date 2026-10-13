@@ -101,7 +101,7 @@ keyPassword=<סיסמת המפתח>
    - מפענח את ה-keystore וכותב `android/key.properties`.
    - מחשב `versionName` ו-`versionCode` (סעיף 5) ובונה App Bundle חתום.
 3. ה-AAB תמיד נשמר כ-artifact: Actions ← ההרצה ← Artifacts ←
-   `hebrew-calendar-release-aab`. כש-`track` שונה מ-`none`, הוא גם מועלה
+   `hebrew-calendar-release-aab` (נשמר 7 ימים). כש-`track` שונה מ-`none`, הוא גם מועלה
    ל-Play עם הערות הגרסה מ-`distribution/whatsnew/`. צריך לעדכן אותן לפני כל
    שחרור, בעברית (`whatsnew-iw-IL`) ובאנגלית (`whatsnew-en-US`), עד 500 תווים
    כל אחת.

@@ -152,12 +152,15 @@ jobs:
             --build-name="${{ steps.version.outputs.name }}" \
             --build-number="${{ steps.version.outputs.code }}"
 
+      # Kept a week (not 30 days): the Play upload below reads the AAB from
+      # disk, so the artifact is only a short-lived copy (Actions storage
+      # quota, 2026-10-13).
       - name: Upload App Bundle artifact
         uses: actions/upload-artifact@v4
         with:
           name: hebrew-calendar-release-aab
           path: build/app/outputs/bundle/release/app-release.aab
-          retention-days: 30
+          retention-days: 7
 
       - name: Resolve Play release status
         id: play
