@@ -117,14 +117,17 @@ class GoogleSyncSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text(
-              l10n.settingsGoogleSyncSectionTitle,
-              style: TextStyle(fontSize: titleRem, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: spacingSm),
+            // Device feedback 2026-10-13: one title, with the switch on its
+            // line (the separate "sync with Google Calendar" label repeated it).
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(l10n.settingsGoogleSyncEnableLabel),
+              title: Text(
+                l10n.settingsGoogleSyncSectionTitle,
+                style: TextStyle(
+                  fontSize: titleRem,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               value: state.enabled,
               onChanged: _isBusy ? null : onEnabledChanged,
               secondary: state.authorizing

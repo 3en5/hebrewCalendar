@@ -1,1 +1,1 @@
-Fix: if the Google connection screen is closed midway, the app now explains how to continue instead of a technical error. Also: sync progress.
+Improvements: the agenda shows the Gregorian date, start and end time sit side by side in the editor, and Settings are more compact.

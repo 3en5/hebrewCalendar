@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/theme/dimens.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
@@ -30,6 +31,7 @@ class CalendarDayHeader extends ConsumerWidget {
     required this.isToday,
     this.mode = CalendarDayHeaderMode.compact,
     this.onTap,
+    this.showGregorian = false,
     super.key,
   });
 
@@ -37,6 +39,10 @@ class CalendarDayHeader extends ConsumerWidget {
   final bool isToday;
   final CalendarDayHeaderMode mode;
   final VoidCallback? onTap;
+
+  /// [CalendarDayHeaderMode.full] only: adds the Gregorian date in
+  /// parentheses, dd/MM/yy (device request 2026-10-13, agenda view).
+  final bool showGregorian;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,8 +59,21 @@ class CalendarDayHeader extends ConsumerWidget {
           horizontal: spacingMd,
           vertical: spacingSm,
         ),
-        child: Text(
-          label,
+        child: Text.rich(
+          TextSpan(
+            text: label,
+            children: <InlineSpan>[
+              if (showGregorian)
+                TextSpan(
+                  text:
+                      ' (${DateFormat('dd/MM/yy').format(engine.toGregorian(date))})',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: isToday ? colorScheme.primary : null,

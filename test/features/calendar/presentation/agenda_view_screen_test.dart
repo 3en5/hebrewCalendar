@@ -92,6 +92,8 @@ void main() {
       expect(find.text('שיעור חודשי'), findsAtLeastNWidgets(2));
       expect(find.textContaining('תשרי'), findsWidgets);
       expect(find.textContaining('חשוון'), findsWidgets);
+      // Device request 2026-10-13: the Gregorian date, dd/MM/yy.
+      expect(find.textContaining(RegExp(r'\(\d\d/\d\d/\d\d\)')), findsWidgets);
     },
   );
 

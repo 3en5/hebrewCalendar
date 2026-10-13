@@ -154,6 +154,7 @@ class _AgendaDayGroup extends ConsumerWidget {
           date: date,
           isToday: date == today,
           mode: CalendarDayHeaderMode.full,
+          showGregorian: true,
         ),
         for (final EventOccurrence occurrence in occurrences)
           _AgendaEventTile(occurrence: occurrence),

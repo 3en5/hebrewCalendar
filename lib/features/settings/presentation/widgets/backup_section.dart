@@ -44,30 +44,30 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
               ),
             ),
             SizedBox(height: spacingMd),
-            Row(
+            // Device feedback 2026-10-13: compact buttons side by side.
+            Wrap(
+              spacing: spacingSm,
+              runSpacing: spacingXs,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _busy ? null : () => _handleExport(l10n),
-                    icon: _busy
-                        ? const _Spinner()
-                        : const Icon(Icons.save_alt_outlined),
-                    label: Text(l10n.settingsBackupExportButton),
-                  ),
+                FilledButton.icon(
+                  onPressed: _busy ? null : () => _handleExport(l10n),
+                  icon: _busy
+                      ? const _Spinner()
+                      : const Icon(Icons.save_alt_outlined),
+                  label: Text(l10n.settingsBackupExportButton),
                 ),
-                SizedBox(width: spacingSm),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : () => _handleImport(l10n),
+                  icon: const Icon(Icons.file_upload_outlined),
+                  label: Text(l10n.settingsBackupImportButton),
+                ),
                 IconButton(
                   tooltip: l10n.settingsBackupShareTooltip,
                   onPressed: _busy ? null : () => _handleShare(l10n),
                   icon: const Icon(Icons.share_outlined),
                 ),
               ],
-            ),
-            SizedBox(height: spacingSm),
-            OutlinedButton.icon(
-              onPressed: _busy ? null : () => _handleImport(l10n),
-              icon: const Icon(Icons.file_upload_outlined),
-              label: Text(l10n.settingsBackupImportButton),
             ),
           ],
         ),
