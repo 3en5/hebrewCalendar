@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/dimens.dart';
 import '../../../../domain/event/event_time_of_day.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// Start/end time rows for the event editor, disabled while the event is
-/// all-day. Uses Flutter's built-in [showTimePicker] and converts the
+/// Start/end time fields for the event editor, side by side, disabled while
+/// the event is all-day. Uses Flutter's built-in [showTimePicker] and converts the
 /// result to the domain's Flutter-free [EventTimeOfDay] immediately.
 class EventTimeSection extends StatelessWidget {
   const EventTimeSection({
@@ -25,19 +26,26 @@ class EventTimeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    return Column(
+    // Device feedback 2026-10-13: start and end side by side, one row.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _TimeTile(
-          enabled: !allDay,
-          label: l10n.eventStartTimeLabel,
-          time: startTime,
-          onChanged: onStartTimeChanged,
+        Expanded(
+          child: _TimeTile(
+            enabled: !allDay,
+            label: l10n.eventStartTimeLabel,
+            time: startTime,
+            onChanged: onStartTimeChanged,
+          ),
         ),
-        _TimeTile(
-          enabled: !allDay,
-          label: l10n.eventEndTimeLabel,
-          time: endTime,
-          onChanged: onEndTimeChanged,
+        SizedBox(width: spacingSm),
+        Expanded(
+          child: _TimeTile(
+            enabled: !allDay,
+            label: l10n.eventEndTimeLabel,
+            time: endTime,
+            onChanged: onEndTimeChanged,
+          ),
         ),
       ],
     );
@@ -64,6 +72,8 @@ class _TimeTile extends StatelessWidget {
       contentPadding: EdgeInsetsDirectional.zero,
       enabled: enabled,
       leading: const Icon(Icons.access_time),
+      minLeadingWidth: spacingMd,
+      horizontalTitleGap: spacingSm,
       title: Text(label),
       subtitle: Text(time?.toString() ?? l10n.eventNoTimeSet),
       onTap: enabled ? () => _pickTime(context) : null,
