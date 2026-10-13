@@ -10,7 +10,7 @@
 - קוד האתר: `site/`, פרסום: `.github/workflows/hosting.yml`.
 
 ## שלבים (בעלים, ב-Google Cloud Console של hebrewcalendar-68363)
-1. **Search Console:** ✅ קובץ האימות `site/googlef81089490c5c16e2.html` הועלה (2026-10-13); נותר ללחוץ Verify.
+1. **Search Console:** ✅ קובץ האימות `site/googlef81089490c5c16e2.html` הועלה ואומת ע"י הבעלים (2026-10-13).
 2. **APIs & Services → OAuth consent screen (Branding):**
    - App name: לוח עברי · User support email: natanor.kalfa@gmail.com · App logo: `distribution/listings/images/icon.png` (120x120 ומעלה)
    - Application home page: הכתובת של דף הבית · Privacy policy: הכתובת של המדיניות
