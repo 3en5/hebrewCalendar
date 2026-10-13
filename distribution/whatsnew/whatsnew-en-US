@@ -1,1 +1,1 @@
-New: the week view has a faint dashed line between the days and a light tint for Shabbat and today, so each day is easy to follow.
+Fix: an event changed between single and recurring no longer appears twice in Google Calendar.
