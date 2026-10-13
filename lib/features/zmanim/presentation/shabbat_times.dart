@@ -68,34 +68,3 @@ class ShabbatTimeLine extends StatelessWidget {
     );
   }
 }
-
-/// The "הדלקת נרות 17:47" tag in the month agenda.
-class ShabbatTimeTag extends StatelessWidget {
-  const ShabbatTimeTag({required this.shabbatTime, super.key});
-
-  final ShabbatTime shabbatTime;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color color = theme.colorScheme.tertiary;
-    return Container(
-      padding: EdgeInsetsDirectional.symmetric(
-        horizontal: spacingSm,
-        vertical: spacingXs / 2,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(spacingMd),
-      ),
-      child: Text(
-        '${shabbatTime.label(AppLocalizations.of(context))} '
-        '${formatZman(shabbatTime.time)}',
-        style: theme.textTheme.labelMedium?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}

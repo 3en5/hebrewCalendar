@@ -135,10 +135,6 @@ class MonthGrid extends ConsumerWidget {
                             labels:
                                 labelsByDay[selected.day] ??
                                 const <JewishDayLabel>[],
-                            shabbatTime: shabbatTimeFor(
-                              zmanimSettings,
-                              engine.toGregorian(selected),
-                            ),
                             occurrences:
                                 occurrencesByDay[selected.day] ??
                                 const <EventOccurrence>[],

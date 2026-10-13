@@ -102,8 +102,10 @@
 | `lib/domain/zmanim/zmanim_location.dart` | M21: `ZmanimLocation` ורשימת הערים עם מנהג הדלקת הנרות |
 | `lib/features/zmanim/application/zmanim_settings.dart` | M21: `ZmanimSettings`/`zmanimSettingsProvider` — העדפות זמני היום במכשיר, מיקום מהטלפון (`geolocator`) |
 | `lib/features/zmanim/presentation/zmanim_panel.dart` | M21: `ZmanimPanel` — שורת "זמני היום" המתקפלת בתצוגת יום |
-| `lib/features/zmanim/presentation/shabbat_times.dart` | M21: `shabbatTimeFor` + שורה בתא החודש ותגית בפירוט היום (הדלקת נרות / צאת שבת) |
+| `lib/features/zmanim/presentation/shabbat_times.dart` | M21: `shabbatTimeFor` + השורה בתא החודש (הדלקת נרות / צאת שבת) |
 | `lib/features/zmanim/presentation/zmanim_settings_section.dart` | M21: סעיף "זמני היום" בהגדרות |
+| `lib/features/zmanim/presentation/day_features_carousel.dart` | `DayFeaturesCarousel`: שורה נגללת של מאפייני היום בפירוט היום שמתחת לחודש (חג, פרשה, ראש חודש, זמנים), הרלוונטי לשעה הנוכחית ראשון (`orderDayFeatures`) |
+| `test/features/zmanim/day_features_carousel_test.dart` | טסטים לסדר המדבקות ולקרוסלה |
 | `test/domain/zmanim/zmanim_test.dart` | טסטים לחישוב הזמנים |
 | `test/features/zmanim/zmanim_settings_test.dart` | טסטים להעדפות ולזמן השבת |
 | `test/features/zmanim/zmanim_widgets_test.dart` | טסטים לסעיף ההגדרות ולשורה בתצוגת יום |
