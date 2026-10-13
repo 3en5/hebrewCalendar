@@ -117,6 +117,7 @@
 | `test/domain/zmanim/zmanim_test.dart` | טסטים לחישוב הזמנים |
 | `test/features/zmanim/zmanim_settings_test.dart` | טסטים להעדפות ולזמן השבת |
 | `test/features/zmanim/zmanim_widgets_test.dart` | טסטים לסעיף ההגדרות ולשורה בתצוגת יום |
+| `test/data/sync/sync_recurrence_change_test.dart` | בודד ↔ חוזר לא משאיר כפילויות ב-Google |
 | `test/data/sync/sync_progress_test.dart` | טסטים להתקדמות הסנכרון |
 | `lib/data/sync/remote_event_fields.dart` | המרת שדות אירוע Google לאירוע מקומי: שעות (`remoteStartTime`/`remoteEndTime`) ו-`withRemoteContent` |
 | `lib/data/sync/full_resync_flag.dart` | `FullResyncFlag`/`PrefsFullResyncFlag` — בקשה חד-פעמית לרשימה מלאה מ-Google (M17: השלמת שעות לאירועים מיובאים) |

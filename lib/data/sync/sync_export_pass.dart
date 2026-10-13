@@ -205,6 +205,20 @@ class SyncExportPass {
     final GoogleSyncState? known = event.googleSync.googleEventId != null
         ? event.googleSync
         : ownExportsLookup['${event.id}|$key'];
+    // A series turned into a single event: its exported instances in Google
+    // are removed (except one the single event itself reuses), or they
+    // would stay behind as duplicates (device report 2026-10-13).
+    final List<StaleExportInstance> stale = <StaleExportInstance>[
+      for (final MapEntry<String, GoogleSyncState> entry
+          in event.googleInstanceSync.entries)
+        if (entry.value.googleEventId != null &&
+            entry.value.googleEventId != known?.googleEventId)
+          StaleExportInstance(
+            eventId: event.id,
+            occurrenceKey: entry.key,
+            state: entry.value,
+          ),
+    ];
     final List<SyncAction> actions = planExportActions(
       candidates: <ExportCandidate>[
         ExportCandidate(
@@ -214,13 +228,25 @@ class SyncExportPass {
           knownState: known,
         ),
       ],
-      staleInstances: const <StaleExportInstance>[],
+      staleInstances: stale,
     );
+    GoogleSyncState? synced;
     for (final SyncAction action in actions) {
       final _PushOutcome outcome = await _applyExportAction(action);
       if (outcome != null) {
-        await _repository.updateSyncState(event.id, googleSync: outcome.state);
+        synced = outcome.state;
       }
+    }
+    if (synced != null || event.googleInstanceSync.isNotEmpty) {
+      await _repository.updateSyncState(
+        event.id,
+        googleSync: synced,
+        // Forget the removed instances: no Google event left behind them.
+        googleInstanceSync: <String, GoogleSyncState>{
+          for (final String instanceKey in event.googleInstanceSync.keys)
+            instanceKey: GoogleSyncState(lastSyncedAt: _now()),
+        },
+      );
     }
   }
 
@@ -252,12 +278,32 @@ class SyncExportPass {
             state: entry.value,
           ),
     ];
+    // A single event turned into a series (or an event imported from
+    // Google made recurring in the app): its one Google event is replaced
+    // by the series' instances, so it is removed, or it would stay behind
+    // as a duplicate (device report 2026-10-13).
+    final GoogleSyncState single = event.googleSync;
+    if (single.googleEventId != null) {
+      stale.add(
+        StaleExportInstance(
+          eventId: event.id,
+          occurrenceKey: '',
+          state: single,
+        ),
+      );
+    }
     final List<SyncAction> actions = planExportActions(
       candidates: candidates,
       staleInstances: stale,
     );
     final Map<String, GoogleSyncState> instanceUpdates =
-        <String, GoogleSyncState>{};
+        <String, GoogleSyncState>{
+          // Removed instances are kept as "no Google event", so a later
+          // cancellation of them is not mistaken for a skipped occurrence.
+          for (final StaleExportInstance s in stale)
+            if (s.occurrenceKey.isNotEmpty)
+              s.occurrenceKey: GoogleSyncState(lastSyncedAt: _now()),
+        };
     for (final SyncAction action in actions) {
       final _PushOutcome outcome = await _applyExportAction(action);
       if (outcome != null) {
@@ -266,7 +312,7 @@ class SyncExportPass {
     }
     await _repository.updateSyncState(
       event.id,
-      googleSync: event.googleSync.copyWith(dirty: false, lastSyncedAt: _now()),
+      googleSync: GoogleSyncState(lastSyncedAt: _now()),
       googleInstanceSync: instanceUpdates,
     );
   }
