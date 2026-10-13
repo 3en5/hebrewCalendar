@@ -23,6 +23,10 @@
 ///    falls on the month's last day (29) in a short month, so it fires
 ///    exactly once per Hebrew month.
 ///
+/// [RecurrenceType.gregorianYearly] and [RecurrenceType.gregorianMonthly]
+/// (M22) recur on the anchor's Gregorian date; a day the target month lacks
+/// (29 February, the 31st) falls on that month's last day.
+///
 /// [RecurrenceType.weekly] and [RecurrenceType.daily] have no such
 /// Hebrew-calendar ambiguity: they step by a fixed number of Gregorian days
 /// from the anchor date (computed via [HebrewDateEngine] round-trips, to
@@ -122,6 +126,10 @@ List<HebrewDate> occurrencesInRange({
       return _yearlyOccurrences(base, rule, from, to, engine);
     case RecurrenceType.hebrewMonthly:
       return _monthlyOccurrences(base, rule, from, to, engine);
+    case RecurrenceType.gregorianYearly:
+      return _gregorianOccurrences(base, rule, from, to, engine, 12);
+    case RecurrenceType.gregorianMonthly:
+      return _gregorianOccurrences(base, rule, from, to, engine, 1);
     case RecurrenceType.weekly:
       return _stepOccurrences(base, rule, from, to, engine, 7);
     case RecurrenceType.daily:
@@ -237,6 +245,54 @@ List<HebrewDate> _monthlyOccurrences(
       results.add(occurrence);
     }
     cursor = engine.nextMonth(cursor);
+  }
+  return results;
+}
+
+/// Gregorian yearly ([monthStep] 12) or monthly ([monthStep] 1)
+/// occurrences: the anchor's Gregorian day in every [monthStep]-th month
+/// from the anchor's, clamped to the month's last day.
+List<HebrewDate> _gregorianOccurrences(
+  HebrewDate base,
+  RecurrenceRule rule,
+  HebrewDate from,
+  HebrewDate to,
+  HebrewDateEngine engine,
+  int monthStep,
+) {
+  final DateTime anchor = _toUtcDate(base, engine);
+  final DateTime fromUtc = _toUtcDate(from, engine);
+  final DateTime toUtc = _toUtcDate(to, engine);
+  if (toUtc.isBefore(anchor)) {
+    return const <HebrewDate>[];
+  }
+  int monthIndex(DateTime d) => d.year * 12 + d.month - 1;
+  final int anchorIndex = monthIndex(anchor);
+  // First step whose month is not before `from`'s month.
+  final int fromSteps = monthIndex(fromUtc) - anchorIndex;
+  int step = fromSteps <= 0 ? 0 : (fromSteps + monthStep - 1) ~/ monthStep;
+  final List<HebrewDate> results = <HebrewDate>[];
+  while (true) {
+    final int index = anchorIndex + step * monthStep;
+    final int year = index ~/ 12;
+    final int month = index % 12 + 1;
+    // Day 0 of the next month is this month's last day.
+    final int lastDay = DateTime.utc(year, month + 1, 0).day;
+    final DateTime candidate = DateTime.utc(
+      year,
+      month,
+      anchor.day > lastDay ? lastDay : anchor.day,
+    );
+    if (candidate.isAfter(toUtc)) {
+      break;
+    }
+    if (!candidate.isBefore(fromUtc)) {
+      final HebrewDate occurrence = engine.fromGregorian(candidate);
+      if (_isEligible(occurrence, base, rule, from, to)) {
+        results.add(occurrence);
+      }
+    }
+    step++;
   }
   return results;
 }

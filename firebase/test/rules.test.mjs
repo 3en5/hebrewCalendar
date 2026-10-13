@@ -133,6 +133,11 @@ describe('events/{eventId}', () => {
     await assertFails(setDoc(ref, event({ description: 'x'.repeat(2001) })));
     await assertFails(setDoc(ref, event({ hebrewDate: { year: 5787, month: 'tishrei', day: 31 } })));
     await assertFails(setDoc(ref, event({ recurrence: { type: 'yearly', until: null, exceptions: [] } })));
+    // M22: Gregorian yearly/monthly recurrence is a valid type.
+    for (const type of ['gregorianYearly', 'gregorianMonthly']) {
+      await assertSucceeds(setDoc(doc(alice(), `events/g-${type}`),
+        event({ recurrence: { type, until: null, exceptions: [] } })));
+    }
     await assertFails(setDoc(ref, event({ source: 'other' })));
     await assertFails(setDoc(ref, event({ colorId: 7 })));
     await assertFails(setDoc(ref, event({ colorId: '123' })));

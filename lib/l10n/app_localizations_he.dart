@@ -316,6 +316,12 @@ class AppLocalizationsHe extends AppLocalizations {
   String get recurrenceTypeMonthly => 'כל חודש (עברי)';
 
   @override
+  String get recurrenceTypeGregorianYearly => 'כל שנה (לועזי)';
+
+  @override
+  String get recurrenceTypeGregorianMonthly => 'כל חודש (לועזי)';
+
+  @override
   String get recurrenceTypeWeekly => 'כל שבוע';
 
   @override

@@ -115,7 +115,9 @@ class SyncExportPass {
   /// How far ahead a series of [type] is exported to Google.
   Duration _windowFor(RecurrenceType type) => switch (type) {
     RecurrenceType.hebrewYearly ||
-    RecurrenceType.hebrewMonthly => _longExportWindow,
+    RecurrenceType.hebrewMonthly ||
+    RecurrenceType.gregorianYearly ||
+    RecurrenceType.gregorianMonthly => _longExportWindow,
     _ => _exportWindow,
   };
 

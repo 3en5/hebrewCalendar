@@ -11,8 +11,17 @@ enum RecurrenceType {
   /// Repeats every Hebrew year on the same Hebrew month/day.
   hebrewYearly,
 
+  /// Repeats every Gregorian year on the same Gregorian month/day (M22,
+  /// owner decision 2026-10-13). 29 February falls on 28 February in a
+  /// non-leap year.
+  gregorianYearly,
+
   /// Repeats every Hebrew month on the same day-of-month.
   hebrewMonthly,
+
+  /// Repeats every Gregorian month on the same day-of-month (M22). A day
+  /// the month lacks (31, or 29-31 in February) falls on its last day.
+  gregorianMonthly,
 
   /// Repeats every week on the same weekday.
   weekly,

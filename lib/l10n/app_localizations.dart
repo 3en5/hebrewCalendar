@@ -616,6 +616,18 @@ abstract class AppLocalizations {
   /// **'כל חודש (עברי)'**
   String get recurrenceTypeMonthly;
 
+  /// Recurrence: every Gregorian year on the same date (M22).
+  ///
+  /// In he, this message translates to:
+  /// **'כל שנה (לועזי)'**
+  String get recurrenceTypeGregorianYearly;
+
+  /// Recurrence: every Gregorian month on the same day (M22).
+  ///
+  /// In he, this message translates to:
+  /// **'כל חודש (לועזי)'**
+  String get recurrenceTypeGregorianMonthly;
+
   /// Recurrence type chip label: repeats every week.
   ///
   /// In he, this message translates to:

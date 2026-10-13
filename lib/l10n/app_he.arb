@@ -263,6 +263,10 @@
   "@recurrenceTypeMonthly": {
     "description": "Recurrence type chip label: repeats every Hebrew month on the same day."
   },
+  "recurrenceTypeGregorianYearly": "כל שנה (לועזי)",
+  "@recurrenceTypeGregorianYearly": {"description": "Recurrence: every Gregorian year on the same date (M22)."},
+  "recurrenceTypeGregorianMonthly": "כל חודש (לועזי)",
+  "@recurrenceTypeGregorianMonthly": {"description": "Recurrence: every Gregorian month on the same day (M22)."},
   "recurrenceTypeWeekly": "כל שבוע",
   "@recurrenceTypeWeekly": {
     "description": "Recurrence type chip label: repeats every week."

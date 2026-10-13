@@ -97,6 +97,7 @@
 | `lib/features/settings/presentation/widgets/sync_progress_view.dart` | `SyncProgressView`: טקסט ההתקדמות ופס שמתמלא; בכרטיס הסנכרון ובמסך היומן |
 | `lib/features/calendar/presentation/widgets/sync_progress_strip.dart` | פס התקדמות דק מתחת לסרגל היומן בזמן סנכרון |
 | `lib/features/calendar/presentation/widgets/day_swipe_area.dart` | החלקה על פירוט היום בתצוגת חודש מעבירה יום, עם אנימציית דף |
+| `test/domain/event/recurrence_expander_gregorian_test.dart` | M22: טסטים לחזרה שנתית/חודשית לועזית (29 בפברואר, יום 31) |
 | `test/features/calendar/presentation/month_day_swipe_test.dart` | טסטים להחלקה בין ימים ובין חודשים |
 | `lib/features/calendar/presentation/widgets/location_actions.dart` | M20: מיקום האירוע בפרטי האירוע עם כפתורי Google Maps ו-Waze (`url_launcher`) |
 | `test/features/calendar/presentation/location_actions_test.dart` | טסט לקישורי Maps/Waze |

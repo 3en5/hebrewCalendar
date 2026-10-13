@@ -134,7 +134,8 @@ service cloud.firestore {
 
       function isValidRecurrence(rec) {
         return rec.type is string
-          && rec.type in ['none', 'hebrewYearly', 'hebrewMonthly', 'weekly', 'daily']
+          && rec.type in ['none', 'hebrewYearly', 'gregorianYearly', 'hebrewMonthly',
+              'gregorianMonthly', 'weekly', 'daily']
           && (!('until' in rec) || rec.until == null || isValidHebrewDateMap(rec.until))
           && (!('exceptions' in rec) || rec.exceptions is list)
           && (!('leapAdar' in rec) || rec.leapAdar == null

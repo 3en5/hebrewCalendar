@@ -52,6 +52,8 @@ String recurrenceTypeLabel(AppLocalizations l10n, RecurrenceType type) =>
       RecurrenceType.none => l10n.recurrenceTypeNone,
       RecurrenceType.hebrewYearly => l10n.recurrenceTypeYearly,
       RecurrenceType.hebrewMonthly => l10n.recurrenceTypeMonthly,
+      RecurrenceType.gregorianYearly => l10n.recurrenceTypeGregorianYearly,
+      RecurrenceType.gregorianMonthly => l10n.recurrenceTypeGregorianMonthly,
       RecurrenceType.weekly => l10n.recurrenceTypeWeekly,
       RecurrenceType.daily => l10n.recurrenceTypeDaily,
     };
