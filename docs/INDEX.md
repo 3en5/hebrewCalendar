@@ -97,6 +97,7 @@
 | `lib/features/settings/presentation/widgets/sync_progress_view.dart` | `SyncProgressView`: טקסט ההתקדמות ופס שמתמלא; בכרטיס הסנכרון ובמסך היומן |
 | `lib/features/calendar/presentation/widgets/sync_progress_strip.dart` | פס התקדמות דק מתחת לסרגל היומן בזמן סנכרון |
 | `lib/features/calendar/application/calendar_display_mode_provider.dart` | M23: `CalendarDisplayMode` (עברית/לועזית), נשמר במכשיר |
+| `lib/features/calendar/presentation/widgets/week_columns_painter.dart` | תצוגת שבוע: קווים מקווקווים עדינים בין הימים, רקע לשבת וליום הנוכחי |
 | `lib/features/calendar/presentation/widgets/calendar_title.dart` | M23: כותרת החודש בסרגל, לחיצה מחליפה בין תצוגה עברית ללועזית |
 | `lib/features/calendar/presentation/widgets/month_grid_data.dart` | M23: נתוני עמוד חודש (תאים, אירועים, תוויות) לחודש עברי או לועזי; `addGregorianMonths` |
 | `test/features/calendar/presentation/gregorian_display_test.dart` | M23: טסטים לתצוגה הלועזית (החלפה, ציר היום המסומן, דפדוף, שמירה) |

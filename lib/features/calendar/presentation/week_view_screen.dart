@@ -17,6 +17,7 @@ import 'widgets/all_day_events_row.dart';
 import 'widgets/calendar_day_header.dart';
 import 'widgets/day_occurrences.dart';
 import 'widgets/hour_grid.dart';
+import 'widgets/week_columns_painter.dart';
 
 const int _daysPerWeek = 7;
 
@@ -99,36 +100,59 @@ class _WeekPage extends ConsumerWidget {
         ),
     ];
 
-    return Column(
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            SizedBox(width: hourLabelWidth),
-            for (final HebrewDate day in days)
-              Expanded(
-                child: CalendarDayHeader(
-                  key: ValueKey<String>('week-day-header-$day'),
-                  date: day,
-                  isToday: day == today,
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final int todayIndex = days.indexOf(today);
+    // Column guides across the whole page: tints behind, dashed lines on
+    // top (owner request 2026-10-13).
+    return CustomPaint(
+      painter: WeekColumnsPainter(
+        labelWidth: hourLabelWidth,
+        textDirection: Directionality.of(context),
+        lineColor: colors.outlineVariant,
+        shabbatTint: colors.primary.withValues(alpha: 0.05),
+        todayTint: colors.primary.withValues(alpha: 0.07),
+        todayIndex: todayIndex < 0 ? null : todayIndex,
+        paintLines: false,
+      ),
+      foregroundPainter: WeekColumnsPainter(
+        labelWidth: hourLabelWidth,
+        textDirection: Directionality.of(context),
+        lineColor: colors.outlineVariant.withValues(alpha: 0.7),
+        shabbatTint: Colors.transparent,
+        todayTint: Colors.transparent,
+        paintTints: false,
+      ),
+      child: Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              SizedBox(width: hourLabelWidth),
+              for (final HebrewDate day in days)
+                Expanded(
+                  child: CalendarDayHeader(
+                    key: ValueKey<String>('week-day-header-$day'),
+                    date: day,
+                    isToday: day == today,
+                  ),
                 ),
-              ),
-          ],
-        ),
-        AllDayEventsRow(
-          columns: columns,
-          onEventTap: (EventOccurrence occurrence) =>
-              openEventEditorForOccurrence(context, occurrence),
-        ),
-        Expanded(
-          child: HourGrid(
+            ],
+          ),
+          AllDayEventsRow(
             columns: columns,
-            onEmptySlotTap: (HebrewDate date, int hour) =>
-                _openEditor(context, initialDate: date, existing: null),
             onEventTap: (EventOccurrence occurrence) =>
                 openEventEditorForOccurrence(context, occurrence),
           ),
-        ),
-      ],
+          Expanded(
+            child: HourGrid(
+              columns: columns,
+              onEmptySlotTap: (HebrewDate date, int hour) =>
+                  _openEditor(context, initialDate: date, existing: null),
+              onEventTap: (EventOccurrence occurrence) =>
+                  openEventEditorForOccurrence(context, occurrence),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
