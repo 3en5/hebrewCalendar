@@ -11,7 +11,7 @@
 
 ## 2026-10-13 — M22: חזרה לפי התאריך הלועזי (אושר עם ברירות המחדל, סקיצה 16)
 
-- `RecurrenceType.gregorianYearly`/`gregorianMonthly` (`recurrence_expander.dart` `_gregorianOccurrences`), חלון יצוא ארוך, תוויות בחלון החזרתיות, כללי Firestore + טסט כללים. 464 טסטים, 19 טסטי כללים. כללי האבטחה ייפרסו עם המיזוג ל-main.
+- `RecurrenceType.gregorianYearly`/`gregorianMonthly` (`recurrence_expander.dart` `_gregorianOccurrences`), חלון יצוא ארוך, תוויות בחלון החזרתיות, כללי Firestore + טסט כללים. 464 טסטים, 19 טסטי כללים. כללי האבטחה נפרסים עם המיזוג ל-main (אושר 2026-10-13).
 
 ## 2026-10-13 — החלקה בין ימים בתצוגת חודש (בקשת משתמש, סקיצה 15 אושרה)
 
