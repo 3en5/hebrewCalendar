@@ -37,7 +37,12 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsScreenTitle)),
       body: ListView(
-        padding: EdgeInsets.all(spacingMd),
+        // An explicit padding drops the ListView's automatic bottom inset,
+        // so the last row went under the phone's navigation bar (owner
+        // report 2026-10-14): add it back.
+        padding: EdgeInsets.all(
+          spacingMd,
+        ).copyWith(bottom: spacingMd + MediaQuery.paddingOf(context).bottom),
         children: <Widget>[
           // Task brief #5: in demo mode there is no signed-in account to
           // sync with, so the section shows a fixed disabled message and

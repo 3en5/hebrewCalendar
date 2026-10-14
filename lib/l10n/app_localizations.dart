@@ -1473,6 +1473,12 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'שנה'**
   String get significantYearLabel;
+
+  /// Backup card: share the backup file (WhatsApp, mail, Drive...).
+  ///
+  /// In he, this message translates to:
+  /// **'שיתוף'**
+  String get settingsBackupShareButton;
 }
 
 class _AppLocalizationsDelegate

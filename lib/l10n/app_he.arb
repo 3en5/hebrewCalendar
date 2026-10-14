@@ -768,5 +768,7 @@
   "significantMonthLabel": "חודש",
   "@significantMonthLabel": {"description": "Month dropdown of the original Gregorian date (M24)."},
   "significantYearLabel": "שנה",
-  "@significantYearLabel": {"description": "Year dropdown of the original Gregorian date (M24)."}
+  "@significantYearLabel": {"description": "Year dropdown of the original Gregorian date (M24)."},
+  "settingsBackupShareButton": "שיתוף",
+  "@settingsBackupShareButton": {"description": "Backup card: share the backup file (WhatsApp, mail, Drive...)."}
 }

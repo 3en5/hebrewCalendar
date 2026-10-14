@@ -820,4 +820,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get significantYearLabel => 'שנה';
+
+  @override
+  String get settingsBackupShareButton => 'שיתוף';
 }

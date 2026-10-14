@@ -62,10 +62,11 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
                   icon: const Icon(Icons.file_upload_outlined),
                   label: Text(l10n.settingsBackupImportButton),
                 ),
-                IconButton(
-                  tooltip: l10n.settingsBackupShareTooltip,
+                // Owner report 2026-10-14: a labeled button, not a lone icon.
+                OutlinedButton.icon(
                   onPressed: _busy ? null : () => _handleShare(l10n),
                   icon: const Icon(Icons.share_outlined),
+                  label: Text(l10n.settingsBackupShareButton),
                 ),
               ],
             ),

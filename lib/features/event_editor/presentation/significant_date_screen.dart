@@ -104,7 +104,12 @@ class _SignificantDateScreenState extends ConsumerState<SignificantDateScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.significantTitle)),
       body: ListView(
-        padding: EdgeInsets.all(spacingMd),
+        // An explicit padding drops the ListView's automatic bottom inset,
+        // so the last row went under the phone's navigation bar (owner
+        // report 2026-10-14): add it back.
+        padding: EdgeInsets.all(
+          spacingMd,
+        ).copyWith(bottom: spacingMd + MediaQuery.paddingOf(context).bottom),
         children: <Widget>[
           // One row like the sunset choice below, so the four kinds never
           // wrap on a narrow phone (owner report 2026-10-14).
