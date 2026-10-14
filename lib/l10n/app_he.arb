@@ -479,7 +479,7 @@
   "@settingsBackupDescription": {
     "description": "Explanatory text under the backup section heading (M7)."
   },
-  "settingsBackupExportButton": "ייצוא גיבוי",
+  "settingsBackupExportButton": "ייצוא",
   "@settingsBackupExportButton": {
     "description": "Button label that exports every event to a JSON file the user saves directly (M7)."
   },
@@ -487,7 +487,7 @@
   "@settingsBackupShareTooltip": {
     "description": "Tooltip for the icon button that shares the backup file via the OS share sheet instead of saving it directly (M7)."
   },
-  "settingsBackupImportButton": "שחזור מגיבוי",
+  "settingsBackupImportButton": "שחזור",
   "@settingsBackupImportButton": {
     "description": "Button label that starts the restore-from-backup-file flow (M7)."
   },

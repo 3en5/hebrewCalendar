@@ -486,13 +486,13 @@ class AppLocalizationsHe extends AppLocalizations {
       'ייצוא כל האירועים לקובץ, ושחזור מקובץ קיים. הנתונים חיים גם ב-Google, אך זהו גיבוי ידני נוסף שנשמר אצלך.';
 
   @override
-  String get settingsBackupExportButton => 'ייצוא גיבוי';
+  String get settingsBackupExportButton => 'ייצוא';
 
   @override
   String get settingsBackupShareTooltip => 'שיתוף קובץ הגיבוי';
 
   @override
-  String get settingsBackupImportButton => 'שחזור מגיבוי';
+  String get settingsBackupImportButton => 'שחזור';
 
   @override
   String get settingsBackupImportConfirmTitle => 'שחזור מגיבוי';

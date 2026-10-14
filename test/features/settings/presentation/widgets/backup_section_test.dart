@@ -115,7 +115,12 @@ void main() {
 
     await tester.tap(find.text(_l10n.settingsBackupImportButton));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(_l10n.settingsBackupImportConfirmButton));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text(_l10n.settingsBackupImportConfirmButton),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(service.importFromFileCallCount, 1);
@@ -136,7 +141,12 @@ void main() {
 
     await tester.tap(find.text(_l10n.settingsBackupImportButton));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(_l10n.settingsBackupImportConfirmButton));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text(_l10n.settingsBackupImportConfirmButton),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(

@@ -44,29 +44,37 @@ class _BackupSectionState extends ConsumerState<BackupSection> {
               ),
             ),
             SizedBox(height: spacingMd),
-            // Device feedback 2026-10-13: compact buttons side by side.
-            Wrap(
-              spacing: spacingSm,
-              runSpacing: spacingXs,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            // Owner request 2026-10-14: three small buttons in one row,
+            // short labels (the card title already says "backup").
+            Row(
               children: <Widget>[
-                FilledButton.icon(
-                  onPressed: _busy ? null : () => _handleExport(l10n),
-                  icon: _busy
-                      ? const _Spinner()
-                      : const Icon(Icons.save_alt_outlined),
-                  label: Text(l10n.settingsBackupExportButton),
+                Expanded(
+                  child: FilledButton.icon(
+                    style: _compact(context),
+                    onPressed: _busy ? null : () => _handleExport(l10n),
+                    icon: _busy
+                        ? const _Spinner()
+                        : const Icon(Icons.save_alt_outlined),
+                    label: _fit(l10n.settingsBackupExportButton),
+                  ),
                 ),
-                OutlinedButton.icon(
-                  onPressed: _busy ? null : () => _handleImport(l10n),
-                  icon: const Icon(Icons.file_upload_outlined),
-                  label: Text(l10n.settingsBackupImportButton),
+                SizedBox(width: spacingSm),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: _compact(context),
+                    onPressed: _busy ? null : () => _handleImport(l10n),
+                    icon: const Icon(Icons.file_upload_outlined),
+                    label: _fit(l10n.settingsBackupImportButton),
+                  ),
                 ),
-                // Owner report 2026-10-14: a labeled button, not a lone icon.
-                OutlinedButton.icon(
-                  onPressed: _busy ? null : () => _handleShare(l10n),
-                  icon: const Icon(Icons.share_outlined),
-                  label: Text(l10n.settingsBackupShareButton),
+                SizedBox(width: spacingSm),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: _compact(context),
+                    onPressed: _busy ? null : () => _handleShare(l10n),
+                    icon: const Icon(Icons.share_outlined),
+                    label: _fit(l10n.settingsBackupShareButton),
+                  ),
                 ),
               ],
             ),
@@ -171,3 +179,19 @@ class _Spinner extends StatelessWidget {
     child: const CircularProgressIndicator(strokeWidth: 2),
   );
 }
+
+/// Compact padding and text so three buttons fit one row on a narrow phone.
+ButtonStyle _compact(BuildContext context) => ButtonStyle(
+  visualDensity: VisualDensity.compact,
+  padding: WidgetStatePropertyAll<EdgeInsetsGeometry>(
+    EdgeInsets.symmetric(horizontal: spacingSm),
+  ),
+  // From the theme's button text, so the app font is kept.
+  textStyle: WidgetStatePropertyAll<TextStyle?>(
+    Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: bodySmallRem),
+  ),
+  iconSize: WidgetStatePropertyAll<double>(bodyRem),
+);
+
+Widget _fit(String text) =>
+    FittedBox(fit: BoxFit.scaleDown, child: Text(text, maxLines: 1));

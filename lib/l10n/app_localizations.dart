@@ -931,7 +931,7 @@ abstract class AppLocalizations {
   /// Button label that exports every event to a JSON file the user saves directly (M7).
   ///
   /// In he, this message translates to:
-  /// **'ייצוא גיבוי'**
+  /// **'ייצוא'**
   String get settingsBackupExportButton;
 
   /// Tooltip for the icon button that shares the backup file via the OS share sheet instead of saving it directly (M7).
@@ -943,7 +943,7 @@ abstract class AppLocalizations {
   /// Button label that starts the restore-from-backup-file flow (M7).
   ///
   /// In he, this message translates to:
-  /// **'שחזור מגיבוי'**
+  /// **'שחזור'**
   String get settingsBackupImportButton;
 
   /// Title of the confirmation dialog shown before restoring from a backup file (M7).
