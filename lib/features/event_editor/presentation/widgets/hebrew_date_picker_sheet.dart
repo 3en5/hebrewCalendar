@@ -69,13 +69,15 @@ class _HebrewDatePickerSheetState extends ConsumerState<HebrewDatePickerSheet> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: spacingMd),
+            // Day, month, year from the right, the order a Hebrew date is
+            // read in (owner report 2026-10-14).
             Row(
               children: <Widget>[
-                Expanded(child: _yearDropdown(l10n)),
+                Expanded(child: _dayDropdown(maxDay, l10n)),
                 SizedBox(width: spacingSm),
                 Expanded(child: _monthDropdown(engine, months, l10n)),
                 SizedBox(width: spacingSm),
-                Expanded(child: _dayDropdown(maxDay, l10n)),
+                Expanded(child: _yearDropdown(l10n)),
               ],
             ),
             SizedBox(height: spacingMd),
