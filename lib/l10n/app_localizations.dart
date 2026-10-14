@@ -1455,6 +1455,24 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'{name} (לועזי)'**
   String significantTitleOtherGregorian(String name);
+
+  /// Day dropdown of the original Gregorian date (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יום'**
+  String get significantDayLabel;
+
+  /// Month dropdown of the original Gregorian date (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'חודש'**
+  String get significantMonthLabel;
+
+  /// Year dropdown of the original Gregorian date (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'שנה'**
+  String get significantYearLabel;
 }
 
 class _AppLocalizationsDelegate

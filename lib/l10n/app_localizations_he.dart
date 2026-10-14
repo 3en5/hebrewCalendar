@@ -811,4 +811,13 @@ class AppLocalizationsHe extends AppLocalizations {
   String significantTitleOtherGregorian(String name) {
     return '$name (לועזי)';
   }
+
+  @override
+  String get significantDayLabel => 'יום';
+
+  @override
+  String get significantMonthLabel => 'חודש';
+
+  @override
+  String get significantYearLabel => 'שנה';
 }

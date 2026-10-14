@@ -173,6 +173,7 @@
 | `lib/features/event_editor/presentation/widgets/yearly_options_section.dart` | M15: בחירת אדר בשנה מעוברת ומה קורה ביום ל׳, לאירוע שנתי |
 | `lib/features/event_editor/presentation/widgets/gregorian_date_entry.dart` | M16: קביעת התאריך העברי לפי תאריך לועזי ושאלת לפני/אחרי השקיעה |
 | `lib/features/event_editor/presentation/significant_date_screen.dart` | M24: מסך "תאריך משמעותי" (סוג, שם, תאריך לועזי, שקיעה, תצוגה מקדימה, אירוע לועזי נוסף) |
+| `lib/features/event_editor/presentation/widgets/gregorian_date_dropdowns.dart` | M24: תאריך לועזי בשלוש רשימות (יום/חודש/שנה) במקום שדה הקלדה |
 | `lib/domain/event/significant_date.dart` | M24: חישוב התאריך העברי, כלל החזרה (יארצייט → אדר א׳), המופע הבא ובניית האירועים |
 | `lib/features/calendar/presentation/widgets/add_menu_sheet.dart` | M24: תפריט כפתור ה-+ (אירוע חדש / תאריך משמעותי) |
 | `test/domain/event/significant_date_test.dart` | M24: טסטים ללוגיקת התאריך המשמעותי |

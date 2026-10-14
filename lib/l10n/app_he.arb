@@ -762,5 +762,11 @@
   "significantTitleOtherHebrew": "{name} (עברי)",
   "@significantTitleOtherHebrew": {"description": "Event title (M24).", "placeholders": {"name": {"type": "String"}}},
   "significantTitleOtherGregorian": "{name} (לועזי)",
-  "@significantTitleOtherGregorian": {"description": "Event title (M24).", "placeholders": {"name": {"type": "String"}}}
+  "@significantTitleOtherGregorian": {"description": "Event title (M24).", "placeholders": {"name": {"type": "String"}}},
+  "significantDayLabel": "יום",
+  "@significantDayLabel": {"description": "Day dropdown of the original Gregorian date (M24)."},
+  "significantMonthLabel": "חודש",
+  "@significantMonthLabel": {"description": "Month dropdown of the original Gregorian date (M24)."},
+  "significantYearLabel": "שנה",
+  "@significantYearLabel": {"description": "Year dropdown of the original Gregorian date (M24)."}
 }

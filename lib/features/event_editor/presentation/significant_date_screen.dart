@@ -14,6 +14,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../calendar/application/hebrew_date_engine_provider.dart';
 import '../application/event_editor_controller.dart';
 import '../application/event_repository_provider.dart';
+import 'widgets/gregorian_date_dropdowns.dart';
 
 /// Whether the original moment was before or after sunset; unknown counts
 /// as before.
@@ -57,20 +58,6 @@ class _SignificantDateScreenState extends ConsumerState<SignificantDateScreen> {
   }
 
   bool get _canSave => !_saving && _day != null && _name.text.trim().isNotEmpty;
-
-  Future<void> _pickDay() async {
-    final DateTime now = DateTime.now();
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _day ?? DateTime(now.year - 30, now.month, now.day),
-      firstDate: DateTime(1900),
-      lastDate: DateTime(2200),
-      initialEntryMode: DatePickerEntryMode.input,
-    );
-    if (picked != null && mounted) {
-      setState(() => _day = picked);
-    }
-  }
 
   Future<void> _save() async {
     final DateTime? day = _day;
@@ -119,18 +106,30 @@ class _SignificantDateScreenState extends ConsumerState<SignificantDateScreen> {
       body: ListView(
         padding: EdgeInsets.all(spacingMd),
         children: <Widget>[
-          Wrap(
-            spacing: spacingSm,
-            runSpacing: spacingSm,
-            children: <Widget>[
+          // One row like the sunset choice below, so the four kinds never
+          // wrap on a narrow phone (owner report 2026-10-14).
+          SegmentedButton<SignificantDateKind>(
+            showSelectedIcon: false,
+            style: ButtonStyle(
+              visualDensity: VisualDensity.compact,
+              padding: WidgetStatePropertyAll<EdgeInsetsGeometry>(
+                EdgeInsets.symmetric(horizontal: spacingXs),
+              ),
+            ),
+            segments: <ButtonSegment<SignificantDateKind>>[
               for (final SignificantDateKind kind in SignificantDateKind.values)
-                ChoiceChip(
-                  key: ValueKey<String>('significant-kind-${kind.name}'),
-                  label: Text(_kindLabel(l10n, kind)),
-                  selected: _kind == kind,
-                  onSelected: (_) => setState(() => _kind = kind),
+                ButtonSegment<SignificantDateKind>(
+                  value: kind,
+                  label: FittedBox(
+                    key: ValueKey<String>('significant-kind-${kind.name}'),
+                    fit: BoxFit.scaleDown,
+                    child: Text(_kindLabel(l10n, kind), maxLines: 1),
+                  ),
                 ),
             ],
+            selected: <SignificantDateKind>{_kind},
+            onSelectionChanged: (Set<SignificantDateKind> s) =>
+                setState(() => _kind = s.first),
           ),
           SizedBox(height: spacingMd),
           TextField(
@@ -149,15 +148,8 @@ class _SignificantDateScreenState extends ConsumerState<SignificantDateScreen> {
           SizedBox(height: spacingSm),
           Text(l10n.significantDateLabel),
           SizedBox(height: spacingXs),
-          OutlinedButton.icon(
-            key: const ValueKey<String>('significant-date'),
-            onPressed: _pickDay,
-            icon: const Icon(Icons.event),
-            label: Text(
-              day == null
-                  ? l10n.significantDatePick
-                  : DateFormat.yMMMMd('he').format(day),
-            ),
+          GregorianDateDropdowns(
+            onChanged: (DateTime? picked) => setState(() => _day = picked),
           ),
           SizedBox(height: spacingMd),
           Text(l10n.significantSunsetLabel),

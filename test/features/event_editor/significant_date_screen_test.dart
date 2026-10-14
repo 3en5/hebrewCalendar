@@ -62,11 +62,7 @@ void main() {
       find.byKey(const ValueKey<String>('significant-name')),
       'דוד',
     );
-    await tester.tap(find.byKey(const ValueKey<String>('significant-date')));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).last, '15.3.1985');
-    await tester.tap(find.text('אישור'));
-    await tester.pumpAndSettle();
+    await pickGregorian(tester, day: '15', month: 'מרץ', year: '1985');
 
     expect(find.textContaining('כ״ב באדר תשמ״ה'), findsOneWidget);
 
@@ -83,4 +79,25 @@ void main() {
       const HebrewDate(year: 5745, month: HebrewMonth.adar, day: 22),
     );
   });
+}
+
+Future<void> pickGregorian(
+  WidgetTester tester, {
+  required String day,
+  required String month,
+  required String year,
+}) async {
+  Future<void> pick(String key, String text) async {
+    await tester.tap(find.byKey(ValueKey<String>(key)));
+    await tester.pumpAndSettle();
+    final Finder menu = find.byType(Scrollable).last;
+    final Finder item = find.descendant(of: menu, matching: find.text(text));
+    await tester.scrollUntilVisible(item, 200, scrollable: menu);
+    await tester.tap(item);
+    await tester.pumpAndSettle();
+  }
+
+  await pick('significant-day', day);
+  await pick('significant-month', month);
+  await pick('significant-year', year);
 }
