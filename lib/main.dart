@@ -13,6 +13,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/font_licenses.dart';
 import 'features/auth/presentation/auth_gate.dart';
 import 'features/calendar/application/calendar_display_mode_provider.dart';
+import 'features/calendar/application/calendar_view_provider.dart';
 import 'features/settings/application/background_sync_bootstrap.dart';
 import 'features/settings/application/theme_mode_provider.dart';
 import 'l10n/app_localizations.dart';
@@ -43,8 +44,10 @@ void main() {
         };
         await _initializeFirebase();
         await _initializeBackgroundSync();
-        // The last Hebrew/Gregorian display choice, before the first frame.
+        // The last Hebrew/Gregorian display choice and the last view type,
+        // before the first frame.
         await preloadCalendarDisplayMode();
+        await preloadCalendarViewType();
         runApp(const ProviderScope(child: HebrewCalendarApp()));
       },
       (Object error, StackTrace stackTrace) {

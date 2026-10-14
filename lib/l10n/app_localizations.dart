@@ -1275,6 +1275,186 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'חוזר'**
   String get searchRecurringNote;
+
+  /// Add menu: open the regular event editor (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'אירוע חדש'**
+  String get addMenuNewEvent;
+
+  /// Add menu: open the significant-date tool (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'תאריך משמעותי'**
+  String get addMenuSignificantDate;
+
+  /// Subtitle of the significant-date entry in the add menu (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יום הולדת, יארצייט, יום נישואין, לפי תאריך לועזי'**
+  String get addMenuSignificantDateHint;
+
+  /// App bar title of the significant-date tool (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'תאריך משמעותי'**
+  String get significantTitle;
+
+  /// Significant date kind (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יום הולדת'**
+  String get significantKindBirthday;
+
+  /// Significant date kind (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יארצייט'**
+  String get significantKindYahrzeit;
+
+  /// Significant date kind (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יום נישואין'**
+  String get significantKindAnniversary;
+
+  /// Significant date kind (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'אחר'**
+  String get significantKindOther;
+
+  /// Name field of the significant-date tool (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'שם'**
+  String get significantNameLabel;
+
+  /// Name field hint for the 'other' kind (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'למשל: עלייה לארץ'**
+  String get significantNameHintOther;
+
+  /// Label of the original Gregorian date button (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'התאריך הלועזי המקורי'**
+  String get significantDateLabel;
+
+  /// Shown on the date button before a date is picked (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'בחירת תאריך'**
+  String get significantDatePick;
+
+  /// Label of the before/after sunset choice (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'מתי ביום?'**
+  String get significantSunsetLabel;
+
+  /// Sunset choice (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'לפני השקיעה'**
+  String get significantSunsetBefore;
+
+  /// Sunset choice (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'אחרי השקיעה'**
+  String get significantSunsetAfter;
+
+  /// Sunset choice: unknown, treated as before sunset (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'לא יודע'**
+  String get significantSunsetUnknown;
+
+  /// Preview: the Gregorian date was this Hebrew date (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'{gregorian} היה {hebrew}.'**
+  String significantPreviewWas(String gregorian, String hebrew);
+
+  /// Preview: the next occurrence (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'השנה יחול ב-{hebrew}, {gregorian}.'**
+  String significantPreviewNext(String hebrew, String gregorian);
+
+  /// Preview note for a yahrzeit in Adar (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'בשנה מעוברת: באדר א׳.'**
+  String get significantAdarNote;
+
+  /// Checkbox: also create a yearly Gregorian event (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'להוסיף גם את התאריך הלועזי'**
+  String get significantAlsoGregorian;
+
+  /// Save button of the significant-date tool (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יצירת אירוע'**
+  String get significantSave;
+
+  /// Snackbar after saving (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'נוצר: {title}'**
+  String significantSaved(String title);
+
+  /// Event title (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יום הולדת עברי – {name}'**
+  String significantTitleBirthdayHebrew(String name);
+
+  /// Event title (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יום הולדת – {name}'**
+  String significantTitleBirthdayGregorian(String name);
+
+  /// Event title (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יארצייט – {name}'**
+  String significantTitleYahrzeitHebrew(String name);
+
+  /// Event title (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יום פטירה (לועזי) – {name}'**
+  String significantTitleYahrzeitGregorian(String name);
+
+  /// Event title (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יום נישואין עברי – {name}'**
+  String significantTitleAnniversaryHebrew(String name);
+
+  /// Event title (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'יום נישואין – {name}'**
+  String significantTitleAnniversaryGregorian(String name);
+
+  /// Event title (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'{name} (עברי)'**
+  String significantTitleOtherHebrew(String name);
+
+  /// Event title (M24).
+  ///
+  /// In he, this message translates to:
+  /// **'{name} (לועזי)'**
+  String significantTitleOtherGregorian(String name);
 }
 
 class _AppLocalizationsDelegate

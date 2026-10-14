@@ -262,6 +262,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<String>('add-menu-new-event')));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'יום הולדת לדוד');
     await tester.tap(find.byIcon(Icons.repeat));
     await tester.pumpAndSettle();

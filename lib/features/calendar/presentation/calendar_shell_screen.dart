@@ -9,6 +9,7 @@ import '../../auth/application/auth_providers.dart';
 import '../../auth/application/demo_mode_provider.dart';
 import '../../event_editor/application/event_editor_controller.dart';
 import '../../event_editor/presentation/event_editor_screen.dart';
+import '../../event_editor/presentation/significant_date_screen.dart';
 import '../../notifications/application/reminder_providers.dart';
 import '../../../domain/sync/sync_run_result.dart';
 import '../../../domain/sync/sync_state.dart';
@@ -23,6 +24,7 @@ import 'day_view_screen.dart';
 import 'event_search_screen.dart';
 import 'month_view_body.dart';
 import 'week_view_screen.dart';
+import 'widgets/add_menu_sheet.dart';
 import 'widgets/calendar_title.dart';
 import 'widgets/go_to_date_sheet.dart';
 import 'widgets/sync_progress_strip.dart';
@@ -184,7 +186,15 @@ class CalendarShellScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openEditorForNewEvent(context, state),
+        onPressed: () => showAddMenuSheet(
+          context,
+          onNewEvent: () => _openEditorForNewEvent(context, state),
+          onSignificantDate: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const SignificantDateScreen(),
+            ),
+          ),
+        ),
         tooltip: l10n.addEventTooltip,
         child: const Icon(Icons.add),
       ),

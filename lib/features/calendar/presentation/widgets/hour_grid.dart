@@ -1,9 +1,14 @@
+import 'dart:async' show Timer;
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/dimens.dart';
 import '../../../../domain/event/event.dart';
 import '../../../../domain/event/event_occurrence.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
+import '../../application/hebrew_date_engine_provider.dart';
 import 'day_occurrences.dart';
 import 'event_block.dart';
 
@@ -25,7 +30,12 @@ const int _defaultDurationMinutes = 60;
 /// and the tapped hour; tapping an event block calls [onEventTap] instead —
 /// the block's own `InkWell` is hit-tested first since it's painted above
 /// the slot's `GestureDetector` in the `Stack`, so the two never conflict.
-class HourGrid extends StatefulWidget {
+///
+/// The grid opens scrolled to an hour before the current time, and today's
+/// column carries a "now" line with a dot, like Google Calendar (tester
+/// request 2026-10-14). A timer moves the line every half minute and is
+/// cancelled on dispose.
+class HourGrid extends ConsumerStatefulWidget {
   const HourGrid({
     required this.columns,
     required this.onEmptySlotTap,
@@ -38,43 +48,115 @@ class HourGrid extends StatefulWidget {
   final void Function(EventOccurrence occurrence) onEventTap;
 
   @override
-  State<HourGrid> createState() => _HourGridState();
+  ConsumerState<HourGrid> createState() => _HourGridState();
 }
 
-/// The hour the grid opens scrolled to, like Google Calendar — the night
-/// hours are rarely used, so they start out of view.
-const int _initialHour = 7;
+/// How far above the current time the grid opens, so the hour just past
+/// stays in view.
+const Duration _leadBeforeNow = Duration(hours: 1);
 
-class _HourGridState extends State<HourGrid> {
-  late final ScrollController _scroll = ScrollController(
-    initialScrollOffset: hourRowHeight * _initialHour,
-  );
+/// How often the "now" line moves.
+const Duration _nowTick = Duration(seconds: 30);
+
+class _HourGridState extends ConsumerState<HourGrid> {
+  /// Created on the first layout, once the viewport height is known, so the
+  /// opening offset can be clamped to the end of the day.
+  ScrollController? _scroll;
+  Timer? _timer;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(_nowTick, (_) {
+      setState(() => _now = DateTime.now());
+    });
+  }
 
   @override
   void dispose() {
-    _scroll.dispose();
+    _timer?.cancel();
+    _scroll?.dispose();
     super.dispose();
+  }
+
+  ScrollController _controllerFor(double viewportHeight) {
+    final ScrollController? existing = _scroll;
+    if (existing != null) {
+      return existing;
+    }
+    final double total = hourRowHeight * _hoursPerDay;
+    final double target =
+        _minutesOf(_now.subtract(_leadBeforeNow)) / 60 * hourRowHeight;
+    // Just after midnight the lead wraps to yesterday's evening: open at
+    // the top instead.
+    final double wanted = _now.hour < _leadBeforeNow.inHours ? 0 : target;
+    final double offset = math.max(0, math.min(wanted, total - viewportHeight));
+    return _scroll = ScrollController(initialScrollOffset: offset);
   }
 
   @override
   Widget build(BuildContext context) {
     final List<DayOccurrences> columns = widget.columns;
-    return SingleChildScrollView(
-      controller: _scroll,
+    final HebrewDate today = ref
+        .watch(hebrewDateEngineProvider)
+        .fromGregorian(_now);
+    final int nowMinutes = _minutesOf(_now);
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return SingleChildScrollView(
+          controller: _controllerFor(constraints.maxHeight),
+          child: SizedBox(
+            height: hourRowHeight * _hoursPerDay,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const _HourLabelColumn(),
+                for (final DayOccurrences column in columns)
+                  Expanded(
+                    child: _DayColumn(
+                      column: column,
+                      nowMinutes: column.date == today ? nowMinutes : null,
+                      onEmptySlotTap: widget.onEmptySlotTap,
+                      onEventTap: widget.onEventTap,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+int _minutesOf(DateTime time) => time.hour * 60 + time.minute;
+
+/// The red "now" line across today's column, with a dot at its start edge.
+class _NowLine extends StatelessWidget {
+  const _NowLine();
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = Theme.of(context).colorScheme.error;
+    final double dot = rem(0.75);
+    return IgnorePointer(
       child: SizedBox(
-        height: hourRowHeight * _hoursPerDay,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        key: const ValueKey<String>('hour-grid-now-line'),
+        height: dot,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: AlignmentDirectional.centerStart,
           children: <Widget>[
-            const _HourLabelColumn(),
-            for (final DayOccurrences column in columns)
-              Expanded(
-                child: _DayColumn(
-                  column: column,
-                  onEmptySlotTap: widget.onEmptySlotTap,
-                  onEventTap: widget.onEventTap,
-                ),
+            Container(height: rem(0.125), color: color),
+            PositionedDirectional(
+              start: -dot / 2,
+              child: Container(
+                width: dot,
+                height: dot,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
+            ),
           ],
         ),
       ),
@@ -118,22 +200,28 @@ class _HourLabelColumn extends StatelessWidget {
 class _DayColumn extends StatelessWidget {
   const _DayColumn({
     required this.column,
+    required this.nowMinutes,
     required this.onEmptySlotTap,
     required this.onEventTap,
   });
 
   final DayOccurrences column;
+
+  /// Minutes since midnight when this column is today, else null.
+  final int? nowMinutes;
   final void Function(HebrewDate date, int hour) onEmptySlotTap;
   final void Function(EventOccurrence occurrence) onEventTap;
 
   @override
   Widget build(BuildContext context) {
+    final int? now = nowMinutes;
     final Color lineColor = Theme.of(context).colorScheme.outlineVariant;
     final List<_PositionedEvent> positioned = _layoutTimedEvents(column.timed);
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         return Stack(
+          clipBehavior: Clip.none,
           children: <Widget>[
             Column(
               children: <Widget>[
@@ -167,6 +255,13 @@ class _DayColumn extends StatelessWidget {
                   occurrence: event.occurrence,
                   onTap: () => onEventTap(event.occurrence),
                 ),
+              ),
+            if (now != null)
+              PositionedDirectional(
+                top: now / 60 * hourRowHeight - rem(0.75) / 2,
+                start: 0,
+                end: 0,
+                child: const _NowLine(),
               ),
           ],
         );

@@ -698,4 +698,117 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get searchRecurringNote => 'חוזר';
+
+  @override
+  String get addMenuNewEvent => 'אירוע חדש';
+
+  @override
+  String get addMenuSignificantDate => 'תאריך משמעותי';
+
+  @override
+  String get addMenuSignificantDateHint =>
+      'יום הולדת, יארצייט, יום נישואין, לפי תאריך לועזי';
+
+  @override
+  String get significantTitle => 'תאריך משמעותי';
+
+  @override
+  String get significantKindBirthday => 'יום הולדת';
+
+  @override
+  String get significantKindYahrzeit => 'יארצייט';
+
+  @override
+  String get significantKindAnniversary => 'יום נישואין';
+
+  @override
+  String get significantKindOther => 'אחר';
+
+  @override
+  String get significantNameLabel => 'שם';
+
+  @override
+  String get significantNameHintOther => 'למשל: עלייה לארץ';
+
+  @override
+  String get significantDateLabel => 'התאריך הלועזי המקורי';
+
+  @override
+  String get significantDatePick => 'בחירת תאריך';
+
+  @override
+  String get significantSunsetLabel => 'מתי ביום?';
+
+  @override
+  String get significantSunsetBefore => 'לפני השקיעה';
+
+  @override
+  String get significantSunsetAfter => 'אחרי השקיעה';
+
+  @override
+  String get significantSunsetUnknown => 'לא יודע';
+
+  @override
+  String significantPreviewWas(String gregorian, String hebrew) {
+    return '$gregorian היה $hebrew.';
+  }
+
+  @override
+  String significantPreviewNext(String hebrew, String gregorian) {
+    return 'השנה יחול ב-$hebrew, $gregorian.';
+  }
+
+  @override
+  String get significantAdarNote => 'בשנה מעוברת: באדר א׳.';
+
+  @override
+  String get significantAlsoGregorian => 'להוסיף גם את התאריך הלועזי';
+
+  @override
+  String get significantSave => 'יצירת אירוע';
+
+  @override
+  String significantSaved(String title) {
+    return 'נוצר: $title';
+  }
+
+  @override
+  String significantTitleBirthdayHebrew(String name) {
+    return 'יום הולדת עברי – $name';
+  }
+
+  @override
+  String significantTitleBirthdayGregorian(String name) {
+    return 'יום הולדת – $name';
+  }
+
+  @override
+  String significantTitleYahrzeitHebrew(String name) {
+    return 'יארצייט – $name';
+  }
+
+  @override
+  String significantTitleYahrzeitGregorian(String name) {
+    return 'יום פטירה (לועזי) – $name';
+  }
+
+  @override
+  String significantTitleAnniversaryHebrew(String name) {
+    return 'יום נישואין עברי – $name';
+  }
+
+  @override
+  String significantTitleAnniversaryGregorian(String name) {
+    return 'יום נישואין – $name';
+  }
+
+  @override
+  String significantTitleOtherHebrew(String name) {
+    return '$name (עברי)';
+  }
+
+  @override
+  String significantTitleOtherGregorian(String name) {
+    return '$name (לועזי)';
+  }
 }

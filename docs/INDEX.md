@@ -172,6 +172,13 @@
 | `lib/features/settings/presentation/about_screen.dart` | `AboutScreen` בסגנון KALFAPP (M14): לוגו, "אודות האפליקציה", הסבר אישי וחתימה, כרטיס עם שם, גרסה (`appVersionProvider`) וקרדיט "מבית KALFAPP", וכפתור ל-`showLicensePage` |
 | `lib/features/event_editor/presentation/widgets/yearly_options_section.dart` | M15: בחירת אדר בשנה מעוברת ומה קורה ביום ל׳, לאירוע שנתי |
 | `lib/features/event_editor/presentation/widgets/gregorian_date_entry.dart` | M16: קביעת התאריך העברי לפי תאריך לועזי ושאלת לפני/אחרי השקיעה |
+| `lib/features/event_editor/presentation/significant_date_screen.dart` | M24: מסך "תאריך משמעותי" (סוג, שם, תאריך לועזי, שקיעה, תצוגה מקדימה, אירוע לועזי נוסף) |
+| `lib/domain/event/significant_date.dart` | M24: חישוב התאריך העברי, כלל החזרה (יארצייט → אדר א׳), המופע הבא ובניית האירועים |
+| `lib/features/calendar/presentation/widgets/add_menu_sheet.dart` | M24: תפריט כפתור ה-+ (אירוע חדש / תאריך משמעותי) |
+| `test/domain/event/significant_date_test.dart` | M24: טסטים ללוגיקת התאריך המשמעותי |
+| `test/features/event_editor/significant_date_screen_test.dart` | M24: טסט מסך — מהתפריט ועד יצירת האירוע |
+| `test/features/calendar/presentation/hour_grid_now_test.dart` | קו "עכשיו" וגלילה פותחת לשעה לפני עכשיו |
+| `test/features/calendar/application/calendar_view_type_persistence_test.dart` | שמירת סוג התצוגה האחרון |
 | `test/features/event_editor/presentation/event_editor_hebrew_rules_test.dart` | טסטי ווידג׳ט ל-M15/M16 בעורך |
 | `test/features/event_editor/presentation/event_editor_compact_test.dart` | טסט לעורך המצומצם: כמה תזכורות ותזכורת מותאמת אישית |
 | `test/flutter_test_config.dart` | רץ לפני כל קובץ טסט: SharedPreferences מדומה |
