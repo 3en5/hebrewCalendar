@@ -1,9 +1,29 @@
 name: CI
 
+# Actions minutes are limited (the free 2,000/month ran out on 2026-10-14):
+# CI runs on main and on pull requests only, never for a change that touches
+# only docs, the website or store texts, and a newer push cancels a run still
+# going. Work branches are checked locally before every push (format,
+# analyze, tests), and the release workflow builds the app anyway.
 on:
   push:
+    branches: [main]
+    paths-ignore:
+      - docs/**
+      - site/**
+      - distribution/**
+      - '**/*.md'
   pull_request:
+    paths-ignore:
+      - docs/**
+      - site/**
+      - distribution/**
+      - '**/*.md'
   workflow_dispatch: # manual rebuild (e.g. after adding/rotating secrets)
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   FLUTTER_VERSION: "3.32.5"
@@ -21,6 +41,8 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: "stable"
+          # Cached SDK + pub packages: saves Actions minutes on every run.
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
@@ -37,9 +59,12 @@ jobs:
       - name: Check 500-line file limit
         run: bash tool/check_file_length.sh
 
+  # The debug APK build is the slowest part (about 10 minutes); it runs only
+  # on a manual run. A compile problem still shows up in the release build.
   build-apk:
     name: Build debug APK
     needs: test
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     env:
       HAS_GS_SECRET: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
@@ -64,6 +89,8 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: "stable"
+          # Cached SDK + pub packages: saves Actions minutes on every run.
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get

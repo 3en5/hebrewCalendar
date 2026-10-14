@@ -6,6 +6,7 @@ name: Firestore rules
 # the app writes would break the app, so deploy only ever runs after tests.
 on:
   push:
+    branches: [main]
     paths:
       - firebase/**
       - firebase.json
