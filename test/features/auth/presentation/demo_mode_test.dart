@@ -82,6 +82,8 @@ void main() {
       // — there is no real session, so no confirmation dialog either.
       expect(find.text(l10n.signInReturnToSignInAction), findsOneWidget);
       expect(find.text(l10n.signOutAction), findsNothing);
+      // Owner request 2026-10-15: the user guide, next to About.
+      expect(find.text(l10n.settingsUserGuide), findsOneWidget);
 
       await tester.tap(find.text(l10n.signInReturnToSignInAction));
       await tester.pumpAndSettle();

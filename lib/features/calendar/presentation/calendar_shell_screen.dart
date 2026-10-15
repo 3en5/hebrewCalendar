@@ -19,6 +19,7 @@ import '../../settings/application/google_sync_settings_state.dart';
 import '../../settings/application/google_sync_trigger_service.dart';
 import '../../settings/presentation/about_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
+import '../../settings/presentation/widgets/user_guide_tile.dart';
 import '../application/calendar_view_provider.dart';
 import 'agenda_view_screen.dart';
 import 'day_view_screen.dart';
@@ -30,7 +31,7 @@ import 'widgets/calendar_title.dart';
 import 'widgets/go_to_date_sheet.dart';
 import 'widgets/sync_progress_strip.dart';
 
-enum _OverflowAction { settings, about, signOut }
+enum _OverflowAction { settings, guide, about, signOut }
 
 /// The app's single home screen (M3b — replaces the old month-only
 /// `MonthViewScreen`): a shared app bar (title, view switcher, "today"
@@ -124,6 +125,8 @@ class CalendarShellScreen extends ConsumerWidget {
                         ),
                       ),
                     );
+                  case _OverflowAction.guide:
+                    unawaited(openUserGuide(context));
                   case _OverflowAction.about:
                     unawaited(
                       Navigator.of(context).push(
@@ -148,6 +151,10 @@ class CalendarShellScreen extends ConsumerWidget {
                     PopupMenuItem<_OverflowAction>(
                       value: _OverflowAction.settings,
                       child: Text(l10n.settingsTooltip),
+                    ),
+                    PopupMenuItem<_OverflowAction>(
+                      value: _OverflowAction.guide,
+                      child: Text(l10n.settingsUserGuide),
                     ),
                     PopupMenuItem<_OverflowAction>(
                       value: _OverflowAction.about,

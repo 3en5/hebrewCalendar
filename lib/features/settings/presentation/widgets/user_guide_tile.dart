@@ -11,24 +11,24 @@ final Uri userGuideUri = Uri.https(
   '/guide.html',
 );
 
-/// "User guide" in settings: opens the guide in the browser.
+/// Opens the user guide in the browser; a snack bar if it can't.
+Future<void> openUserGuide(BuildContext context) async {
+  final ScaffoldMessengerState? messenger = ScaffoldMessenger.maybeOf(context);
+  final String failed = AppLocalizations.of(context).linkOpenFailed;
+  try {
+    if (await launchUrl(userGuideUri, mode: LaunchMode.externalApplication)) {
+      return;
+    }
+  } catch (_) {
+    // Reported below.
+  }
+  messenger?.showSnackBar(SnackBar(content: Text(failed)));
+}
+
+/// "User guide" in settings (and in the calendar's ⋮ menu, by
+/// [openUserGuide]).
 class UserGuideTile extends StatelessWidget {
   const UserGuideTile({super.key});
-
-  Future<void> _open(BuildContext context) async {
-    final ScaffoldMessengerState? messenger = ScaffoldMessenger.maybeOf(
-      context,
-    );
-    final String failed = AppLocalizations.of(context).linkOpenFailed;
-    try {
-      if (await launchUrl(userGuideUri, mode: LaunchMode.externalApplication)) {
-        return;
-      }
-    } catch (_) {
-      // Reported below.
-    }
-    messenger?.showSnackBar(SnackBar(content: Text(failed)));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class UserGuideTile extends StatelessWidget {
       leading: const Icon(Icons.menu_book_outlined),
       title: Text(l10n.settingsUserGuide),
       subtitle: Text(l10n.settingsUserGuideSubtitle),
-      onTap: () => unawaited(_open(context)),
+      onTap: () => unawaited(openUserGuide(context)),
     );
   }
 }

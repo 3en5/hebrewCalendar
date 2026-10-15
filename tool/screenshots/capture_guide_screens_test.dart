@@ -91,6 +91,12 @@ void main() {
     });
   });
 
+  testWidgets('overflow menu', (WidgetTester tester) async {
+    await pumpShotApp(tester, mode: ThemeMode.light);
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await shot(tester, 'g_overflow');
+  });
+
   testWidgets('view menu', (WidgetTester tester) async {
     await pumpShotApp(tester, mode: ThemeMode.light);
     await tester.tap(find.byIcon(Icons.arrow_drop_down).first);
