@@ -12,10 +12,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
+import 'package:hebrew_calendar/core/theme/dimens.dart';
 import 'package:hebrew_calendar/features/calendar/application/calendar_view_provider.dart';
+import 'package:hebrew_calendar/features/calendar/presentation/widgets/hour_grid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens_harness.dart';
+
+/// The hour grid opens an hour before the current time, so a shot would
+/// depend on when it is taken: start it at [hour] instead.
+Future<void> _hoursFrom(WidgetTester tester, int hour) async {
+  await tester.pumpAndSettle();
+  final ScrollableState grid = tester.state<ScrollableState>(
+    find
+        .descendant(
+          of: find.byType(HourGrid),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
+  grid.position.jumpTo(
+    (hour * hourRowHeight).clamp(0, grid.position.maxScrollExtent),
+  );
+  await tester.pumpAndSettle();
+}
 
 void main() {
   setUpAll(() async {
@@ -41,6 +61,7 @@ void main() {
       mode: ThemeMode.light,
     );
     c.read(calendarViewProvider.notifier).setViewType(CalendarViewType.week);
+    await _hoursFrom(tester, 11);
     await shot(tester, '2_week');
   });
 
@@ -148,6 +169,7 @@ void main() {
     );
     c.read(calendarViewProvider.notifier).setViewType(CalendarViewType.day);
     await tester.pumpAndSettle();
+    await _hoursFrom(tester, 11);
     await tester.tap(find.byType(ExpansionTile).first);
     await shot(tester, '11_day');
   });
@@ -158,7 +180,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('הגדרות'));
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView).first, const Offset(0, -1200));
+    await tester.drag(find.byType(ListView).first, const Offset(0, -350));
     await shot(tester, '12_settings_more');
   });
 
