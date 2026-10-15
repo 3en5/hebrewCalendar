@@ -1,17 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none" stroke="#4BB8F5" stroke-width="34" stroke-linejoin="round" stroke-linecap="round">
-  <!-- house -->
-  <path d="M60 370 L355 75 L560 280"/>
-  <path d="M60 370 H110 V740 H440"/>
-  <rect x="215" y="390" width="200" height="200" rx="14"/>
-  <path d="M315 390 V590 M215 490 H415"/>
-  <!-- calendar page -->
-  <rect x="560" y="200" width="400" height="390" rx="40"/>
-  <path d="M560 300 H960"/>
-  <path d="M665 150 V240 M855 150 V240"/>
-  <text x="760" y="550" font-family="Rubik" font-weight="700" font-size="240" text-anchor="middle" fill="#4BB8F5" stroke="none">א</text>
-  <!-- gear -->
-  <g transform="translate(640 735)">
-    <path d="M-40 -230 h80 l18 62 a170 170 0 0 1 48 20 l57 -31 l57 57 l-31 57 a170 170 0 0 1 20 48 l62 18 v80 l-62 18 a170 170 0 0 1 -20 48 l31 57 l-57 57 l-57 -31 a170 170 0 0 1 -48 20 l-18 62 h-80 l-18 -62 a170 170 0 0 1 -48 -20 l-57 31 l-57 -57 l31 -57 a170 170 0 0 1 -20 -48 l-62 -18 v-80 l62 -18 a170 170 0 0 1 20 -48 l-31 -57 l57 -57 l57 31 a170 170 0 0 1 48 -20 z" transform="scale(0.7)"/>
-    <circle r="62"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none" stroke-linejoin="round" stroke-linecap="round">
+  <!-- Reference drawing of tool/brand/make_brand_assets.py's STYLE (owner
+       decision 2026-10-15): blue house (80%) and gear, a large calendar page
+       with an orange-to-red gradient and a white "א". -->
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F59632"/>
+      <stop offset="1" stop-color="#DE3C2D"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(13.07 259.6) scale(0.7122)">
+    <!-- house, shrunk to 80% about its bottom-left corner -->
+    <g stroke="#4BB8F5" stroke-width="42.5" transform="translate(110 740) scale(0.8) translate(-110 -740)">
+      <path d="M60 370 L355 75 L560 280"/>
+      <path d="M60 370 H110 V740 H440"/>
+      <rect x="215" y="390" width="200" height="200" rx="14"/>
+      <path d="M315 390 V590 M215 490 H415"/>
+    </g>
+    <!-- calendar page, grown 1.85x about its bottom-left corner -->
+    <g transform="translate(560 590) scale(1.85) translate(-560 -590)">
+      <rect x="534.3" y="174.3" width="451.4" height="441.4" rx="65.7" fill="#FFFFFF"/>
+      <rect x="550.8" y="190.8" width="418.4" height="408.4" rx="49.2" fill="url(#page)"/>
+      <path d="M560 300 H960" stroke="#FFFFFF" stroke-width="18.4"/>
+      <path d="M665 150 V240 M855 150 V240" stroke="#FFFFFF" stroke-width="36.8"/>
+      <path d="M665 150 V240 M855 150 V240" stroke="#E8833A" stroke-width="18.4"/>
+      <text x="760" y="550" font-family="Rubik" font-weight="700" font-size="240" text-anchor="middle" fill="#FFFFFF">א</text>
+    </g>
+    <!-- gear, moved 150 left, with a white halo over the page -->
+    <g transform="translate(490 735)">
+      <path d="M-40 -230 h80 l18 62 a170 170 0 0 1 48 20 l57 -31 l57 57 l-31 57 a170 170 0 0 1 20 48 l62 18 v80 l-62 18 a170 170 0 0 1 -20 48 l31 57 l-57 57 l-57 -31 a170 170 0 0 1 -48 20 l-18 62 h-80 l-18 -62 a170 170 0 0 1 -48 -20 l-57 31 l-57 -57 l31 -57 a170 170 0 0 1 -20 -48 l-62 -18 v-80 l62 -18 a170 170 0 0 1 20 -48 l-31 -57 l57 -57 l57 31 a170 170 0 0 1 48 -20 z" transform="scale(0.7)" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="116"/>
+      <path d="M-40 -230 h80 l18 62 a170 170 0 0 1 48 20 l57 -31 l57 57 l-31 57 a170 170 0 0 1 20 48 l62 18 v80 l-62 18 a170 170 0 0 1 -20 48 l31 57 l-57 57 l-57 -31 a170 170 0 0 1 -48 20 l-18 62 h-80 l-18 -62 a170 170 0 0 1 -48 -20 l-57 31 l-57 -57 l31 -57 a170 170 0 0 1 -20 -48 l-62 -18 v-80 l62 -18 a170 170 0 0 1 20 -48 l-31 -57 l57 -57 l57 31 a170 170 0 0 1 48 -20 z" transform="scale(0.7)" stroke="#4BB8F5" stroke-width="48.6"/>
+      <circle r="62" stroke="#4BB8F5" stroke-width="34"/>
+    </g>
   </g>
 </svg>

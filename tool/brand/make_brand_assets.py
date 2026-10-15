@@ -13,6 +13,7 @@ Outputs, relative to the repo root:
 - android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml     adaptive icon
 - android/app/src/main/res/values/ic_launcher_background.xml     bg colour
 - distribution/listings/images/icon.png                  Play icon, 512x512
+- site/assets/icon.png                                   the same icon for the site
 - distribution/listings/images/featureGraphic.png        Play feature graphic
 
 Fonts: Rubik (OFL, assets/fonts). Logo: assets/brand/kalfapp_logo.png.
@@ -44,7 +45,11 @@ SUPERSAMPLE = 4
 EXTENT = 922                   # the 2026-10-11 drawing's width on the grid
 
 ACCENT = (232, 131, 58)        # the app's orange add button, #E8833A
-STYLE = {"kind": "line"}
+# Owner decision 2026-10-15 (sketch 47, option "11b"): the calendar page,
+# the app's own symbol, is large and filled with a warm orange-to-red
+# gradient over the blue house (80%) and gear (moved left).
+STYLE = {"kind": "filled", "accent": ACCENT, "gradient": ((245, 150, 50), (222, 60, 45)),
+         "scale": 1.85, "origin": (560, 590), "halo": True, "house": 0.8, "gear_dx": -150}
 
 
 def glyph(size, style=None):
@@ -239,7 +244,9 @@ def gradient_text(canvas, xy, text, font):
 
 def store_images():
     # Play masks the icon itself, so the store icon is a full-bleed square.
-    write(f"{STORE}/icon.png", tile(512, 0.82).convert("RGB"))
+    icon = tile(512, 0.82).convert("RGB")
+    write(f"{STORE}/icon.png", icon)
+    write(f"{ROOT}/site/assets/icon.png", icon)
     fg = Image.new("RGB", (1024, 500), WHITE)
     d = ImageDraw.Draw(fg)
     gradient_text(fg, (960, 190), "לוח עברי", ImageFont.truetype(FONT_BOLD, 108))
