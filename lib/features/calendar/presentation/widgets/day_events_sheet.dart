@@ -9,14 +9,12 @@ import '../../../../core/widgets/linkified_text.dart';
 import '../../../../domain/event/event.dart';
 import '../../../../domain/event/event_attendee.dart';
 import '../../../../domain/event/event_occurrence.dart';
-import '../../../../domain/event/event_repository.dart';
-import '../../../../domain/event/recurring_edit.dart';
 import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../event_editor/application/event_editor_controller.dart';
-import '../../../event_editor/application/event_repository_provider.dart';
+import '../../../event_editor/presentation/delete_event_flow.dart';
 import '../../../event_editor/presentation/event_editor_screen.dart';
 import '../../../event_editor/presentation/recurring_scope_dialog.dart';
 import '../../application/hebrew_date_engine_provider.dart';
@@ -178,71 +176,13 @@ class _DayEventTile extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
-    if (!occurrence.isRecurring) {
-      await _confirmDeleteWholeEvent(context, ref);
-      return;
-    }
-    await _confirmDeleteRecurringOccurrence(context, ref);
-  }
-
-  /// Non-recurring event: a single confirm/cancel dialog, as before M3a.
-  Future<void> _confirmDeleteWholeEvent(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final AppLocalizations l10n = AppLocalizations.of(context);
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(l10n.eventDeleteConfirmTitle),
-        content: Text(l10n.eventDeleteConfirmMessage),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.eventDeleteAction),
-          ),
-        ],
-      ),
-    );
-    if (confirmed ?? false) {
-      await ref.read(eventRepositoryProvider).delete(_event.id);
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-    }
-  }
-
-  /// Recurring event (M9): "this occurrence only" (adds it to the
-  /// exceptions), "this and following" (the series ends the day before) or
-  /// "the whole series" (deleted) — each option doubles as the confirmation.
-  Future<void> _confirmDeleteRecurringOccurrence(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final RecurringEditScope? scope = await askRecurringScope(
+    final bool deleted = await confirmAndDeleteEvent(
       context,
-      forDelete: true,
-    );
-    if (scope == null) {
-      return;
-    }
-    final RecurringChangePlan plan = planRecurringDelete(
-      series: _event,
+      ref,
+      event: _event,
       occurrenceDate: occurrence.occurrenceDate,
-      scope: scope,
-      engine: ref.read(hebrewDateEngineProvider),
     );
-    final EventRepository repository = ref.read(eventRepositoryProvider);
-    if (plan.deleteSeries) {
-      await repository.delete(_event.id);
-    } else if (plan.updatedSeries != null) {
-      await repository.update(plan.updatedSeries!);
-    }
-    if (context.mounted) {
+    if (deleted && context.mounted) {
       Navigator.of(context).pop();
     }
   }

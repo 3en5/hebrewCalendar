@@ -42,6 +42,7 @@ SHOTS = {
     "g_add_menu": ("add-menu", [("items", "frame")]),
     "g_recurrence": ("recurrence", [("yearly", "frame"), ("adar", "arrow")]),
     "g_event_sheet": ("event-sheet", [("map", "arrow")]),
+    "g_editor_delete": ("editor-delete", [("delete", "arrow")]),
     "g_significant": ("significant", [("kinds", "frame"), ("sunset", "frame"),
                                       ("preview", "frame")]),
     "g_settings": ("settings", [("sync", "frame")]),

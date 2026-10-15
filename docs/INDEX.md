@@ -193,6 +193,7 @@
 | `test/domain/halacha/daily_halacha_test.dart`, `test/data/halacha/daily_halacha_source_test.dart`, `test/features/halacha/daily_halacha_launcher_test.dart` | M25: טסטים |
 | `lib/domain/text/text_links.dart` | איתור מספרי טלפון, מיילים וקישורים בטקסט, ומספר לוואטסאפ |
 | `lib/core/widgets/linkified_text.dart` | טקסט שבו מספרים, מיילים וקישורים לחיצים (חיוג/וואטסאפ/העתקה, מייל, דפדפן) |
+| `lib/features/event_editor/presentation/delete_event_flow.dart` | `confirmAndDeleteEvent`: אישור ומחיקה של אירוע (בודד או מופע/הבאים/כל הסדרה), משותף לחלון פרטי האירוע ולעורך |
 | `lib/features/settings/presentation/widgets/user_guide_tile.dart` | שורת "מדריך למשתמש" בהגדרות, פותחת את `guide.html` באתר |
 | `lib/features/settings/presentation/widgets/rate_app_tile.dart` | שורת "דירוג האפליקציה" בהגדרות, פותחת את עמוד האפליקציה ב-Google Play |
 | `lib/features/calendar/presentation/widgets/event_attendees_list.dart` | משתתפי האירוע בחלון הפרטים, מייל לחיץ ותשובה |

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/dimens.dart';
+import '../../../domain/event/event.dart';
 import '../../../domain/event/event_validation.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/event_editor_controller.dart';
 import '../application/event_editor_state.dart';
+import 'delete_event_flow.dart';
 import 'widgets/attendees_field.dart';
 import 'widgets/editor_option_sheets.dart';
 import 'widgets/event_time_section.dart';
@@ -61,6 +63,19 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
     }
   }
 
+  Future<void> _delete() async {
+    final Event event = widget.args.existing!;
+    final bool deleted = await confirmAndDeleteEvent(
+      context,
+      ref,
+      event: event,
+      occurrenceDate: widget.args.occurrenceDate ?? event.hebrewDate,
+    );
+    if (deleted && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final EventEditorState state = ref.watch(
@@ -92,6 +107,15 @@ class _EventEditorScreenState extends ConsumerState<EventEditorScreen> {
           isEditing ? l10n.eventEditorTitleEdit : l10n.eventEditorTitleNew,
         ),
         actions: <Widget>[
+          // Owner request 2026-10-15: delete from every view, not only the
+          // month view's event sheet.
+          if (isEditing)
+            IconButton(
+              key: const ValueKey<String>('editor-delete'),
+              icon: const Icon(Icons.delete_outline),
+              tooltip: l10n.eventDeleteAction,
+              onPressed: state.isSaving ? null : _delete,
+            ),
           IconButton(
             icon: const Icon(Icons.check),
             tooltip: l10n.eventSave,

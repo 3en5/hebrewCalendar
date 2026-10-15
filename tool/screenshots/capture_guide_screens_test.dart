@@ -91,6 +91,22 @@ void main() {
     });
   });
 
+  testWidgets('editor delete', (WidgetTester tester) async {
+    final ProviderContainer c = await pumpShotApp(
+      tester,
+      mode: ThemeMode.light,
+    );
+    c.read(calendarViewProvider.notifier).setViewType(CalendarViewType.agenda);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('רופא שיניים').first);
+    await shot(tester, 'g_editor_delete');
+    _mark('g_editor_delete', <String, Finder>{
+      'delete': find.byKey(const ValueKey<String>('editor-delete')),
+    });
+    await tester.tap(find.byKey(const ValueKey<String>('editor-delete')));
+    await shot(tester, 'g_editor_delete_confirm');
+  });
+
   testWidgets('overflow menu', (WidgetTester tester) async {
     await pumpShotApp(tester, mode: ThemeMode.light);
     await tester.tap(find.byIcon(Icons.more_vert));
