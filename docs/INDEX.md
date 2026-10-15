@@ -176,6 +176,7 @@
 | `lib/features/event_editor/presentation/widgets/gregorian_date_dropdowns.dart` | M24: תאריך לועזי בשלוש רשימות (יום/חודש/שנה) במקום שדה הקלדה |
 | `lib/domain/event/significant_date.dart` | M24: חישוב התאריך העברי, כלל החזרה (יארצייט → אדר א׳), המופע הבא ובניית האירועים |
 | `tool/halacha/build_ksa.py` | M25: בונה את קבצי ההלכה היומית מלוח הקיצור היומי ומהטקסט, עם תיקון ובדיקת כיסוי |
+| `.github/workflows/dedication.yml` | M25: עדכון הקדשה (יום או ברירת מחדל) ב-Firestore בהרצה ידנית |
 | `tool/halacha/ksa_schedule.json` | M25: לוח קיצור שולחן ערוך יומי (מ-@hebcal/learning, רישיון ב-`ksa_schedule.LICENSE`) |
 | `site/halacha/ksa/` | M25: קובץ JSON לכל יום בשנה העברית (נבנה, לא לערוך ידנית) |
 | `lib/domain/halacha/daily_halacha.dart` | M25: מודל ההלכה היומית, מפתח הקובץ לפי תאריך עברי, מפתח יום להקדשה |

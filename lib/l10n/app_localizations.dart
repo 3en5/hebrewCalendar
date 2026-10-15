@@ -1579,13 +1579,13 @@ abstract class AppLocalizations {
   /// Settings switch for the daily halacha (M25).
   ///
   /// In he, this message translates to:
-  /// **'הלכה יומית בכניסה הראשונה ביום'**
+  /// **'הצגה בכניסה הראשונה ביום'**
   String get dailyHalachaSettingTitle;
 
   /// Settings subtitle: share of users who keep it on (M25).
   ///
   /// In he, this message translates to:
-  /// **'{percent}% מהמשתמשים קוראים הלכה יומית'**
+  /// **'{percent}% קוראים הלכה יומית'**
   String dailyHalachaSettingShare(String percent);
 
   /// Settings subtitle when the share is unknown (M25).

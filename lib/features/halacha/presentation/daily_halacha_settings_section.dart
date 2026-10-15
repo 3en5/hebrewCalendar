@@ -3,6 +3,7 @@ import 'dart:async' show unawaited;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/dimens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/daily_halacha_providers.dart';
 import 'daily_halacha_launcher.dart';
@@ -19,14 +20,30 @@ class DailyHalachaSettingsSection extends ConsumerWidget {
       dailyHalachaSettingsProvider,
     );
     final double? share = ref.watch(dailyHalachaShareProvider).value;
+    // Owner request 2026-10-15: a section like "זמני היום", every row on
+    // one line.
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        Padding(
+          padding: EdgeInsetsDirectional.only(bottom: spacingXs),
+          child: Text(
+            l10n.dailyHalachaTitle,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ),
         SwitchListTile(
           key: const ValueKey<String>('daily-halacha-switch'),
           contentPadding: EdgeInsets.zero,
           secondary: const Icon(Icons.menu_book_outlined),
-          title: Text(l10n.dailyHalachaSettingTitle),
+          title: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(l10n.dailyHalachaSettingTitle, maxLines: 1),
+          ),
           subtitle: Text(
             share == null
                 ? l10n.dailyHalachaSettingSubtitle

@@ -192,7 +192,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('45% מהמשתמשים קוראים הלכה יומית'), findsOneWidget);
+    expect(find.text('45% קוראים הלכה יומית'), findsOneWidget);
     await tester.tap(
       find.byKey(const ValueKey<String>('daily-halacha-switch')),
     );

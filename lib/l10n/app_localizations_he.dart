@@ -878,11 +878,11 @@ class AppLocalizationsHe extends AppLocalizations {
   String get dailyHalachaStop => 'אל תציג לי יותר';
 
   @override
-  String get dailyHalachaSettingTitle => 'הלכה יומית בכניסה הראשונה ביום';
+  String get dailyHalachaSettingTitle => 'הצגה בכניסה הראשונה ביום';
 
   @override
   String dailyHalachaSettingShare(String percent) {
-    return '$percent% מהמשתמשים קוראים הלכה יומית';
+    return '$percent% קוראים הלכה יומית';
   }
 
   @override

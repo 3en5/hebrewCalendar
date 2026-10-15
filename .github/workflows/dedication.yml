@@ -1,0 +1,52 @@
+name: Set dedication
+
+# M25: writes the daily halacha dedication to Firestore
+# (dedications/<yyyy-MM-dd> or dedications/default), so the owner can ask
+# for a change without opening the Firebase console. An empty text deletes
+# that day's dedication (the default then shows). Run manually only.
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: "yyyy-MM-dd, or default"
+        required: true
+        default: default
+      text:
+        description: "e.g. לרפואת ... (empty = delete)"
+        required: false
+        default: ""
+
+jobs:
+  set:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Write to Firestore
+        env:
+          GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY }}
+          DAY: ${{ inputs.day }}
+          TEXT: ${{ inputs.text }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$DAY" =~ ^(default|[0-9]{4}-[0-9]{2}-[0-9]{2})$ ]]; then
+            echo "day must be yyyy-MM-dd or default" >&2; exit 1
+          fi
+          if [ "${#TEXT}" -gt 200 ]; then
+            echo "text is longer than 200 characters" >&2; exit 1
+          fi
+          creds="$RUNNER_TEMP/sa.json"
+          trap 'rm -f "$creds"' EXIT
+          printf '%s' "$GOOGLE_PLAY_KEY" > "$creds"
+          gcloud auth activate-service-account --key-file="$creds" --quiet
+          token="$(gcloud auth print-access-token)"
+          url="https://firestore.googleapis.com/v1/projects/hebrewcalendar-68363/databases/(default)/documents/dedications/$DAY"
+          headers=(-H "Authorization: Bearer $token" -H "x-goog-user-project: hebrewcalendar-68363")
+          if [ -z "$TEXT" ]; then
+            curl -sf -X DELETE "${headers[@]}" "$url" > /dev/null
+            echo "Deleted dedications/$DAY"
+          else
+            jq -n --arg t "$TEXT" '{fields: {text: {stringValue: $t}}}' \
+              | curl -sf -X PATCH "${headers[@]}" -H "Content-Type: application/json" \
+                  --data @- "$url?updateMask.fieldPaths=text" > /dev/null
+            echo "Set dedications/$DAY"
+          fi
