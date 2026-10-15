@@ -10,6 +10,9 @@ import '../../../zmanim/presentation/shabbat_times.dart';
 /// still shows this many (the full list is in the agenda below the grid).
 const int _maxDots = 3;
 
+/// Space above the day's numeral, clear of the small corner number.
+double get _cellTopPad => spacingXs * 1.5;
+
 /// A single day cell in the month grid (owner-approved "variant B" design):
 /// thin grid lines, the Hebrew day in gematria centered, the Gregorian day
 /// small in the top-end corner, the day's main holiday/parsha [label] (M8)
@@ -114,40 +117,74 @@ class DayCell extends StatelessWidget {
                 ),
               ),
               LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) =>
-                    Center(
-                      // Safety net for large system font scales / short
-                      // rows: scale the content down instead of overflowing.
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  final Widget numeral = _DayNumeral(
+                    text: gregorianPrimary
+                        ? '$gregorianDay'
+                        : hebrewDayNumeral(hebrewDay),
+                    isToday: isToday,
+                    isSelected: isSelected,
+                  );
+                  final Widget dots = _EventDots(
+                    hebrewDay: hebrewDay,
+                    colors: eventColors,
+                  );
+                  final Widget middle = Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (label != null)
+                        // Fixed to the cell's width so a long name shrinks
+                        // instead of widening the cell.
+                        SizedBox(
+                          width: constraints.maxWidth - spacingXs,
+                          child: _DayLabel(label: label!),
+                        ),
+                      if (shabbatTime != null)
+                        ShabbatTimeLine(shabbatTime: shabbatTime!),
+                    ],
+                  );
+                  final double numeralHeight =
+                      rem(1.75) * textGrowth(context, bodyRem);
+                  final double fixedPart =
+                      _cellTopPad + numeralHeight + spacingXs * 2.5;
+                  if (constraints.maxHeight < fixedPart + spacingXs) {
+                    // A very short row: everything centered and scaled down
+                    // together, as a safety net.
+                    return Center(
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            _DayNumeral(
-                              text: gregorianPrimary
-                                  ? '$gregorianDay'
-                                  : hebrewDayNumeral(hebrewDay),
-                              isToday: isToday,
-                              isSelected: isSelected,
-                            ),
-                            if (label != null)
-                              // Fixed to the cell's width so a long name
-                              // ellipsizes instead of shrinking the numeral.
-                              SizedBox(
-                                width: constraints.maxWidth - spacingXs,
-                                child: _DayLabel(label: label!),
-                              ),
-                            if (shabbatTime != null)
-                              ShabbatTimeLine(shabbatTime: shabbatTime!),
-                            SizedBox(height: spacingXs / 2),
-                            _EventDots(
-                              hebrewDay: hebrewDay,
-                              colors: eventColors,
-                            ),
-                          ],
+                          children: <Widget>[numeral, middle, dots],
                         ),
                       ),
+                    );
+                  }
+                  // Owner request 2026-10-15: the day's letters always at
+                  // the same height and the dots always at the bottom, so a
+                  // row reads level however much text a day has; the label
+                  // and Shabbat time take the space between, shrunk to fit.
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      top: _cellTopPad,
+                      bottom: spacingXs / 2,
                     ),
+                    child: Column(
+                      children: <Widget>[
+                        numeral,
+                        Expanded(
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: middle,
+                            ),
+                          ),
+                        ),
+                        dots,
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),
