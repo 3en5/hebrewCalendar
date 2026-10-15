@@ -1,5 +1,6 @@
-// Owner request 2026-10-15: tapping a day in the month view pops its cell
-// to twice its size for about a second, then it shrinks back.
+// Owner requests 2026-10-15: touching a day in the month view pops its cell
+// to twice its size; it stays big while held and shrinks back half a second
+// after the finger lifts. A drag cancels it.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,7 +21,6 @@ import 'package:hebrew_calendar/main.dart';
 import '../../../test_support/fake_auth_repository.dart';
 import '../../../test_support/fake_google_calendar_api.dart';
 import '../../../test_support/fake_notification_scheduler.dart';
-
 
 class _FixedDayNotifier extends CalendarViewNotifier {
   _FixedDayNotifier(this._day);
@@ -65,6 +65,17 @@ Finder _cell(int day) => find.byWidgetPredicate(
   (Widget w) => w is DayCell && w.hebrewDay == day && w.onTap != null,
 );
 
+/// Pumps in small frames (each phase starts on the frame after the one
+/// before ends) until the pop is gone, within the hold and shrink plus a
+/// margin.
+Future<void> _untilGone(WidgetTester tester) async {
+  final int frames = (dayPopHold + dayPopShrink).inMilliseconds ~/ 50 + 6;
+  for (int i = 0; i < frames && _pop.evaluate().isNotEmpty; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+  expect(_pop, findsNothing);
+}
+
 void main() {
   const HebrewDate day = HebrewDate(
     year: 5787,
@@ -72,7 +83,7 @@ void main() {
     day: 12,
   );
 
-  testWidgets('a tapped day grows, holds and shrinks back', (
+  testWidgets('a quick tap grows, holds and shrinks back', (
     WidgetTester tester,
   ) async {
     final ProviderContainer container = await _pump(tester, day);
@@ -80,7 +91,7 @@ void main() {
     await tester.tap(_cell(18));
     await tester.pump();
     expect(container.read(calendarViewProvider).focusedDate.day, 18);
-    await tester.pump(dayPopGrow + const Duration(milliseconds: 100));
+    await tester.pump(dayPopGrow);
     expect(_pop, findsOneWidget);
     final Rect grown = tester.getRect(_pop);
     expect(grown.width, moreOrLessEquals(cell.width * dayPopScale, epsilon: 1));
@@ -88,9 +99,54 @@ void main() {
       grown.height,
       moreOrLessEquals(cell.height * dayPopScale, epsilon: 1),
     );
-    await tester.pump(dayPopHold + dayPopShrink);
+    // Still fully grown just before the hold ends.
+    await tester.pump(dayPopHold - const Duration(milliseconds: 50));
+    expect(
+      tester.getRect(_pop).width,
+      moreOrLessEquals(grown.width, epsilon: 1),
+    );
+    await _untilGone(tester);
+  });
+
+  testWidgets('holding keeps the day big; it shrinks after the finger lifts', (
+    WidgetTester tester,
+  ) async {
+    final ProviderContainer container = await _pump(tester, day);
+    final Rect cell = tester.getRect(_cell(18));
+    final TestGesture finger = await tester.startGesture(cell.center);
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(dayPopGrow);
+    await tester.pump(const Duration(seconds: 3));
+    expect(_pop, findsOneWidget);
+    expect(
+      tester.getRect(_pop).width,
+      moreOrLessEquals(cell.width * dayPopScale, epsilon: 1),
+    );
+    await finger.up();
     await tester.pump();
+    expect(container.read(calendarViewProvider).focusedDate.day, 18);
+    await tester.pump(dayPopHold - const Duration(milliseconds: 50));
+    expect(_pop, findsOneWidget);
+    await _untilGone(tester);
+  });
+
+  testWidgets('a drag cancels the pop and selects nothing', (
+    WidgetTester tester,
+  ) async {
+    final ProviderContainer container = await _pump(tester, day);
+    final Rect cell = tester.getRect(_cell(18));
+    final TestGesture finger = await tester.startGesture(cell.center);
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(_pop, findsOneWidget);
+    for (int i = 0; i < 5; i++) {
+      await finger.moveBy(const Offset(0, 20));
+      await tester.pump();
+    }
     expect(_pop, findsNothing);
+    await finger.up();
+    await tester.pumpAndSettle();
+    expect(_pop, findsNothing);
+    expect(container.read(calendarViewProvider).focusedDate.day, 12);
   });
 
   testWidgets('an edge day grows inwards and stays on screen', (
@@ -101,7 +157,8 @@ void main() {
     // 1 Cheshvan 5787 is a Sunday: the first column, at the right in RTL.
     for (final int d in <int>[1, 7]) {
       await tester.tap(_cell(d));
-      await tester.pump(dayPopGrow + const Duration(milliseconds: 100));
+      await tester.pump();
+      await tester.pump(dayPopGrow);
       final Rect grown = tester.getRect(_pop);
       expect(grown.left, greaterThanOrEqualTo(-0.5), reason: 'day $d');
       expect(

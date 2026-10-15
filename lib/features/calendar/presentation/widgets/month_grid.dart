@@ -172,7 +172,13 @@ class MonthGrid extends ConsumerWidget {
     }
     final HebrewDateEngine engine = ref.read(hebrewDateEngineProvider);
     final DateTime gregorianDate = engine.toGregorian(cellDate);
-    DayCell cell({required bool isSelected, required bool endLine}) => DayCell(
+    DayPopStackState? pop() => DayPopStack.maybeOf(context);
+    // The popped copy shows the day selected and takes no touches.
+    DayCell cell({
+      required bool isSelected,
+      required bool endLine,
+      bool copy = false,
+    }) => DayCell(
       hebrewDay: cellDate.day,
       gregorianDay: gregorianDate.day,
       gregorianPrimary: gregorian,
@@ -188,12 +194,19 @@ class MonthGrid extends ConsumerWidget {
       // Labels are ordered most important first, parsha last.
       label: data.labels[cellDate]?.first,
       shabbatTime: shabbatTimeFor(zmanimSettings, gregorianDate),
-      onTap: () {
-        ref.read(calendarViewProvider.notifier).setFocusedDate(cellDate);
-        DayPopStack.maybeOf(
-          context,
-        )?.pop(context, cell(isSelected: true, endLine: false));
-      },
+      onTap: copy
+          ? null
+          : () => ref
+                .read(calendarViewProvider.notifier)
+                .setFocusedDate(cellDate),
+      onPressStart: copy
+          ? null
+          : () => pop()?.press(
+              context,
+              cell(isSelected: true, endLine: false, copy: true),
+            ),
+      onPressEnd: copy ? null : () => pop()?.release(),
+      onPressCancel: copy ? null : () => pop()?.cancel(),
     );
     return cell(isSelected: cellDate == selected, endLine: drawEndLine);
   }

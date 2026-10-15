@@ -29,6 +29,9 @@ class DayCell extends StatelessWidget {
     this.label,
     this.shabbatTime,
     this.onTap,
+    this.onPressStart,
+    this.onPressEnd,
+    this.onPressCancel,
     super.key,
   });
 
@@ -65,6 +68,12 @@ class DayCell extends StatelessWidget {
 
   final VoidCallback? onTap;
 
+  /// A finger touched the cell, lifted from it, or turned the touch into a
+  /// drag (the month view's pop, [DayPopStack]).
+  final VoidCallback? onPressStart;
+  final VoidCallback? onPressEnd;
+  final VoidCallback? onPressCancel;
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -80,6 +89,9 @@ class DayCell extends StatelessWidget {
       selected: isSelected,
       child: InkWell(
         onTap: onTap,
+        onTapDown: onPressStart == null ? null : (_) => onPressStart!(),
+        onTapUp: onPressEnd == null ? null : (_) => onPressEnd!(),
+        onTapCancel: onPressCancel,
         child: Ink(
           decoration: BoxDecoration(
             color: background,

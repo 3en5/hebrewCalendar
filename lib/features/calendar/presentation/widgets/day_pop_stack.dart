@@ -1,20 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/dimens.dart';
 
-/// The tapped day's "pop" (owner request 2026-10-15): the cell grows to
-/// [dayPopScale] times its size, holds so its small text is easy to read,
-/// and shrinks back. All the timings are here, to tune in one place.
+/// The pressed day's "pop" (owner requests 2026-10-15): when a finger
+/// touches a cell it grows to [dayPopScale] times its size, so its small
+/// text is easy to read; it stays that big while the finger is held, and
+/// [dayPopHold] after the finger lifts it shrinks back. A drag (changing
+/// month, scrolling) cancels it at once. All the timings are here, to tune
+/// in one place.
 const Duration dayPopGrow = Duration(milliseconds: 200);
-const Duration dayPopHold = Duration(milliseconds: 1000);
+const Duration dayPopHold = Duration(milliseconds: 500);
 const Duration dayPopShrink = Duration(milliseconds: 250);
 const double dayPopScale = 2.0;
 
 /// Wraps the month grid (and the agenda under it) and draws the popped
-/// cell above them. A cell calls [DayPopStackState.pop] with its own
-/// context; the copy grows from a point chosen so it stays inside this
-/// area (an edge cell grows inwards). The copy ignores touches, so taps
-/// reach the grid underneath; a new pop replaces the current one.
+/// cell above them. A cell reports its press with [DayPopStackState.press],
+/// [DayPopStackState.release] and [DayPopStackState.cancel]; the copy grows
+/// from a point chosen so it stays inside this area (an edge cell grows
+/// inwards). The copy ignores touches, so they reach the grid underneath;
+/// a new press replaces the current pop.
 class DayPopStack extends StatefulWidget {
   const DayPopStack({required this.child, super.key});
 
@@ -29,51 +35,58 @@ class DayPopStack extends StatefulWidget {
 
 class DayPopStackState extends State<DayPopStack>
     with SingleTickerProviderStateMixin {
+  /// 0 is the cell's own size, 1 is fully grown.
   late final AnimationController _controller;
   late final Animation<double> _scale;
+  Timer? _holdTimer;
+  bool _released = false;
+
+  Widget? _cell;
+  Rect _rect = Rect.zero;
+  Alignment _alignment = Alignment.center;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: dayPopGrow + dayPopHold + dayPopShrink,
+      duration: dayPopGrow,
+      reverseDuration: dayPopShrink,
     )..addStatusListener(_onStatus);
-    _scale = TweenSequence<double>(<TweenSequenceItem<double>>[
-      TweenSequenceItem<double>(
-        tween: Tween<double>(
-          begin: 1,
-          end: dayPopScale,
-        ).chain(CurveTween(curve: Curves.easeOutCubic)),
-        weight: dayPopGrow.inMilliseconds.toDouble(),
+    _scale = Tween<double>(begin: 1, end: dayPopScale).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
       ),
-      TweenSequenceItem<double>(
-        tween: ConstantTween<double>(dayPopScale),
-        weight: dayPopHold.inMilliseconds.toDouble(),
-      ),
-      TweenSequenceItem<double>(
-        tween: Tween<double>(
-          begin: dayPopScale,
-          end: 1,
-        ).chain(CurveTween(curve: Curves.easeInCubic)),
-        weight: dayPopShrink.inMilliseconds.toDouble(),
-      ),
-    ]).animate(_controller);
+    );
   }
 
   void _onStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed && mounted) {
+    if (!mounted) {
+      return;
+    }
+    if (status == AnimationStatus.completed && _released) {
+      _startHold();
+    } else if (status == AnimationStatus.dismissed && _cell != null) {
       setState(() => _cell = null);
     }
   }
 
-  Widget? _cell;
-  Rect _rect = Rect.zero;
-  Alignment _alignment = Alignment.center;
+  /// The hold counts from when the finger lifted and the cell is fully
+  /// grown, so even a quick tap shows the big cell for [dayPopHold].
+  void _startHold() {
+    _holdTimer?.cancel();
+    _holdTimer = Timer(dayPopHold, () {
+      if (mounted) {
+        _controller.reverse();
+      }
+    });
+  }
 
-  /// Pops [cell], a copy of the cell whose context is [cellContext], over
-  /// that cell's place.
-  void pop(BuildContext cellContext, Widget cell) {
+  /// A finger touched the cell whose context is [cellContext]: grow [cell],
+  /// a copy of it, over that cell's place, and keep it until [release].
+  void press(BuildContext cellContext, Widget cell) {
     if (MediaQuery.disableAnimationsOf(context)) {
       return;
     }
@@ -84,12 +97,38 @@ class DayPopStackState extends State<DayPopStack>
     }
     final Rect rect =
         cellBox.localToGlobal(Offset.zero, ancestor: area) & cellBox.size;
+    // Reset first: going back to 0 reports "dismissed", which clears the
+    // previous pop, not this one.
+    _holdTimer?.cancel();
+    _controller.value = 0;
+    _released = false;
     setState(() {
       _cell = cell;
       _rect = rect;
       _alignment = _growFrom(rect, area.size);
     });
-    _controller.forward(from: 0);
+    _controller.forward();
+  }
+
+  /// The finger lifted: shrink back [dayPopHold] after the cell is fully
+  /// grown.
+  void release() {
+    if (_cell == null) {
+      return;
+    }
+    _released = true;
+    if (_controller.status == AnimationStatus.completed) {
+      _startHold();
+    }
+  }
+
+  /// The touch became a drag: remove the pop at once.
+  void cancel() {
+    _holdTimer?.cancel();
+    _controller.value = 0;
+    if (_cell != null) {
+      setState(() => _cell = null);
+    }
   }
 
   /// The alignment to scale [rect] about so the grown rect stays inside
@@ -114,6 +153,7 @@ class DayPopStackState extends State<DayPopStack>
 
   @override
   void dispose() {
+    _holdTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
