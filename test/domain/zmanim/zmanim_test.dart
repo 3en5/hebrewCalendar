@@ -25,9 +25,12 @@ void main() {
     final ZmanimDay day = at(friday);
     final DateTime sunset = day.times[Zman.sunset]!.toUtc();
     final DateTime chatzos = day.times[Zman.chatzos]!.toUtc();
-    // 18:02 and 12:23 Israel summer time (UTC+3).
+    // 17:58 and 12:23 Israel summer time (UTC+3): sea-level sunset, as the
+    // common calendars publish it (Jerusalem's elevation was dropped
+    // 2026-10-15; with 754 m it was 18:02). Checked against an independent
+    // NOAA solar computation.
     expect(
-      sunset.difference(DateTime.utc(2026, 10, 23, 15, 2)).inMinutes.abs(),
+      sunset.difference(DateTime.utc(2026, 10, 23, 14, 58)).inMinutes.abs(),
       lessThanOrEqualTo(2),
     );
     expect(

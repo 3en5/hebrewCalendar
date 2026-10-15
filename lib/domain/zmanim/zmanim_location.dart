@@ -40,15 +40,17 @@ class ZmanimLocation {
 /// Id of the "use the phone's position" choice.
 const String kDeviceZmanimLocationId = 'device';
 
-/// Cities offered in settings. Coordinates of each city center; elevation
-/// is used only where it is customary (Jerusalem).
+/// Cities offered in settings, at each city center. All at sea level, as
+/// the common Israeli calendars and Hebcal compute them (owner decision
+/// 2026-10-15: Jerusalem's 754 m and Ma'ale Adumim's 500 m moved sunset
+/// and candle lighting away from the printed times). Candle lighting:
+/// Jerusalem, Ma'ale Adumim and Petah Tikva 40, by local custom.
 const List<ZmanimLocation> kZmanimCities = <ZmanimLocation>[
   ZmanimLocation(
     id: 'jerusalem',
     name: 'ירושלים',
     latitude: 31.7780,
     longitude: 35.2354,
-    elevation: 754,
     candleLightingMinutes: 40,
   ),
   ZmanimLocation(
@@ -98,7 +100,7 @@ const List<ZmanimLocation> kZmanimCities = <ZmanimLocation>[
     name: 'פתח תקווה',
     latitude: 32.0871,
     longitude: 34.8875,
-    candleLightingMinutes: 30,
+    candleLightingMinutes: 40,
   ),
   ZmanimLocation(
     id: 'rishon',
@@ -182,7 +184,6 @@ const List<ZmanimLocation> kZmanimCities = <ZmanimLocation>[
     name: 'מעלה אדומים',
     latitude: 31.7770,
     longitude: 35.2980,
-    elevation: 500,
     candleLightingMinutes: 40,
   ),
   ZmanimLocation(
@@ -277,7 +278,6 @@ const ZmanimLocation kDefaultZmanimCity = ZmanimLocation(
   name: 'ירושלים',
   latitude: 31.7780,
   longitude: 35.2354,
-  elevation: 754,
   candleLightingMinutes: 40,
 );
 
