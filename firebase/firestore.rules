@@ -154,6 +154,56 @@ service cloud.firestore {
       }
     }
 
+    // M25 (daily halacha, owner decision 2026-10-15).
+    //
+    // dedications/{yyyy-MM-dd} and dedications/default: the line shown at the
+    // top of the daily halacha ("לעילוי נשמת..."). Signed-in users only read
+    // them; the owner edits them in the Firebase console (the console is not
+    // bound by these rules), and later a payment webhook will, through the
+    // Admin SDK.
+    match /dedications/{day} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // stats/dailyHalacha: how many users keep the daily halacha on or off
+    // (shown as a percentage in settings). Anonymous counters: each client
+    // only moves them by one, never stores who it is.
+    match /stats/dailyHalacha {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['enabled', 'disabled'])
+        && counterStep(request.resource.data, {}, 'enabled')
+        && counterStep(request.resource.data, {}, 'disabled');
+      allow update: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['enabled', 'disabled'])
+        && counterStep(request.resource.data, resource.data, 'enabled')
+        && counterStep(request.resource.data, resource.data, 'disabled');
+    }
+
+    // stats/dailyHalacha/days/{yyyy-MM-dd}: how many learned that day
+    // (pressed "שיננתי"). Only ever goes up by one.
+    match /stats/dailyHalacha/days/{day} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['learned'])
+        && request.resource.data.learned == 1;
+      allow update: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['learned'])
+        && request.resource.data.learned == resource.data.learned + 1;
+    }
+
+    // A counter field that is absent or an int, at most one away from its
+    // previous value (absent counts as 0), and never negative.
+    function counterStep(next, prev, key) {
+      let before = key in prev ? prev[key] : 0;
+      let after = key in next ? next[key] : 0;
+      return (!(key in next) || next[key] is int)
+        && after >= 0
+        && after - before <= 1
+        && before - after <= 1;
+    }
+
     // Deny everything else explicitly (Firestore already denies unmatched
     // paths by default, but this documents the intent for reviewers).
     match /{document=**} {

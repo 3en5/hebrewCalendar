@@ -175,6 +175,17 @@
 | `lib/features/event_editor/presentation/significant_date_screen.dart` | M24: מסך "תאריך משמעותי" (סוג, שם, תאריך לועזי, שקיעה, תצוגה מקדימה, אירוע לועזי נוסף) |
 | `lib/features/event_editor/presentation/widgets/gregorian_date_dropdowns.dart` | M24: תאריך לועזי בשלוש רשימות (יום/חודש/שנה) במקום שדה הקלדה |
 | `lib/domain/event/significant_date.dart` | M24: חישוב התאריך העברי, כלל החזרה (יארצייט → אדר א׳), המופע הבא ובניית האירועים |
+| `tool/halacha/build_ksa.py` | M25: בונה את קבצי ההלכה היומית מלוח הקיצור היומי ומהטקסט, עם תיקון ובדיקת כיסוי |
+| `tool/halacha/ksa_schedule.json` | M25: לוח קיצור שולחן ערוך יומי (מ-@hebcal/learning, רישיון ב-`ksa_schedule.LICENSE`) |
+| `site/halacha/ksa/` | M25: קובץ JSON לכל יום בשנה העברית (נבנה, לא לערוך ידנית) |
+| `lib/domain/halacha/daily_halacha.dart` | M25: מודל ההלכה היומית, מפתח הקובץ לפי תאריך עברי, מפתח יום להקדשה |
+| `lib/data/halacha/daily_halacha_source.dart` | M25: הורדה ומטמון של השבוע הקרוב בלבד |
+| `lib/data/halacha/halacha_cloud.dart` | M25: הקדשות ומונים אנונימיים ב-Firestore (ו-Offline לדמו/טסטים) |
+| `lib/features/halacha/application/daily_halacha_providers.dart` | M25: בחירת המשתמש (לא נקבע/פעיל/כבוי), יום אחרון שהוצג, אחוז המשתמשים |
+| `lib/features/halacha/presentation/daily_halacha_dialog.dart` | M25: חלון ההלכה היומית עם ההקדשה ו"שיננתי" |
+| `lib/features/halacha/presentation/daily_halacha_launcher.dart` | M25: פתיחה בכניסה הראשונה ביום והורדת השבוע הקרוב |
+| `lib/features/halacha/presentation/daily_halacha_settings_section.dart` | M25: המתג בהגדרות עם האחוזים, ופתיחת ההלכה של היום |
+| `test/domain/halacha/daily_halacha_test.dart`, `test/data/halacha/daily_halacha_source_test.dart`, `test/features/halacha/daily_halacha_launcher_test.dart` | M25: טסטים |
 | `lib/domain/text/text_links.dart` | איתור מספרי טלפון, מיילים וקישורים בטקסט, ומספר לוואטסאפ |
 | `lib/core/widgets/linkified_text.dart` | טקסט שבו מספרים, מיילים וקישורים לחיצים (חיוג/וואטסאפ/העתקה, מייל, דפדפן) |
 | `lib/features/settings/presentation/widgets/rate_app_tile.dart` | שורת "דירוג האפליקציה" בהגדרות, פותחת את עמוד האפליקציה ב-Google Play |

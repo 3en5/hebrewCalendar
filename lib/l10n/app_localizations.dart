@@ -1527,6 +1527,84 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'אהבת? נשמח לדירוג ב-Google Play'**
   String get settingsRateAppSubtitle;
+
+  /// Daily halacha dialog title (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'הלכה יומית'**
+  String get dailyHalachaTitle;
+
+  /// The book the daily halacha comes from (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'קיצור שולחן ערוך'**
+  String get dailyHalachaBook;
+
+  /// A chapter heading in the daily halacha (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'סימן {n}'**
+  String dailyHalachaSiman(String n);
+
+  /// A paragraph label in the daily halacha (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'סעיף {n}'**
+  String dailyHalachaSeif(String n);
+
+  /// Source line at the end of the daily halacha (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'מקור: קיצור שולחן ערוך, מהדורת תורת אמת (נחלת הכלל). לוח הלימוד: קיצור שולחן ערוך יומי, מחזור שנתי.'**
+  String get dailyHalachaSource;
+
+  /// Closes the daily halacha after learning it (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'שיננתי'**
+  String get dailyHalachaLearned;
+
+  /// First visit: learned, and keep showing it daily (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'שיננתי, תמשיך להציג לי'**
+  String get dailyHalachaLearnedKeep;
+
+  /// First visit: stop showing the daily halacha (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'אל תציג לי יותר'**
+  String get dailyHalachaStop;
+
+  /// Settings switch for the daily halacha (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'הלכה יומית בכניסה הראשונה ביום'**
+  String get dailyHalachaSettingTitle;
+
+  /// Settings subtitle: share of users who keep it on (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'{percent}% מהמשתמשים קוראים הלכה יומית'**
+  String dailyHalachaSettingShare(String percent);
+
+  /// Settings subtitle when the share is unknown (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'קיצור שולחן ערוך, מסיימים בכל שנה'**
+  String get dailyHalachaSettingSubtitle;
+
+  /// Settings row that opens today's halacha (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'ההלכה של היום'**
+  String get dailyHalachaOpenToday;
+
+  /// Snackbar when today's halacha is neither cached nor reachable (M25).
+  ///
+  /// In he, this message translates to:
+  /// **'ההלכה של היום עדיין לא ירדה. נסו שוב כשיש חיבור לאינטרנט.'**
+  String get dailyHalachaUnavailable;
 }
 
 class _AppLocalizationsDelegate

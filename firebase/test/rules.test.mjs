@@ -199,3 +199,36 @@ test('any other collection is denied', async () => {
   await assertFails(setDoc(doc(alice(), 'other/x'), { a: 1 }));
   await assertFails(getDoc(doc(alice(), 'other/x')));
 });
+
+describe('M25 daily halacha', () => {
+  test('dedications are read-only for signed-in users', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'dedications/2026-10-16'), { text: 'לעילוי נשמת' });
+    });
+    await assertSucceeds(getDoc(doc(alice(), 'dedications/2026-10-16')));
+    await assertSucceeds(getDoc(doc(alice(), 'dedications/default')));
+    await assertFails(setDoc(doc(alice(), 'dedications/2026-10-17'), { text: 'x' }));
+    await assertFails(getDoc(doc(anon(), 'dedications/2026-10-16')));
+  });
+
+  test('the on/off counters move by one at a time', async () => {
+    const ref = (db) => doc(db, 'stats/dailyHalacha');
+    await assertSucceeds(setDoc(ref(alice()), { enabled: 1 }));
+    await assertSucceeds(updateDoc(ref(bob()), { enabled: 2 }));
+    await assertSucceeds(updateDoc(ref(bob()), { enabled: 1, disabled: 1 }));
+    await assertFails(updateDoc(ref(bob()), { enabled: 5 }));
+    await assertFails(updateDoc(ref(bob()), { enabled: -1 }));
+    await assertFails(updateDoc(ref(bob()), { other: 1 }));
+    await assertSucceeds(getDoc(ref(alice())));
+    await assertFails(getDoc(ref(anon())));
+  });
+
+  test('the learned counter only goes up by one', async () => {
+    const ref = (db) => doc(db, 'stats/dailyHalacha/days/2026-10-16');
+    await assertFails(setDoc(ref(alice()), { learned: 3 }));
+    await assertSucceeds(setDoc(ref(alice()), { learned: 1 }));
+    await assertSucceeds(updateDoc(ref(bob()), { learned: 2 }));
+    await assertFails(updateDoc(ref(bob()), { learned: 1 }));
+    await assertFails(updateDoc(ref(bob()), { learned: 4 }));
+  });
+});

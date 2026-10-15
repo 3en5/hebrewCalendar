@@ -847,4 +847,51 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get settingsRateAppSubtitle => 'אהבת? נשמח לדירוג ב-Google Play';
+
+  @override
+  String get dailyHalachaTitle => 'הלכה יומית';
+
+  @override
+  String get dailyHalachaBook => 'קיצור שולחן ערוך';
+
+  @override
+  String dailyHalachaSiman(String n) {
+    return 'סימן $n';
+  }
+
+  @override
+  String dailyHalachaSeif(String n) {
+    return 'סעיף $n';
+  }
+
+  @override
+  String get dailyHalachaSource =>
+      'מקור: קיצור שולחן ערוך, מהדורת תורת אמת (נחלת הכלל). לוח הלימוד: קיצור שולחן ערוך יומי, מחזור שנתי.';
+
+  @override
+  String get dailyHalachaLearned => 'שיננתי';
+
+  @override
+  String get dailyHalachaLearnedKeep => 'שיננתי, תמשיך להציג לי';
+
+  @override
+  String get dailyHalachaStop => 'אל תציג לי יותר';
+
+  @override
+  String get dailyHalachaSettingTitle => 'הלכה יומית בכניסה הראשונה ביום';
+
+  @override
+  String dailyHalachaSettingShare(String percent) {
+    return '$percent% מהמשתמשים קוראים הלכה יומית';
+  }
+
+  @override
+  String get dailyHalachaSettingSubtitle => 'קיצור שולחן ערוך, מסיימים בכל שנה';
+
+  @override
+  String get dailyHalachaOpenToday => 'ההלכה של היום';
+
+  @override
+  String get dailyHalachaUnavailable =>
+      'ההלכה של היום עדיין לא ירדה. נסו שוב כשיש חיבור לאינטרנט.';
 }
