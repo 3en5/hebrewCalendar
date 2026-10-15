@@ -13,7 +13,7 @@
 <header class="wrap"><a href="index.html"><img class="logo" src="assets/kalfapp_logo.png" alt="KALFAPP"></a></header>
 <main class="wrap doc">
   <h1>מדיניות פרטיות</h1>
-  <p class="tag">לוח עברי · עודכן ב-13 באוקטובר 2026</p>
+  <p class="tag">לוח עברי · עודכן ב-15 באוקטובר 2026</p>
   <p>האפליקציה "לוח עברי" (il.co.natanor.kalfapp.hebrewcalendar) פותחה על ידי נתן-אור, במסגרת KALFAPP, פרויקט התנדבותי. הדף הזה מסביר אילו נתונים האפליקציה משתמשת בהם, למה, ואיך אפשר למחוק אותם.</p>
 
   <h2>אילו נתונים נאספים ולמה</h2>
@@ -23,11 +23,13 @@
     <li><b>יומן Google (רק אם הפעלת סנכרון):</b> באישורך, האפליקציה מקבלת הרשאה לקרוא ולכתוב אירועים ביומן הראשי שלך ב-Google Calendar (הרשאת calendar.events). היא משתמשת בה רק לסנכרון: מציגה ביומן העברי את האירועים שכבר יש לך ב-Google, וכותבת ל-Google את האירועים שיצרת באפליקציה, כולל שינויים ומחיקות. עותק של האירועים המסונכרנים נשמר בחשבון שלך ב-Firebase כדי שהיומן יעבוד גם בלי חיבור. כשאתה מזמין משתתפים לאירוע, Google שולחת להם את הזימון.</li>
     <li><b>במכשיר בלבד:</b> העדפות (מצב כהה, לוח ארץ ישראל או חו"ל, עיר לזמני היום) והתראות שנקבעות בטלפון עצמו.</li>
     <li><b>מיקום (רק אם בחרת "מיקום מהטלפון" בזמני היום):</b> האפליקציה קוראת מיקום משוער של הטלפון כדי לחשב את זמני היום ושעות השבת. המיקום נשמר בטלפון בלבד, החישוב נעשה בטלפון, והמיקום לא נשלח לשום שרת ולא נשמר בחשבון שלך. אפשר לכבות את האפשרות בכל רגע ולחזור לבחירת עיר.</li>
+    <li><b>הלכה יומית:</b> האפליקציה מורידה מאתר האפליקציה את ההלכות של השבוע הקרוב ושומרת אותן בטלפון. ההורדה לא כוללת שום פרט עליך. כדי להציג את ההקדשה שבראש ההלכה, האפליקציה קוראת אותה מ-Firebase.</li>
+    <li><b>מונים אנונימיים:</b> כדי להציג כמה אחוזים מהמשתמשים קוראים הלכה יומית, נשמרים ב-Firebase שני מונים כלליים: כמה השאירו את ההלכה היומית פעילה וכמה כיבו, ולכל יום כמה לחצו "שיננתי". המונים לא שומרים מי לחץ, לא מזהה, לא מייל ולא שום פרט אחר.</li>
   </ul>
 
   <h2>מה לא נעשה בנתונים</h2>
   <ul>
-    <li>אין פרסומות, אין כלי מעקב ואין כלי ניתוח (analytics).</li>
+    <li>אין פרסומות, אין כלי מעקב ואין כלי ניתוח (analytics). מלבד המונים האנונימיים של ההלכה היומית, האפליקציה לא סופרת ולא מתעדת את השימוש שלך.</li>
     <li>הנתונים לא נמכרים ולא מועברים לאף אחד. הם מעובדים רק אצל Google (Firebase ו-Google Calendar), שמספקת את השירות.</li>
     <li>הנתונים מיומן Google לא משמשים לשום מטרה מלבד הסנכרון שהפעלת, ולא נקראים על ידי אדם.</li>
   </ul>
@@ -51,7 +53,7 @@
 
   <section class="en" id="en">
     <h1>Privacy Policy</h1>
-    <p class="tag">Hebrew Calendar · Updated October 13, 2026</p>
+    <p class="tag">Hebrew Calendar · Updated October 15, 2026</p>
     <p>"Hebrew Calendar" (il.co.natanor.kalfapp.hebrewcalendar) is developed by Natan-Or as part of KALFAPP, a volunteer project. This page explains what data the app uses, why, and how to delete it.</p>
     <h2>Data we use and why</h2>
     <ul>
@@ -60,10 +62,12 @@
       <li><b>Google Calendar (only if you turn sync on):</b> with your consent the app gets permission to read and write events in your primary Google Calendar (the calendar.events scope). It is used only for sync: showing the events you already have in Google in the Hebrew calendar, and writing the events you create in the app to Google, including changes and deletions. A copy of synced events is kept in your Firebase account so the calendar works offline. When you invite participants, Google sends them the invitation.</li>
       <li><b>On the device only:</b> preferences (dark mode, Israel or diaspora calendar, the city for the times of day) and reminders scheduled on the phone.</li>
       <li><b>Location (only if you choose "phone location" for the times of day):</b> the app reads the phone's approximate location to compute the times of day and Shabbat times. It is kept on the phone only, the calculation runs on the phone, and the location is never sent to any server or stored in your account. You can turn it off at any time and pick a city instead.</li>
+      <li><b>Daily halacha:</b> the app downloads the coming week's readings from the app's website and keeps them on the phone. The download carries no information about you. To show the dedication at the top of the reading, the app reads it from Firebase.</li>
+      <li><b>Anonymous counters:</b> to show what share of users read the daily halacha, Firebase keeps two overall counters (how many keep it on and how many turned it off) and, per day, how many pressed "learned". The counters never store who pressed, no identifier, no email and nothing else.</li>
     </ul>
     <h2>What we do not do</h2>
     <ul>
-      <li>No ads, no tracking, no analytics.</li>
+      <li>No ads, no tracking, no analytics. Apart from the daily halacha's anonymous counters, the app does not count or record your use.</li>
       <li>Data is never sold or shared. It is processed only by Google (Firebase and Google Calendar), which provides the service.</li>
       <li>Google Calendar data is used for nothing but the sync you turned on, and is not read by humans.</li>
     </ul>

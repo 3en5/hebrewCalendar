@@ -6,16 +6,29 @@ A calendar built on the Hebrew date
 • Month, week, day and agenda views, with the Hebrew and Gregorian dates side by side
 • Holidays, fasts, Rosh Chodesh, Israeli national days and the weekly parsha, for Israel or the diaspora
 • Jump to any Hebrew or Gregorian date, and search all your events by word
+• Switch the calendar to Gregorian months with a tap on the title
+• A line marking the current time in the week and day views
+
+Times of day and Shabbat
+• Dawn, sunrise, latest Shema and prayer, midday, mincha, sunset and nightfall
+• Candle lighting and Havdalah by the city's custom, by city or by the phone's location
+
+Daily halacha
+• On the first visit each day: the day's Kitzur Shulchan Aruch reading, in a cycle that finishes the book every year
+• Turn it off or open it again in settings
 
 Events that repeat by the Hebrew date
 • Hebrew birthdays, anniversaries, yahrzeits, or any event on the same Hebrew date
-• Yearly, monthly, weekly or daily recurrence
+• Yearly, monthly, weekly or daily recurrence, by the Hebrew or the Gregorian date
+• "Significant date": enter a Gregorian birth, death or wedding date and the app works out the Hebrew date, before or after sunset
 • Correct handling of leap years (Adar I and Adar II) and 29-day months
 • Edit or delete one occurrence, this and following, or the whole series
 
 Meetings, colors and participants
 • A color for every event, using Google Calendar's colors
 • Invite participants by email. Google sends the invitation and you can see who accepted
+• Phone numbers, emails and links in an event are tappable: call, WhatsApp, mail, or open a Zoom link
+• Open the location in Google Maps or Waze
 
 Reminders
 • Phone notifications before an event, at the time you choose
@@ -25,7 +38,7 @@ Google Calendar sync
 • Pull the screen down to sync right away
 
 Backup and restore
-• Export all your events to a file and restore them at any time
+• Export all your events to a file, send it to yourself, and restore at any time
 
 Privacy
 • Your data is stored in your own account only, and other users cannot access it
