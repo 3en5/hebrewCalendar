@@ -41,44 +41,99 @@ MUTED = (122, 135, 150)
 DENSITIES = {"mdpi": 1, "hdpi": 1.5, "xhdpi": 2, "xxhdpi": 3, "xxxhdpi": 4}
 
 SUPERSAMPLE = 4
+EXTENT = 922                   # the 2026-10-11 drawing's width on the grid
+
+ACCENT = (232, 131, 58)        # the app's orange add button, #E8833A
+STYLE = {"kind": "line"}
 
 
-def glyph(size):
-    """The line-art icon on a transparent size x size canvas (1024 design grid)."""
+def glyph(size, style=None):
+    """The line-art icon on a transparent size x size canvas (1024 design grid).
+
+    [style] picks how the calendar page, the app's own symbol, stands out
+    from the blue house and gear: "line" (blue outline, the 2026-10-11
+    design) or a larger accent page: "outline", "filled" or "header".
+    """
+    style = style or STYLE
+    accent = style.get("accent", LINE)
+    kind = style.get("kind", "line")
+    f = style.get("scale", 1.0)
     s = 1024 * SUPERSAMPLE
     k = SUPERSAMPLE
-    im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    m = 256  # margin, so a larger page is not cut at the grid's edge
+    im = Image.new("RGBA", (s + 2 * m * k, s + 2 * m * k), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     w = 34 * k
 
     def p(*pts):
-        return [(x * k, y * k) for x, y in pts]
+        return [((x + m) * k, (y + m) * k) for x, y in pts]
+
+    def box(x0, y0, x1, y1):
+        return [(x0 + m) * k, (y0 + m) * k, (x1 + m) * k, (y1 + m) * k]
 
     # House: roof, wall and floor, window with its cross.
     d.line(p((440, 740), (110, 740), (110, 370), (60, 370), (355, 75), (560, 280)),
            fill=LINE, width=w, joint="curve")
-    d.rounded_rectangle([215 * k, 390 * k, 415 * k, 590 * k], radius=14 * k,
+    d.rounded_rectangle(box(215, 390, 415, 590), radius=14 * k,
                         outline=LINE, width=w)
     d.line(p((315, 390), (315, 590)), fill=LINE, width=w)
     d.line(p((215, 490), (415, 490)), fill=LINE, width=w)
-    # Calendar page with binding rings and "א".
-    d.rounded_rectangle([560 * k, 200 * k, 960 * k, 590 * k], radius=40 * k,
-                        outline=LINE, width=w)
-    d.line(p((560, 300), (960, 300)), fill=LINE, width=w)
+
+    # Calendar page with binding rings and "א", grown by f about [origin].
+    ox, oy = style.get("origin", (760, 395))
+
+    def c(x, y):
+        return ((ox + (x - ox) * f + m) * k, (oy + (y - oy) * f + m) * k)
+
+    cw = int(w * style.get("stroke", 1.0))
+    left, top = c(560, 200)
+    right, bottom = c(960, 590)
+    head = c(0, 300)[1]
+    r = 40 * f * k
+    body = accent if kind == "filled" else WHITE
+    edge = LINE if kind == "line" else accent
+    d.rounded_rectangle([left, top, right, bottom], radius=r, fill=body,
+                        outline=edge, width=cw)
+    if kind == "header":
+        d.rounded_rectangle([left, top, right, head + cw / 2], radius=r, fill=accent)
+        d.rectangle([left, head - r, right, head + cw / 2], fill=accent)
+    else:
+        d.line([(left, head), (right, head)],
+               fill=WHITE if kind == "filled" else edge, width=cw)
     for x in (665, 855):
-        d.line(p((x, 150), (x, 240)), fill=LINE, width=w)
-    d.text((760 * k, 550 * k), "א", font=ImageFont.truetype(FONT_BOLD, 240 * k),
-           fill=LINE, anchor="ms", direction="rtl")
-    # Gear: eight teeth around a hole, overlapping the house's corner.
+        x0, y0 = c(x, 150)
+        y1 = c(x, 240)[1]
+        if kind != "line":
+            d.line([(x0, y0), (x0, y1)], fill=WHITE, width=cw * 2)
+        d.line([(x0, y0), (x0, y1)], fill=edge, width=cw)
+    d.text(c(760, 550), "א", font=ImageFont.truetype(FONT_BOLD, int(240 * f * k)),
+           fill=WHITE if kind == "filled" else edge, anchor="ms", direction="rtl")
+
+    # Gear: eight teeth around a hole, overlapping the house's corner. A
+    # white halo keeps it apart from the larger page behind it.
     cx, cy, outer, inner, teeth = 640, 735, 158, 122, 8
     pts = []
     for i in range(teeth * 4):
         a = 2 * math.pi * (i - 0.5) / (teeth * 4)
-        r = outer if i % 4 in (0, 1) else inner
-        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+        rr = outer if i % 4 in (0, 1) else inner
+        pts.append((cx + rr * math.cos(a), cy + rr * math.sin(a)))
+    if kind != "line":
+        d.polygon(p(*pts), fill=WHITE)
+        d.line(p(*pts, pts[0]), fill=WHITE, width=int(w * 2.4), joint="curve")
     d.line(p(*pts, pts[0]), fill=LINE, width=w, joint="curve")
-    d.ellipse([(cx - 62) * k, (cy - 62) * k, (cx + 62) * k, (cy + 62) * k],
+    d.ellipse(box(cx - 62, cy - 62, cx + 62, cy + 62),
               outline=LINE, width=w)
+
+    # A larger page widens the drawing: shrink it back to the original
+    # extent, centred on the grid.
+    if kind == "line":
+        im = im.crop((m * k, m * k, m * k + s, m * k + s))
+    else:
+        crop = im.crop(im.getbbox())
+        t = EXTENT * k / max(crop.width, crop.height)
+        crop = crop.resize((int(crop.width * t), int(crop.height * t)), Image.LANCZOS)
+        im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+        im.paste(crop, ((s - crop.width) // 2, (s - crop.height) // 2), crop)
     return im.resize((size, size), Image.LANCZOS)
 
 
