@@ -47,7 +47,13 @@ class TextSizeNotifier extends Notifier<double> {
 final NotifierProvider<TextSizeNotifier, double> textSizeProvider =
     NotifierProvider<TextSizeNotifier, double>(TextSizeNotifier.new);
 
-/// The phone's text scaling (possibly nonlinear) times the app's [factor].
+/// The most the app's choice may enlarge text in total, together with the
+/// phone's font size (owner decision 2026-10-15): beyond about 170% the
+/// screens get cramped. A phone already set above it keeps its own size.
+const double kMaxTotalTextScale = 1.7;
+
+/// The phone's text scaling (possibly nonlinear) times the app's [factor],
+/// up to [kMaxTotalTextScale].
 @immutable
 class AppTextScaler extends TextScaler {
   const AppTextScaler(this.system, this.factor);
@@ -56,11 +62,15 @@ class AppTextScaler extends TextScaler {
   final double factor;
 
   @override
-  double scale(double fontSize) => system.scale(fontSize) * factor;
+  double scale(double fontSize) {
+    final double phone = system.scale(fontSize);
+    final double cap = fontSize * kMaxTotalTextScale;
+    return phone >= cap ? phone : (phone * factor).clamp(phone, cap);
+  }
 
   @override
   // ignore: deprecated_member_use
-  double get textScaleFactor => system.textScaleFactor * factor;
+  double get textScaleFactor => scale(100) / 100;
 
   @override
   bool operator ==(Object other) =>

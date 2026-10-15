@@ -98,6 +98,16 @@ void main() {
     );
   });
 
+  test('the total enlargement stops at the cap', () {
+    double total(double phone, double app) =>
+        AppTextScaler(TextScaler.linear(phone), app).scale(10) / 10;
+    expect(total(1.0, 1.4), moreOrLessEquals(1.4));
+    expect(total(1.1, 1.2), moreOrLessEquals(1.32));
+    expect(total(1.3, 1.4), moreOrLessEquals(kMaxTotalTextScale));
+    // A phone already above the cap keeps its own size.
+    expect(total(2.0, 1.4), moreOrLessEquals(2.0));
+  });
+
   testWidgets('the month cells grow with the text size, without overflow', (
     WidgetTester tester,
   ) async {
