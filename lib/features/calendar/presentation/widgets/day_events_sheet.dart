@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/widgets/linkified_text.dart';
@@ -41,6 +42,7 @@ class DayEventsSheet extends ConsumerWidget {
     final String dateLabel =
         '${hebrewDayNumeral(date.day)} ${engine.monthName(date.month)} '
         '${hebrewYearNumeral(date.year)}';
+    final TextStyle? titleStyle = Theme.of(context).textTheme.titleMedium;
 
     return SafeArea(
       child: Padding(
@@ -49,7 +51,25 @@ class DayEventsSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(dateLabel, style: Theme.of(context).textTheme.titleMedium),
+            // Owner request 2026-10-15: the Gregorian date too, small, on
+            // the same line at the far end, for orientation.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: <Widget>[
+                Expanded(child: Text(dateLabel, style: titleStyle)),
+                SizedBox(width: spacingSm),
+                Text(
+                  DateFormat.yMMMMd('he').format(engine.toGregorian(date)),
+                  key: const ValueKey<String>('day-sheet-gregorian'),
+                  style: titleStyle?.copyWith(
+                    fontSize: (titleStyle.fontSize ?? titleRem) * 0.6,
+                    fontWeight: FontWeight.normal,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
             SizedBox(height: spacingSm),
             for (final EventOccurrence occurrence in occurrences)
               _DayEventTile(occurrence: occurrence),
