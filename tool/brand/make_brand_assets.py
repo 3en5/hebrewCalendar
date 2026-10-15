@@ -91,9 +91,28 @@ def glyph(size, style=None):
     head = c(0, 300)[1]
     r = 40 * f * k
     body = accent if kind == "filled" else WHITE
-    edge = LINE if kind == "line" else accent
+    edge = LINE if kind in ("line", "badge") else accent
+    if style.get("halo"):
+        # A white margin cuts the house's lines where the page covers them.
+        g = cw * 1.4
+        d.rounded_rectangle([left - g, top - g, right + g, bottom + g],
+                            radius=r + g, fill=WHITE)
     d.rounded_rectangle([left, top, right, bottom], radius=r, fill=body,
                         outline=edge, width=cw)
+    if kind == "filled" and style.get("gradient"):
+        # Top-to-bottom gradient over the page's whole shape.
+        top_c, bottom_c = style["gradient"]
+        shape = Image.new("L", im.size, 0)
+        ImageDraw.Draw(shape).rounded_rectangle(
+            [left - cw / 2, top - cw / 2, right + cw / 2, bottom + cw / 2],
+            radius=r + cw / 2, fill=255)
+        fill = Image.new("RGBA", im.size, top_c)
+        fd = ImageDraw.Draw(fill)
+        for y in range(int(top - cw), int(bottom + cw) + 1):
+            t = min(1, max(0, (y - top) / max(1, bottom - top)))
+            fd.line([(left - cw, y), (right + cw, y)],
+                    fill=tuple(int(top_c[i] * (1 - t) + bottom_c[i] * t) for i in range(3)))
+        im.paste(fill, (0, 0), shape)
     if kind == "header":
         d.rounded_rectangle([left, top, right, head + cw / 2], radius=r, fill=accent)
         d.rectangle([left, head - r, right, head + cw / 2], fill=accent)
@@ -106,8 +125,18 @@ def glyph(size, style=None):
         if kind != "line":
             d.line([(x0, y0), (x0, y1)], fill=WHITE, width=cw * 2)
         d.line([(x0, y0), (x0, y1)], fill=edge, width=cw)
-    d.text(c(760, 550), "א", font=ImageFont.truetype(FONT_BOLD, int(240 * f * k)),
-           fill=WHITE if kind == "filled" else edge, anchor="ms", direction="rtl")
+    if kind != "badge":
+        d.text(c(760, 550), "א", font=ImageFont.truetype(FONT_BOLD, int(240 * f * k)),
+               fill=WHITE if kind == "filled" else edge, anchor="ms", direction="rtl")
+    if style.get("moon"):
+        # A crescent: the Hebrew months follow the moon.
+        mx, my = c(*style["moon"])
+        mr = 38 * f * k
+        moon = Image.new("L", im.size, 0)
+        md = ImageDraw.Draw(moon)
+        md.ellipse([mx - mr, my - mr, mx + mr, my + mr], fill=255)
+        md.ellipse([mx - mr * 0.45, my - mr * 1.1, mx + mr * 1.55, my + mr * 0.9], fill=0)
+        im.paste(Image.new("RGBA", im.size, WHITE), (0, 0), moon)
 
     # Gear: eight teeth around a hole, overlapping the house's corner. A
     # white halo keeps it apart from the larger page behind it.
@@ -123,6 +152,16 @@ def glyph(size, style=None):
     d.line(p(*pts, pts[0]), fill=LINE, width=w, joint="curve")
     d.ellipse(box(cx - 62, cy - 62, cx + 62, cy + 62),
               outline=LINE, width=w)
+
+    if kind == "badge":
+        # The "א" moves to an accent badge on the page's corner.
+        bx, by = c(*style.get("badge", (930, 590)))
+        br = style.get("badge_r", 170) * k
+        g = cw * 1.2
+        d.ellipse([bx - br - g, by - br - g, bx + br + g, by + br + g], fill=WHITE)
+        d.ellipse([bx - br, by - br, bx + br, by + br], fill=accent)
+        d.text((bx, by + br * 0.42), "א", font=ImageFont.truetype(FONT_BOLD, int(br * 1.25)),
+               fill=WHITE, anchor="ms", direction="rtl")
 
     # A larger page widens the drawing: shrink it back to the original
     # extent, centred on the grid.
