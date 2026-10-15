@@ -98,7 +98,7 @@ class _DayEventTile extends ConsumerWidget {
       subtitle: Text(
         _event.attendees.isEmpty
             ? timeLabel
-            : '$timeLabel · ${l10n.eventAttendeesSummary(_event.attendees.length, _event.attendees.where((EventAttendee a) => a.response == AttendeeResponse.accepted).length)}',
+            : '$timeLabel · ${attendeesSummary(l10n, _event.attendees)}',
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -186,4 +186,15 @@ class _DayEventTile extends ConsumerWidget {
       Navigator.of(context).pop();
     }
   }
+}
+
+/// "משתתף אחד, אישר/ה" / "3 משתתפים, 2 אישרו" (owner report 2026-10-15:
+/// "1 משתתפים, 1 אישרו" read wrong).
+String attendeesSummary(AppLocalizations l10n, List<EventAttendee> attendees) {
+  final int accepted = attendees
+      .where((EventAttendee a) => a.response == AttendeeResponse.accepted)
+      .length;
+  return attendees.length == 1
+      ? l10n.eventAttendeesSummaryOne(accepted)
+      : l10n.eventAttendeesSummary(attendees.length, accepted);
 }

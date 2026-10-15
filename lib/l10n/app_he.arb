@@ -675,9 +675,14 @@
   "@attendeeTentative": {"description": "Participant reply: tentative (M11)."},
   "attendeeNoReply": "טרם השיב/ה",
   "@attendeeNoReply": {"description": "Participant has not replied yet (M11)."},
-  "eventAttendeesSummary": "{count} משתתפים, {accepted} אישרו",
+  "eventAttendeesSummaryOne": "{accepted, plural, =0{משתתף אחד, טרם השיב/ה} other{משתתף אחד, אישר/ה}}",
+  "@eventAttendeesSummaryOne": {
+    "description": "Participants summary under an event in the day events sheet when there is exactly one participant; accepted is 0 or 1.",
+    "placeholders": {"accepted": {"type": "int"}}
+  },
+  "eventAttendeesSummary": "{accepted, plural, =0{{count} משתתפים, טרם אישרו} =1{{count} משתתפים, אחד אישר/ה} other{{count} משתתפים, {accepted} אישרו}}",
   "@eventAttendeesSummary": {
-    "description": "Short participants summary under an event in the day events sheet (M11).",
+    "description": "Short participants summary under an event in the day events sheet (M11), for two or more participants.",
     "placeholders": {"count": {"type": "int"}, "accepted": {"type": "int"}}
   },
   "goToDateTooltip": "מעבר לתאריך",

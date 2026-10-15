@@ -674,8 +674,26 @@ class AppLocalizationsHe extends AppLocalizations {
   String get attendeeNoReply => 'טרם השיב/ה';
 
   @override
+  String eventAttendeesSummaryOne(int accepted) {
+    String _temp0 = intl.Intl.pluralLogic(
+      accepted,
+      locale: localeName,
+      other: 'משתתף אחד, אישר/ה',
+      zero: 'משתתף אחד, טרם השיב/ה',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String eventAttendeesSummary(int count, int accepted) {
-    return '$count משתתפים, $accepted אישרו';
+    String _temp0 = intl.Intl.pluralLogic(
+      accepted,
+      locale: localeName,
+      other: '$count משתתפים, $accepted אישרו',
+      one: '$count משתתפים, אחד אישר/ה',
+      zero: '$count משתתפים, טרם אישרו',
+    );
+    return '$_temp0';
   }
 
   @override

@@ -87,19 +87,30 @@ class LocationActions extends StatelessWidget {
             ],
           ),
           SizedBox(height: spacingXs),
-          Wrap(
-            spacing: spacingSm,
+          // One row, whatever the phone's font size (owner report
+          // 2026-10-15: with a larger font the two buttons stacked): each
+          // takes half the width and its label shrinks to fit.
+          Row(
             children: <Widget>[
-              OutlinedButton.icon(
-                onPressed: () =>
-                    unawaited(_open(context, googleMapsUri(location))),
-                icon: const Icon(Icons.map_outlined),
-                label: Text(l10n.locationOpenInMaps),
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: const ValueKey<String>('location-maps'),
+                  style: _compact(context),
+                  onPressed: () =>
+                      unawaited(_open(context, googleMapsUri(location))),
+                  icon: const Icon(Icons.map_outlined),
+                  label: _fit(l10n.locationOpenInMaps),
+                ),
               ),
-              OutlinedButton.icon(
-                onPressed: () => unawaited(_open(context, wazeUri(location))),
-                icon: const Icon(Icons.navigation_outlined),
-                label: Text(l10n.locationNavigateWaze),
+              SizedBox(width: spacingSm),
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: const ValueKey<String>('location-waze'),
+                  style: _compact(context),
+                  onPressed: () => unawaited(_open(context, wazeUri(location))),
+                  icon: const Icon(Icons.navigation_outlined),
+                  label: _fit(l10n.locationNavigateWaze),
+                ),
               ),
             ],
           ),
@@ -108,3 +119,17 @@ class LocationActions extends StatelessWidget {
     );
   }
 }
+
+ButtonStyle _compact(BuildContext context) => ButtonStyle(
+  visualDensity: VisualDensity.compact,
+  padding: WidgetStatePropertyAll<EdgeInsetsGeometry>(
+    EdgeInsets.symmetric(horizontal: spacingSm),
+  ),
+  // From the theme's button text, so the app font is kept.
+  textStyle: WidgetStatePropertyAll<TextStyle?>(
+    Theme.of(context).textTheme.labelLarge,
+  ),
+);
+
+Widget _fit(String text) =>
+    FittedBox(fit: BoxFit.scaleDown, child: Text(text, maxLines: 1));

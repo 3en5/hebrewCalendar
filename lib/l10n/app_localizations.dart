@@ -1228,10 +1228,16 @@ abstract class AppLocalizations {
   /// **'טרם השיב/ה'**
   String get attendeeNoReply;
 
-  /// Short participants summary under an event in the day events sheet (M11).
+  /// Participants summary under an event in the day events sheet when there is exactly one participant; accepted is 0 or 1.
   ///
   /// In he, this message translates to:
-  /// **'{count} משתתפים, {accepted} אישרו'**
+  /// **'{accepted, plural, =0{משתתף אחד, טרם השיב/ה} other{משתתף אחד, אישר/ה}}'**
+  String eventAttendeesSummaryOne(int accepted);
+
+  /// Short participants summary under an event in the day events sheet (M11), for two or more participants.
+  ///
+  /// In he, this message translates to:
+  /// **'{accepted, plural, =0{{count} משתתפים, טרם אישרו} =1{{count} משתתפים, אחד אישר/ה} other{{count} משתתפים, {accepted} אישרו}}'**
   String eventAttendeesSummary(int count, int accepted);
 
   /// App bar button opening the go-to-date sheet (M12).
