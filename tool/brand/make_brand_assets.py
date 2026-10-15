@@ -60,7 +60,7 @@ def glyph(size, style=None):
     f = style.get("scale", 1.0)
     s = 1024 * SUPERSAMPLE
     k = SUPERSAMPLE
-    m = 256  # margin, so a larger page is not cut at the grid's edge
+    m = 400  # margin, so a larger page is not cut at the grid's edge
     im = Image.new("RGBA", (s + 2 * m * k, s + 2 * m * k), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     w = 34 * k
@@ -71,13 +71,19 @@ def glyph(size, style=None):
     def box(x0, y0, x1, y1):
         return [(x0 + m) * k, (y0 + m) * k, (x1 + m) * k, (y1 + m) * k]
 
-    # House: roof, wall and floor, window with its cross.
-    d.line(p((440, 740), (110, 740), (110, 370), (60, 370), (355, 75), (560, 280)),
+    # House: roof, wall and floor, window with its cross; [house] shrinks
+    # it about its bottom-left corner.
+    hs = style.get("house", 1.0)
+
+    def h(*pts):
+        return p(*[(110 + (x - 110) * hs, 740 + (y - 740) * hs) for x, y in pts])
+
+    d.line(h((440, 740), (110, 740), (110, 370), (60, 370), (355, 75), (560, 280)),
            fill=LINE, width=w, joint="curve")
-    d.rounded_rectangle(box(215, 390, 415, 590), radius=14 * k,
-                        outline=LINE, width=w)
-    d.line(p((315, 390), (315, 590)), fill=LINE, width=w)
-    d.line(p((215, 490), (415, 490)), fill=LINE, width=w)
+    d.rounded_rectangle(sum(map(list, h((215, 390), (415, 590))), []),
+                        radius=14 * k, outline=LINE, width=w)
+    d.line(h((315, 390), (315, 590)), fill=LINE, width=w)
+    d.line(h((215, 490), (415, 490)), fill=LINE, width=w)
 
     # Calendar page with binding rings and "א", grown by f about [origin].
     ox, oy = style.get("origin", (760, 395))
@@ -140,7 +146,7 @@ def glyph(size, style=None):
 
     # Gear: eight teeth around a hole, overlapping the house's corner. A
     # white halo keeps it apart from the larger page behind it.
-    cx, cy, outer, inner, teeth = 640, 735, 158, 122, 8
+    cx, cy, outer, inner, teeth = 640 + style.get("gear_dx", 0), 735, 158, 122, 8
     pts = []
     for i in range(teeth * 4):
         a = 2 * math.pi * (i - 0.5) / (teeth * 4)
