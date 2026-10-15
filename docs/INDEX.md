@@ -34,6 +34,9 @@
 | `firebase/test/rules.test.mjs`, `package.json` | בדיקות ה-Security Rules (`@firebase/rules-unit-testing`, `node:test`). ה-fixture תואם לפלט של `event_firestore_mapper.dart`. בודק בידוד בין משתמשים, ולידציית שדות, איסור העברת בעלות, ו-catch-all |
 | `tool/brand/make_brand_assets.py`, `tool/brand/icon.svg` | יוצר מקוד את אייקון האפליקציה בסגנון KALFAPP (legacy ו-adaptive, לכל הצפיפויות) ואת תמונות החנות (`icon.png`, גם ל-`site/assets/icon.png`, ו-`featureGraphic.png` עם לוגו KALFAPP). `icon.svg` הוא רפרנס של אותו ציור (ARCHITECTURE.md §13) |
 | `tool/screenshots/capture_store_screens_test.dart` | מצלם את מסכי האפליקציה האמיתיים עם אירועים לדוגמה (1080x2400) ל-`build/store_raw/`. לא רץ ב-CI |
+| `tool/screenshots/screens_harness.dart` | משותף לצילומי המסך: האפליקציה האמיתית עם אירועים לדוגמה, גופנים, `shot`/`shotNow` (תמיד מתחיל בתצוגת חודש) |
+| `tool/screenshots/capture_guide_screens_test.dart` | צילומי המדריך (`build/store_raw/g_*.png`) ומיקום כל רכיב שהמדריך מצביע עליו (`guide_marks.json`) |
+| `tool/screenshots/annotate_guide.py` | מצייר על צילומי המדריך מסגרות כתומות, חיצים ועמעום של שאר המסך, וכותב `site/assets/guide/*.jpg` |
 | `tool/brand/make_store_screenshots.py` | ממסגר את המסכים לתמונות חנות בסגנון KALFAPP (כותרת, הסבר, מסגרת טלפון) ל-`distribution/listings/images/phoneScreenshots/` |
 | `assets/fonts/` | גופן Rubik (OFL) במשקלים סטטיים 400/500/600/700 + `OFL-Rubik.txt` |
 | `assets/brand/kalfapp_logo.png` | לוגו KALFAPP (ממשפחת PowerWatch), מוצג במסך "אודות" ובגרפיקה לחנות |
@@ -282,6 +285,6 @@
 | `test/test_support/fake_background_sync_scheduler.dart` | `FakeBackgroundSyncScheduler` (M5b): test double בזיכרון ל-`BackgroundSyncScheduler` — סופר קריאות `registerPeriodic`/`cancel` במקום לגעת בפלאגין `workmanager` האמיתי |
 | `test/test_support/fake_backup_service.dart` | `FakeBackupService` (M7): test double ל-`BackupService` — תוצאות/מוני-קריאות ניתנים להגדרה ל-`exportToFile`/`shareBackup`/`importFromFile`, ללא נגיעה ב-`file_picker`/`share_plus`; override קבוע בטסטי widget של `BackupSection`/`SettingsScreen` |
 | `test/test_support/fake_hanging_sync_settings_store.dart` | `FakeHangingSyncSettingsStore` (סבב משוב מכשיר #1, תיקון #2): test double ל-`SyncSettingsStore` שה-`load()` שלו לעולם לא מסתיים — מדמה את כשל המכשיר האמיתי (Firestore read שנתקע/נכשל) כדי לאמת שה-timeout וה-retry עובדים |
-| `site/` | האתר הציבורי (Firebase Hosting): `index.html` דף הבית, `privacy.html` מדיניות פרטיות ומחיקת נתונים, `testers.html` הוראות לבודקים (noindex), `guide.html` מדריך למשתמש (8 פרקים, צילומי מסך ב-`assets/guide/` מ-`tool/screenshots/`), `style.css`, `assets/`, `googlef81089490c5c16e2.html` (אימות בעלות ב-Search Console, לא למחוק) |
+| `site/` | האתר הציבורי (Firebase Hosting): `index.html` דף הבית, `privacy.html` מדיניות פרטיות ומחיקת נתונים, `testers.html` הוראות לבודקים (noindex), `guide.html` מדריך למשתמש (8 פרקים, צילומי מסך עם מסגרות וחיצים ב-`assets/guide/`, נוצרים ב-`tool/screenshots/capture_guide_screens_test.dart` ואז `annotate_guide.py`), `style.css`, `assets/`, `googlef81089490c5c16e2.html` (אימות בעלות ב-Search Console, לא למחוק) |
 | `.github/workflows/hosting.yml` | פרסום `site/` ל-https://hebrewcalendar-68363.web.app (אוטומטי כש-site/ משתנה ב-main או בענף claude/*) |
 | `docs/OAUTH_VERIFICATION.md` | חומרים ושלבים לאימות ה-OAuth אצל Google: כתובות, הסבר ל-scope, תסריט לסרטון |
