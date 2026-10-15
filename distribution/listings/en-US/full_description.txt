@@ -8,6 +8,7 @@ A calendar built on the Hebrew date
 • Jump to any Hebrew or Gregorian date, and search all your events by word
 • Switch the calendar to Gregorian months with a tap on the title
 • A line marking the current time in the week and day views
+• Choose a larger text size, up to 140%, and touch a day in the month view to enlarge it
 
 Times of day and Shabbat
 • Dawn, sunrise, latest Shema and prayer, midday, mincha, sunset and nightfall

@@ -46,6 +46,7 @@ SHOTS = {
     "g_significant": ("significant", [("kinds", "frame"), ("sunset", "frame"),
                                       ("preview", "frame")]),
     "g_settings": ("settings", [("sync", "frame")]),
+    "g_text_size": ("text-size", [("size", "frame")]),
     "g_settings_more": ("settings-more", [("backup", "frame"), ("guide", "frame")]),
     "g_halacha": ("halacha", [("dedication", "frame"), ("learned", "frame")]),
 }
