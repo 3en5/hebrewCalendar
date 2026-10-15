@@ -12,6 +12,7 @@ import '../../application/hebrew_date_engine_provider.dart';
 import '../../../zmanim/application/zmanim_settings.dart';
 import '../../../zmanim/presentation/shabbat_times.dart';
 import 'day_cell.dart';
+import 'day_pop_stack.dart';
 import 'day_swipe_area.dart';
 import 'month_grid_data.dart';
 import 'month_day_agenda.dart';
@@ -92,48 +93,54 @@ class MonthGrid extends ConsumerWidget {
                     final double rowHeight =
                         (constraints.maxHeight * _gridHeightShare / rowCount)
                             .clamp(rem(2.75), rem(4.5));
-                    return Column(
-                      children: <Widget>[
-                        for (int row = 0; row < rowCount; row++)
-                          SizedBox(
-                            height: rowHeight,
-                            child: Row(
-                              // Stretch so empty (out-of-month) cells, which have
-                              // no child to size them, still fill the row and
-                              // their grid lines line up with the day cells'.
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget>[
-                                for (int col = 0; col < _daysPerWeek; col++)
-                                  Expanded(
-                                    child: _buildCell(
-                                      context,
-                                      ref,
-                                      cells[row * _daysPerWeek + col],
-                                      col: col,
-                                      today: today,
-                                      selected: selected,
-                                      data: data,
-                                      zmanimSettings: zmanimSettings,
+                    // The tapped day pops over the grid and the agenda.
+                    return DayPopStack(
+                      child: Column(
+                        children: <Widget>[
+                          for (int row = 0; row < rowCount; row++)
+                            SizedBox(
+                              height: rowHeight,
+                              child: Row(
+                                // Stretch so empty (out-of-month) cells, which have
+                                // no child to size them, still fill the row and
+                                // their grid lines line up with the day cells'.
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: <Widget>[
+                                  for (int col = 0; col < _daysPerWeek; col++)
+                                    Expanded(
+                                      child: Builder(
+                                        builder: (BuildContext cellContext) =>
+                                            _buildCell(
+                                              cellContext,
+                                              ref,
+                                              cells[row * _daysPerWeek + col],
+                                              col: col,
+                                              today: today,
+                                              selected: selected,
+                                              data: data,
+                                              zmanimSettings: zmanimSettings,
+                                            ),
+                                      ),
                                     ),
-                                  ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        Expanded(
-                          child: DaySwipeArea(
-                            date: selected,
-                            child: MonthDayAgenda(
+                          Expanded(
+                            child: DaySwipeArea(
                               date: selected,
-                              labels:
-                                  data.labels[selected] ??
-                                  const <JewishDayLabel>[],
-                              occurrences:
-                                  data.occurrences[selected] ??
-                                  const <EventOccurrence>[],
+                              child: MonthDayAgenda(
+                                date: selected,
+                                labels:
+                                    data.labels[selected] ??
+                                    const <JewishDayLabel>[],
+                                occurrences:
+                                    data.occurrences[selected] ??
+                                    const <EventOccurrence>[],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     );
                   },
                 ),
@@ -165,14 +172,14 @@ class MonthGrid extends ConsumerWidget {
     }
     final HebrewDateEngine engine = ref.read(hebrewDateEngineProvider);
     final DateTime gregorianDate = engine.toGregorian(cellDate);
-    return DayCell(
+    DayCell cell({required bool isSelected, required bool endLine}) => DayCell(
       hebrewDay: cellDate.day,
       gregorianDay: gregorianDate.day,
       gregorianPrimary: gregorian,
       isToday: cellDate == today,
-      isSelected: cellDate == selected,
+      isSelected: isSelected,
       isShabbat: col == _daysPerWeek - 1,
-      drawEndLine: drawEndLine,
+      drawEndLine: endLine,
       eventColors: <Color>[
         for (final EventOccurrence o
             in data.occurrences[cellDate] ?? const <EventOccurrence>[])
@@ -181,9 +188,14 @@ class MonthGrid extends ConsumerWidget {
       // Labels are ordered most important first, parsha last.
       label: data.labels[cellDate]?.first,
       shabbatTime: shabbatTimeFor(zmanimSettings, gregorianDate),
-      onTap: () =>
-          ref.read(calendarViewProvider.notifier).setFocusedDate(cellDate),
+      onTap: () {
+        ref.read(calendarViewProvider.notifier).setFocusedDate(cellDate);
+        DayPopStack.maybeOf(
+          context,
+        )?.pop(context, cell(isSelected: true, endLine: false));
+      },
     );
+    return cell(isSelected: cellDate == selected, endLine: drawEndLine);
   }
 }
 
