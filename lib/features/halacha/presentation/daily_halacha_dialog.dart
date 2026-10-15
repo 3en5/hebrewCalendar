@@ -84,42 +84,35 @@ class _DailyHalachaDialog extends StatelessWidget {
                 ),
               ),
             ),
-          Padding(
-            padding: EdgeInsetsDirectional.fromSTEB(
-              spacingMd,
-              spacingMd,
-              spacingMd,
-              spacingSm,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  l10n.dailyHalachaTitle,
-                  style: TextStyle(
-                    fontSize: titleLargeRem,
-                    fontWeight: FontWeight.w700,
-                    color: colors.primary,
-                  ),
-                ),
-                SizedBox(height: spacingXs),
-                Text(
-                  '${l10n.dailyHalachaBook} · ${halacha.title} · $dateLabel',
-                  style: TextStyle(
-                    fontSize: bodySmallRem,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
+          // Owner request 2026-10-15: the dedication stays put on top; the
+          // title and the halacha scroll together under it.
           Flexible(
             child: SingleChildScrollView(
+              key: const ValueKey<String>('daily-halacha-scroll'),
               padding: EdgeInsets.all(spacingMd),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  Text(
+                    l10n.dailyHalachaTitle,
+                    style: TextStyle(
+                      fontSize: titleLargeRem,
+                      fontWeight: FontWeight.w700,
+                      color: colors.primary,
+                    ),
+                  ),
+                  SizedBox(height: spacingXs),
+                  Text(
+                    '${l10n.dailyHalachaBook} · ${halacha.title} · $dateLabel',
+                    style: TextStyle(
+                      fontSize: bodySmallRem,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: spacingSm),
+                    child: const Divider(height: 1),
+                  ),
                   for (int i = 0; i < halacha.sections.length; i++)
                     _Section(
                       section: halacha.sections[i],
