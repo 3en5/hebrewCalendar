@@ -841,4 +841,10 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get linkOpenFailed => 'לא ניתן לפתוח';
+
+  @override
+  String get settingsRateApp => 'דירוג האפליקציה';
+
+  @override
+  String get settingsRateAppSubtitle => 'אהבת? נשמח לדירוג ב-Google Play';
 }

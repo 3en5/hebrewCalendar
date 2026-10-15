@@ -177,6 +177,7 @@
 | `lib/domain/event/significant_date.dart` | M24: חישוב התאריך העברי, כלל החזרה (יארצייט → אדר א׳), המופע הבא ובניית האירועים |
 | `lib/domain/text/text_links.dart` | איתור מספרי טלפון, מיילים וקישורים בטקסט, ומספר לוואטסאפ |
 | `lib/core/widgets/linkified_text.dart` | טקסט שבו מספרים, מיילים וקישורים לחיצים (חיוג/וואטסאפ/העתקה, מייל, דפדפן) |
+| `lib/features/settings/presentation/widgets/rate_app_tile.dart` | שורת "דירוג האפליקציה" בהגדרות, פותחת את עמוד האפליקציה ב-Google Play |
 | `lib/features/calendar/presentation/widgets/event_attendees_list.dart` | משתתפי האירוע בחלון הפרטים, מייל לחיץ ותשובה |
 | `test/features/calendar/presentation/event_details_links_test.dart` | טסטים: מיקום שהוא קישור, רשימת משתתפים |
 | `test/domain/text/text_links_test.dart` | טסטים לאיתור הקישורים |

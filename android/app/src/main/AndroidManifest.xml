@@ -68,6 +68,11 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
+        <!-- Rate the app: the Play Store page (2026-10-15). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="market" />
+        </intent>
         <!-- Tappable phone numbers and emails in events (2026-10-15). -->
         <intent>
             <action android:name="android.intent.action.DIAL" />

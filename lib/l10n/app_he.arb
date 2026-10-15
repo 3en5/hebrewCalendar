@@ -782,5 +782,9 @@
   "linkCopied": "הועתק",
   "@linkCopied": {"description": "Snackbar after copying a phone or email."},
   "linkOpenFailed": "לא ניתן לפתוח",
-  "@linkOpenFailed": {"description": "Snackbar when no app can open a link, number or email."}
+  "@linkOpenFailed": {"description": "Snackbar when no app can open a link, number or email."},
+  "settingsRateApp": "דירוג האפליקציה",
+  "@settingsRateApp": {"description": "Settings row: open the app's Google Play page to rate it."},
+  "settingsRateAppSubtitle": "אהבת? נשמח לדירוג ב-Google Play",
+  "@settingsRateAppSubtitle": {"description": "Subtitle of the rate-the-app row."}
 }

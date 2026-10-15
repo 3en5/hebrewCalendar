@@ -280,6 +280,8 @@ void main() {
     // lands on it.
     await tester.drag(find.byType(ListView), const Offset(0, -50));
     await tester.pumpAndSettle();
+    // Owner request 2026-10-15: "rate the app" sits above About.
+    expect(find.byKey(const ValueKey<String>('rate-app')), findsOneWidget);
     await tester.tap(find.text(l10n.settingsAboutTooltip));
     await tester.pumpAndSettle();
 

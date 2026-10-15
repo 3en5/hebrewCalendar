@@ -1515,6 +1515,18 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'לא ניתן לפתוח'**
   String get linkOpenFailed;
+
+  /// Settings row: open the app's Google Play page to rate it.
+  ///
+  /// In he, this message translates to:
+  /// **'דירוג האפליקציה'**
+  String get settingsRateApp;
+
+  /// Subtitle of the rate-the-app row.
+  ///
+  /// In he, this message translates to:
+  /// **'אהבת? נשמח לדירוג ב-Google Play'**
+  String get settingsRateAppSubtitle;
 }
 
 class _AppLocalizationsDelegate
