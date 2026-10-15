@@ -14,6 +14,11 @@ class AppTheme {
   /// `Colors.blue`; owner-approved rebrand, ARCHITECTURE.md §13).
   static const Color _seedColor = Color(0xFF2196F3);
 
+  /// The add button's accent (owner choice 2026-10-15, sketch 39): a deep
+  /// orange, the complement of the brand blue, used on that button only so
+  /// the main action stands out in both light and dark mode.
+  static const Color addButtonColor = Color(0xFFE8833A);
+
   /// The KALFAPP family font, bundled under `assets/fonts` (OFL).
   static const String fontFamily = 'Rubik';
 
@@ -46,6 +51,10 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: colorScheme.primary,
         ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: addButtonColor,
+        foregroundColor: Colors.white,
       ),
     );
   }
