@@ -10,7 +10,13 @@ import '../../../zmanim/presentation/shabbat_times.dart';
 /// still shows this many (the full list is in the agenda below the grid).
 const int _maxDots = 3;
 
-/// Space above the day's numeral, clear of the small corner number.
+/// Where the day's numeral and the event dots sit, as shares of the
+/// cell's height: the space above the numeral and below the dots (owner
+/// tuning 2026-10-15: the first version had them too close to the edges).
+const double _numeralTopShare = 0.12;
+const double _dotsBottomShare = 0.10;
+
+/// The least space above the numeral, clear of the small corner number.
 double get _cellTopPad => spacingXs * 1.5;
 
 /// A single day cell in the month grid (owner-approved "variant B" design):
@@ -164,11 +170,27 @@ class DayCell extends StatelessWidget {
                   // the same height and the dots always at the bottom, so a
                   // row reads level however much text a day has; the label
                   // and Shabbat time take the space between, shrunk to fit.
+                  final double top = (constraints.maxHeight * _numeralTopShare)
+                      .clamp(_cellTopPad, double.infinity);
+                  final double bottom =
+                      (constraints.maxHeight * _dotsBottomShare).clamp(
+                        spacingXs / 2,
+                        double.infinity,
+                      );
+                  if (constraints.maxHeight <
+                      top + bottom + numeralHeight + spacingXs * 3) {
+                    return Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[numeral, middle, dots],
+                        ),
+                      ),
+                    );
+                  }
                   return Padding(
-                    padding: EdgeInsets.only(
-                      top: _cellTopPad,
-                      bottom: spacingXs / 2,
-                    ),
+                    padding: EdgeInsets.only(top: top, bottom: bottom),
                     child: Column(
                       children: <Widget>[
                         numeral,
