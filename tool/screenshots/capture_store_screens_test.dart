@@ -31,13 +31,54 @@ import 'package:hebrew_calendar/features/event_editor/application/event_reposito
 import 'package:hebrew_calendar/features/notifications/application/reminder_providers.dart';
 import 'package:hebrew_calendar/features/settings/application/google_sync_providers.dart';
 import 'package:hebrew_calendar/features/settings/application/theme_mode_provider.dart';
+import 'package:hebrew_calendar/data/halacha/daily_halacha_source.dart';
+import 'package:hebrew_calendar/data/halacha/halacha_cloud.dart';
+import 'package:hebrew_calendar/domain/halacha/daily_halacha.dart';
+import 'package:hebrew_calendar/features/halacha/application/daily_halacha_providers.dart';
+import 'package:hebrew_calendar/features/settings/application/app_version_provider.dart';
 import 'package:hebrew_calendar/main.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../test/test_support/fake_auth_repository.dart';
 import '../../test/test_support/fake_background_sync_scheduler.dart';
 import '../../test/test_support/fake_google_calendar_api.dart';
 import '../../test/test_support/fake_notification_scheduler.dart';
+
+/// M25: the daily halacha from the built files in site/halacha/ksa, a
+/// sample dedication and share, and no cloud writes.
+class _ShotHalachaCloud implements HalachaCloud {
+  @override
+  Future<String?> dedicationFor(DateTime day) async =>
+      'לרפואת כל חולי עמו ישראל';
+
+  @override
+  Future<double?> enabledShare() async => 0.45;
+
+  @override
+  Future<void> recordChoice({required bool? from, required bool to}) async {}
+
+  @override
+  Future<void> recordLearned(DateTime day) async {}
+}
+
+DailyHalachaSource _localHalacha() => DailyHalachaSource(
+  baseUrl: 'https://example.test/ksa',
+  client: MockClient(
+    (http.Request r) async => http.Response.bytes(
+      File('site/halacha/ksa/${r.url.pathSegments.last}').readAsBytesSync(),
+      200,
+    ),
+  ),
+);
+
+/// Preferences for every shot: the daily halacha already shown today, so
+/// it opens only in its own shot.
+Map<String, Object> _prefs() => <String, Object>{
+  'daily_halacha_mode_v1': 'on',
+  'daily_halacha_last_shown_v1': dedicationDayKey(DateTime.now()),
+};
 
 const Size _physical = Size(1080, 2400);
 const double _dpr = 2.625;
@@ -201,6 +242,9 @@ Future<ProviderContainer> _pumpApp(
           ),
           googleCalendarApiProvider.overrideWithValue(FakeGoogleCalendarApi()),
           syncSettingsStoreProvider.overrideWithValue(store),
+          appVersionProvider.overrideWith((Ref ref) async => '1.0.0'),
+          dailyHalachaSourceProvider.overrideWithValue(_localHalacha()),
+          halachaCloudProvider.overrideWithValue(_ShotHalachaCloud()),
           backgroundSyncSchedulerProvider.overrideWithValue(
             FakeBackgroundSyncScheduler(),
           ),
@@ -227,7 +271,7 @@ void main() {
     await _loadFonts();
   });
   // A fresh preferences store per screen, so dark mode doesn't carry over.
-  setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
+  setUp(() => SharedPreferences.setMockInitialValues(_prefs()));
 
   testWidgets('month', (WidgetTester tester) async {
     await _pumpApp(tester, mode: ThemeMode.light);
@@ -293,6 +337,65 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('הגדרות'));
     await _shot(tester, '5_settings');
+  });
+
+  testWidgets('halacha', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'daily_halacha_mode_v1': 'on',
+    });
+    await _pumpApp(tester, mode: ThemeMode.light);
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 300)),
+    );
+    await _shot(tester, '9_halacha');
+  });
+
+  testWidgets('significant', (WidgetTester tester) async {
+    await _pumpApp(tester, mode: ThemeMode.light);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('add-menu-significant-date')),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('significant-name')),
+      'דוד',
+    );
+    Future<void> pick(String key, String text) async {
+      await tester.tap(find.byKey(ValueKey<String>(key)));
+      await tester.pumpAndSettle();
+      final Finder menu = find.byType(Scrollable).last;
+      final Finder item = find.descendant(of: menu, matching: find.text(text));
+      await tester.scrollUntilVisible(item, 200, scrollable: menu);
+      await tester.tap(item);
+      await tester.pumpAndSettle();
+    }
+
+    await pick('significant-day', '15');
+    await pick('significant-month', 'מרץ');
+    await pick('significant-year', '1985');
+    await tester.tap(find.text('אחרי השקיעה'));
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await _shot(tester, '10_significant');
+  });
+
+  testWidgets('day zmanim', (WidgetTester tester) async {
+    final ProviderContainer c = await _pumpApp(tester, mode: ThemeMode.light);
+    c.read(calendarViewProvider.notifier).setViewType(CalendarViewType.day);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(ExpansionTile).first);
+    await _shot(tester, '11_day');
+  });
+
+  testWidgets('settings halacha', (WidgetTester tester) async {
+    await _pumpApp(tester, mode: ThemeMode.light);
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('הגדרות'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).first, const Offset(0, -1200));
+    await _shot(tester, '12_settings_more');
   });
 
   testWidgets('about', (WidgetTester tester) async {
