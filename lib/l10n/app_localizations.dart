@@ -1516,6 +1516,18 @@ abstract class AppLocalizations {
   /// **'לא ניתן לפתוח'**
   String get linkOpenFailed;
 
+  /// Settings row: open the user guide on the app's site.
+  ///
+  /// In he, this message translates to:
+  /// **'מדריך למשתמש'**
+  String get settingsUserGuide;
+
+  /// Subtitle of the user guide row.
+  ///
+  /// In he, this message translates to:
+  /// **'כל מה שאפשר לעשות באפליקציה, צעד אחר צעד'**
+  String get settingsUserGuideSubtitle;
+
   /// Settings row: open the app's Google Play page to rate it.
   ///
   /// In he, this message translates to:

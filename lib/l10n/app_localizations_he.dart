@@ -843,6 +843,13 @@ class AppLocalizationsHe extends AppLocalizations {
   String get linkOpenFailed => 'לא ניתן לפתוח';
 
   @override
+  String get settingsUserGuide => 'מדריך למשתמש';
+
+  @override
+  String get settingsUserGuideSubtitle =>
+      'כל מה שאפשר לעשות באפליקציה, צעד אחר צעד';
+
+  @override
   String get settingsRateApp => 'דירוג האפליקציה';
 
   @override

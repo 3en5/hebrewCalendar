@@ -282,6 +282,8 @@ void main() {
     await tester.pumpAndSettle();
     // Owner request 2026-10-15: "rate the app" sits above About.
     expect(find.byKey(const ValueKey<String>('rate-app')), findsOneWidget);
+    // Owner request 2026-10-15: the user guide, above "rate the app".
+    expect(find.byKey(const ValueKey<String>('user-guide')), findsOneWidget);
     await tester.tap(find.text(l10n.settingsAboutTooltip));
     await tester.pumpAndSettle();
 

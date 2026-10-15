@@ -190,6 +190,7 @@
 | `test/domain/halacha/daily_halacha_test.dart`, `test/data/halacha/daily_halacha_source_test.dart`, `test/features/halacha/daily_halacha_launcher_test.dart` | M25: טסטים |
 | `lib/domain/text/text_links.dart` | איתור מספרי טלפון, מיילים וקישורים בטקסט, ומספר לוואטסאפ |
 | `lib/core/widgets/linkified_text.dart` | טקסט שבו מספרים, מיילים וקישורים לחיצים (חיוג/וואטסאפ/העתקה, מייל, דפדפן) |
+| `lib/features/settings/presentation/widgets/user_guide_tile.dart` | שורת "מדריך למשתמש" בהגדרות, פותחת את `guide.html` באתר |
 | `lib/features/settings/presentation/widgets/rate_app_tile.dart` | שורת "דירוג האפליקציה" בהגדרות, פותחת את עמוד האפליקציה ב-Google Play |
 | `lib/features/calendar/presentation/widgets/event_attendees_list.dart` | משתתפי האירוע בחלון הפרטים, מייל לחיץ ותשובה |
 | `test/features/calendar/presentation/event_details_links_test.dart` | טסטים: מיקום שהוא קישור, רשימת משתתפים |
@@ -281,6 +282,6 @@
 | `test/test_support/fake_background_sync_scheduler.dart` | `FakeBackgroundSyncScheduler` (M5b): test double בזיכרון ל-`BackgroundSyncScheduler` — סופר קריאות `registerPeriodic`/`cancel` במקום לגעת בפלאגין `workmanager` האמיתי |
 | `test/test_support/fake_backup_service.dart` | `FakeBackupService` (M7): test double ל-`BackupService` — תוצאות/מוני-קריאות ניתנים להגדרה ל-`exportToFile`/`shareBackup`/`importFromFile`, ללא נגיעה ב-`file_picker`/`share_plus`; override קבוע בטסטי widget של `BackupSection`/`SettingsScreen` |
 | `test/test_support/fake_hanging_sync_settings_store.dart` | `FakeHangingSyncSettingsStore` (סבב משוב מכשיר #1, תיקון #2): test double ל-`SyncSettingsStore` שה-`load()` שלו לעולם לא מסתיים — מדמה את כשל המכשיר האמיתי (Firestore read שנתקע/נכשל) כדי לאמת שה-timeout וה-retry עובדים |
-| `site/` | האתר הציבורי (Firebase Hosting): `index.html` דף הבית, `privacy.html` מדיניות פרטיות ומחיקת נתונים, `testers.html` הוראות לבודקים (noindex), `style.css`, `assets/`, `googlef81089490c5c16e2.html` (אימות בעלות ב-Search Console, לא למחוק) |
+| `site/` | האתר הציבורי (Firebase Hosting): `index.html` דף הבית, `privacy.html` מדיניות פרטיות ומחיקת נתונים, `testers.html` הוראות לבודקים (noindex), `guide.html` מדריך למשתמש (8 פרקים, צילומי מסך ב-`assets/guide/` מ-`tool/screenshots/`), `style.css`, `assets/`, `googlef81089490c5c16e2.html` (אימות בעלות ב-Search Console, לא למחוק) |
 | `.github/workflows/hosting.yml` | פרסום `site/` ל-https://hebrewcalendar-68363.web.app (אוטומטי כש-site/ משתנה ב-main או בענף claude/*) |
 | `docs/OAUTH_VERIFICATION.md` | חומרים ושלבים לאימות ה-OAuth אצל Google: כתובות, הסבר ל-scope, תסריט לסרטון |

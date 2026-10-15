@@ -20,6 +20,7 @@ import 'about_screen.dart';
 import 'widgets/backup_section.dart';
 import 'widgets/google_sync_section.dart';
 import 'widgets/rate_app_tile.dart';
+import 'widgets/user_guide_tile.dart';
 
 /// The app's settings screen, reached via the gear icon in
 /// `CalendarShellScreen`'s app bar: Google Calendar sync (M5a), local-file
@@ -115,6 +116,7 @@ class SettingsScreen extends ConsumerWidget {
           SizedBox(height: spacingMd),
           const BackupSection(),
           SizedBox(height: spacingMd),
+          const UserGuideTile(),
           const RateAppTile(),
           // Owner request 2026-10-15: the version on the About row.
           ListTile(

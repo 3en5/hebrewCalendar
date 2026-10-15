@@ -29,3 +29,15 @@ footer a{margin:0 8px}
 .doc h3{font-size:1.05em;margin:1.1em 0 .2em}
 .shots-steps img{display:block;width:48%;max-width:190px;height:auto;margin:.6em auto 1.2em;border-radius:14px;box-shadow:0 6px 20px #0a28501f;border:1px solid var(--line)}
 img{max-width:100%;height:auto}
+.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin:10px 0 6px}
+.toc a{text-decoration:none;font-weight:600}
+.guide .row{display:flex;gap:22px;align-items:flex-start}
+.guide .row>div{flex:1;min-width:0}
+.guide figure{margin:.4em 0 1em;text-align:center;flex:0 0 auto}
+.guide figure img{width:200px;border-radius:14px;box-shadow:0 6px 20px #0a28501f;border:1px solid var(--line)}
+.guide figcaption{color:var(--muted);font-size:.85em;margin-top:.3em}
+.guide .shots-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.guide .shots-row figure{width:160px}.guide .shots-row img{width:100%}
+.guide ul,.guide ol{padding-inline-start:1.3em}.guide li{margin:.3em 0}
+.links{margin:14px 0 0}.links a{margin:0 8px}
+@media (max-width:620px){.guide .row{flex-direction:column;align-items:stretch}.guide .row figure img{width:62%;max-width:240px}.guide .shots-row figure{width:46%}}
