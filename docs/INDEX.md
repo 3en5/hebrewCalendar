@@ -175,6 +175,10 @@
 | `lib/features/event_editor/presentation/significant_date_screen.dart` | M24: מסך "תאריך משמעותי" (סוג, שם, תאריך לועזי, שקיעה, תצוגה מקדימה, אירוע לועזי נוסף) |
 | `lib/features/event_editor/presentation/widgets/gregorian_date_dropdowns.dart` | M24: תאריך לועזי בשלוש רשימות (יום/חודש/שנה) במקום שדה הקלדה |
 | `lib/domain/event/significant_date.dart` | M24: חישוב התאריך העברי, כלל החזרה (יארצייט → אדר א׳), המופע הבא ובניית האירועים |
+| `lib/domain/text/text_links.dart` | איתור מספרי טלפון, מיילים וקישורים בטקסט, ומספר לוואטסאפ |
+| `lib/core/widgets/linkified_text.dart` | טקסט שבו מספרים, מיילים וקישורים לחיצים (חיוג/וואטסאפ/העתקה, מייל, דפדפן) |
+| `test/domain/text/text_links_test.dart` | טסטים לאיתור הקישורים |
+| `test/core/widgets/linkified_text_test.dart` | טסטים ללחיצה על מספר ומייל |
 | `lib/features/calendar/presentation/widgets/add_menu_sheet.dart` | M24: תפריט כפתור ה-+ (אירוע חדש / תאריך משמעותי) |
 | `test/domain/event/significant_date_test.dart` | M24: טסטים ללוגיקת התאריך המשמעותי |
 | `test/features/event_editor/significant_date_screen_test.dart` | M24: טסט מסך — מהתפריט ועד יצירת האירוע |

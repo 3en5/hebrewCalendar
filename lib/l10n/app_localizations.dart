@@ -1479,6 +1479,42 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'שיתוף'**
   String get settingsBackupShareButton;
+
+  /// Phone number in an event: call it.
+  ///
+  /// In he, this message translates to:
+  /// **'חיוג'**
+  String get linkCall;
+
+  /// Phone number in an event: open a WhatsApp chat.
+  ///
+  /// In he, this message translates to:
+  /// **'וואטסאפ'**
+  String get linkWhatsApp;
+
+  /// Email in an event: compose a mail.
+  ///
+  /// In he, this message translates to:
+  /// **'שליחת מייל'**
+  String get linkSendEmail;
+
+  /// Phone or email in an event: copy it.
+  ///
+  /// In he, this message translates to:
+  /// **'העתקה'**
+  String get linkCopy;
+
+  /// Snackbar after copying a phone or email.
+  ///
+  /// In he, this message translates to:
+  /// **'הועתק'**
+  String get linkCopied;
+
+  /// Snackbar when no app can open a link, number or email.
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן לפתוח'**
+  String get linkOpenFailed;
 }
 
 class _AppLocalizationsDelegate

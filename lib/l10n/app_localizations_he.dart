@@ -823,4 +823,22 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get settingsBackupShareButton => 'שיתוף';
+
+  @override
+  String get linkCall => 'חיוג';
+
+  @override
+  String get linkWhatsApp => 'וואטסאפ';
+
+  @override
+  String get linkSendEmail => 'שליחת מייל';
+
+  @override
+  String get linkCopy => 'העתקה';
+
+  @override
+  String get linkCopied => 'הועתק';
+
+  @override
+  String get linkOpenFailed => 'לא ניתן לפתוח';
 }

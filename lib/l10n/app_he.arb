@@ -770,5 +770,17 @@
   "significantYearLabel": "שנה",
   "@significantYearLabel": {"description": "Year dropdown of the original Gregorian date (M24)."},
   "settingsBackupShareButton": "שיתוף",
-  "@settingsBackupShareButton": {"description": "Backup card: share the backup file (WhatsApp, mail, Drive...)."}
+  "@settingsBackupShareButton": {"description": "Backup card: share the backup file (WhatsApp, mail, Drive...)."},
+  "linkCall": "חיוג",
+  "@linkCall": {"description": "Phone number in an event: call it."},
+  "linkWhatsApp": "וואטסאפ",
+  "@linkWhatsApp": {"description": "Phone number in an event: open a WhatsApp chat."},
+  "linkSendEmail": "שליחת מייל",
+  "@linkSendEmail": {"description": "Email in an event: compose a mail."},
+  "linkCopy": "העתקה",
+  "@linkCopy": {"description": "Phone or email in an event: copy it."},
+  "linkCopied": "הועתק",
+  "@linkCopied": {"description": "Snackbar after copying a phone or email."},
+  "linkOpenFailed": "לא ניתן לפתוח",
+  "@linkOpenFailed": {"description": "Snackbar when no app can open a link, number or email."}
 }

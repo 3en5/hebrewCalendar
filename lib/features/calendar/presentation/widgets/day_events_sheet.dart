@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/dimens.dart';
+import '../../../../core/widgets/linkified_text.dart';
 import '../../../../domain/event/event.dart';
 import '../../../../domain/event/event_attendee.dart';
 import '../../../../domain/event/event_occurrence.dart';
@@ -74,7 +75,7 @@ class _DayEventTile extends ConsumerWidget {
 
     final Widget tile = ListTile(
       contentPadding: EdgeInsetsDirectional.zero,
-      title: Text(_event.title),
+      title: LinkifiedText(_event.title),
       subtitle: Text(
         _event.attendees.isEmpty
             ? timeLabel
@@ -97,14 +98,28 @@ class _DayEventTile extends ConsumerWidget {
       ),
     );
     final String location = _event.location.trim();
-    if (location.isEmpty) {
+    final String description = _event.description.trim();
+    if (location.isEmpty && description.isEmpty) {
       return tile;
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         tile,
-        LocationActions(location: location),
+        // Owner request 2026-10-15: the description, with its numbers,
+        // emails and links tappable.
+        if (description.isNotEmpty)
+          Padding(
+            padding: EdgeInsetsDirectional.only(bottom: spacingSm),
+            child: LinkifiedText(
+              description,
+              style: TextStyle(
+                fontSize: bodySmallRem,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        if (location.isNotEmpty) LocationActions(location: location),
       ],
     );
   }
