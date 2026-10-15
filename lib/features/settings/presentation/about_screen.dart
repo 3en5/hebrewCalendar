@@ -1,9 +1,12 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/dimens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/app_version_provider.dart';
+import 'widgets/user_guide_tile.dart';
 
 /// The KALFAPP logo, bundled for the About screen (ARCHITECTURE.md §13).
 const String kalfappLogoAsset = 'assets/brand/kalfapp_logo.png';
@@ -106,6 +109,28 @@ class AboutScreen extends ConsumerWidget {
                       ),
                     ),
                     SizedBox(height: spacingLg),
+                    // Owner request 2026-10-15: the privacy policy and the
+                    // terms of use, on the site.
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: spacingSm,
+                      children: <Widget>[
+                        TextButton(
+                          key: const ValueKey<String>('about-privacy'),
+                          onPressed: () => unawaited(
+                            openSitePage(context, privacyPolicyUri),
+                          ),
+                          child: Text(l10n.aboutPrivacyPolicy),
+                        ),
+                        TextButton(
+                          key: const ValueKey<String>('about-terms'),
+                          onPressed: () =>
+                              unawaited(openSitePage(context, termsOfUseUri)),
+                          child: Text(l10n.aboutTermsOfUse),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: spacingSm),
                     Center(
                       child: OutlinedButton(
                         onPressed: () => showLicensePage(

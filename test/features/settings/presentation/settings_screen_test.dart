@@ -292,6 +292,9 @@ void main() {
     // same Hebrew text, so both render as "יומן עברי" — hence findsWidgets.
     expect(find.text(l10n.appTitle), findsWidgets);
     expect(find.text(l10n.aboutDeveloperCredit), findsOneWidget);
+    // Owner request 2026-10-15: privacy policy and terms of use links.
+    expect(find.byKey(const ValueKey<String>('about-privacy')), findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('about-terms')), findsOneWidget);
     expect(find.textContaining('1.0.0'), findsOneWidget);
   });
 

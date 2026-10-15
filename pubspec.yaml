@@ -85,6 +85,7 @@ flutter:
   assets:
     - assets/brand/kalfapp_logo.png
     - assets/fonts/OFL-Rubik.txt
+    - assets/licenses/hebcal-learning-BSD-2.txt
 
   fonts:
     - family: Rubik

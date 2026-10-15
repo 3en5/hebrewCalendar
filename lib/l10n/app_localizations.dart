@@ -1540,6 +1540,18 @@ abstract class AppLocalizations {
   /// **'{percent}%'**
   String settingsTextSizePercent(int percent);
 
+  /// About screen link to the privacy policy on the site.
+  ///
+  /// In he, this message translates to:
+  /// **'מדיניות פרטיות'**
+  String get aboutPrivacyPolicy;
+
+  /// About screen link to the terms of use on the site.
+  ///
+  /// In he, this message translates to:
+  /// **'תנאי שימוש'**
+  String get aboutTermsOfUse;
+
   /// Settings row: open the user guide on the app's site.
   ///
   /// In he, this message translates to:

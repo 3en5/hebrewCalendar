@@ -872,6 +872,12 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String get aboutPrivacyPolicy => 'מדיניות פרטיות';
+
+  @override
+  String get aboutTermsOfUse => 'תנאי שימוש';
+
+  @override
   String get settingsUserGuide => 'מדריך למשתמש';
 
   @override

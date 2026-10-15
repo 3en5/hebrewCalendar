@@ -11,12 +11,26 @@ final Uri userGuideUri = Uri.https(
   '/guide.html',
 );
 
+/// The site's privacy policy and terms of use (owner request 2026-10-15).
+final Uri privacyPolicyUri = Uri.https(
+  'hebrewcalendar-68363.web.app',
+  '/privacy.html',
+);
+final Uri termsOfUseUri = Uri.https(
+  'hebrewcalendar-68363.web.app',
+  '/terms.html',
+);
+
 /// Opens the user guide in the browser; a snack bar if it can't.
-Future<void> openUserGuide(BuildContext context) async {
+Future<void> openUserGuide(BuildContext context) =>
+    openSitePage(context, userGuideUri);
+
+/// Opens a page of the app's site in the browser; a snack bar if it can't.
+Future<void> openSitePage(BuildContext context, Uri uri) async {
   final ScaffoldMessengerState? messenger = ScaffoldMessenger.maybeOf(context);
   final String failed = AppLocalizations.of(context).linkOpenFailed;
   try {
-    if (await launchUrl(userGuideUri, mode: LaunchMode.externalApplication)) {
+    if (await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       return;
     }
   } catch (_) {

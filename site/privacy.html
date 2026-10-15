@@ -21,7 +21,8 @@
     <li><b>חשבון Google:</b> כשנכנסים עם Google, האפליקציה מקבלת את השם, כתובת המייל ותמונת הפרופיל שלך. הם משמשים רק כדי לזהות את החשבון שלך ולשמור את האירועים שלך תחתיו.</li>
     <li><b>האירועים שלך:</b> מה שאתה יוצר ביומן (כותרת, תיאור, מקום, תאריך עברי ושעות, חזרתיות, תזכורות, צבע וכתובות מייל של משתתפים שהזמנת). הם נשמרים ב-Google Firebase (Cloud Firestore) תחת החשבון שלך, וכללי האבטחה מאפשרים גישה אליהם רק לך.</li>
     <li><b>יומן Google (רק אם הפעלת סנכרון):</b> באישורך, האפליקציה מקבלת הרשאה לקרוא ולכתוב אירועים ביומן הראשי שלך ב-Google Calendar (הרשאת calendar.events). היא משתמשת בה רק לסנכרון: מציגה ביומן העברי את האירועים שכבר יש לך ב-Google, וכותבת ל-Google את האירועים שיצרת באפליקציה, כולל שינויים ומחיקות. עותק של האירועים המסונכרנים נשמר בחשבון שלך ב-Firebase כדי שהיומן יעבוד גם בלי חיבור. כשאתה מזמין משתתפים לאירוע, Google שולחת להם את הזימון.</li>
-    <li><b>במכשיר בלבד:</b> העדפות (מצב כהה, לוח ארץ ישראל או חו"ל, עיר לזמני היום) והתראות שנקבעות בטלפון עצמו.</li>
+    <li><b>במכשיר בלבד:</b> העדפות (מצב כהה, גודל טקסט, תצוגה עברית או לועזית, התצוגה האחרונה שבחרת, לוח ארץ ישראל או חו"ל, עיר ושיטות לזמני היום, והבחירה אם להציג הלכה יומית) והתראות שנקבעות בטלפון עצמו. הן לא נשלחות לשום מקום.</li>
+    <li><b>קובץ גיבוי (רק אם יצרת):</b> כשלוחצים "ייצוא" או "שיתוף", האפליקציה יוצרת קובץ עם האירועים שלך ושומרת או שולחת אותו לאן שבחרת. הקובץ לא מוצפן ולא נשלח אלינו, ולכן כדאי לשמור אותו במקום פרטי.</li>
     <li><b>מיקום (רק אם בחרת "מיקום מהטלפון" בזמני היום):</b> האפליקציה קוראת מיקום משוער של הטלפון כדי לחשב את זמני היום ושעות השבת. המיקום נשמר בטלפון בלבד, החישוב נעשה בטלפון, והמיקום לא נשלח לשום שרת ולא נשמר בחשבון שלך. אפשר לכבות את האפשרות בכל רגע ולחזור לבחירת עיר.</li>
     <li><b>הלכה יומית:</b> האפליקציה מורידה מאתר האפליקציה את ההלכות של השבוע הקרוב ושומרת אותן בטלפון. ההורדה לא כוללת שום פרט עליך. כדי להציג את ההקדשה שבראש ההלכה, האפליקציה קוראת אותה מ-Firebase.</li>
     <li><b>מונים אנונימיים:</b> כדי להציג כמה אחוזים מהמשתמשים קוראים הלכה יומית, נשמרים ב-Firebase שני מונים כלליים: כמה השאירו את ההלכה היומית פעילה וכמה כיבו, ולכל יום כמה לחצו "שיננתי". המונים לא שומרים מי לחץ, לא מזהה, לא מייל ולא שום פרט אחר.</li>
@@ -60,7 +61,8 @@
       <li><b>Google account:</b> when you sign in with Google, the app receives your name, email address and profile photo, used only to identify your account and store your events under it.</li>
       <li><b>Your events:</b> what you create in the calendar (title, description, location, Hebrew date and times, recurrence, reminders, color, and the email addresses of participants you invite), stored in Google Firebase (Cloud Firestore) under your account; security rules allow only you to access them.</li>
       <li><b>Google Calendar (only if you turn sync on):</b> with your consent the app gets permission to read and write events in your primary Google Calendar (the calendar.events scope). It is used only for sync: showing the events you already have in Google in the Hebrew calendar, and writing the events you create in the app to Google, including changes and deletions. A copy of synced events is kept in your Firebase account so the calendar works offline. When you invite participants, Google sends them the invitation.</li>
-      <li><b>On the device only:</b> preferences (dark mode, Israel or diaspora calendar, the city for the times of day) and reminders scheduled on the phone.</li>
+      <li><b>On the device only:</b> preferences (dark mode, text size, Hebrew or Gregorian display, the last view you chose, Israel or diaspora calendar, the city and methods for the times of day, and whether to show the daily halacha) and reminders scheduled on the phone. They are not sent anywhere.</li>
+      <li><b>Backup file (only if you make one):</b> "Export" or "Share" creates a file with your events and saves or sends it wherever you choose. The file is not encrypted and is never sent to us, so keep it somewhere private.</li>
       <li><b>Location (only if you choose "phone location" for the times of day):</b> the app reads the phone's approximate location to compute the times of day and Shabbat times. It is kept on the phone only, the calculation runs on the phone, and the location is never sent to any server or stored in your account. You can turn it off at any time and pick a city instead.</li>
       <li><b>Daily halacha:</b> the app downloads the coming week's readings from the app's website and keeps them on the phone. The download carries no information about you. To show the dedication at the top of the reading, the app reads it from Firebase.</li>
       <li><b>Anonymous counters:</b> to show what share of users read the daily halacha, Firebase keeps two overall counters (how many keep it on and how many turned it off) and, per day, how many pressed "learned". The counters never store who pressed, no identifier, no email and nothing else.</li>
@@ -87,7 +89,7 @@
   </section>
 </main>
 <footer class="wrap">
-  <a href="index.html">דף הבית</a> · <a href="guide.html">מדריך למשתמש</a> · <a href="privacy.html">מדיניות פרטיות</a> · <a href="privacy.html#delete">מחיקת נתונים</a> · <a href="mailto:natanor.kalfa@gmail.com">יצירת קשר</a>
+  <a href="index.html">דף הבית</a> · <a href="guide.html">מדריך למשתמש</a> · <a href="privacy.html">מדיניות פרטיות</a> · <a href="terms.html">תנאי שימוש</a> · <a href="privacy.html#delete">מחיקת נתונים</a> · <a href="mailto:natanor.kalfa@gmail.com">יצירת קשר</a>
   <div>לוח עברי · חלק ממשפחת האפליקציות של KALFAPP</div>
 </footer>
 </body>
