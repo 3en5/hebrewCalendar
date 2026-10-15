@@ -76,7 +76,10 @@ class _AttendeesFieldState extends State<AttendeesField> {
           children: <Widget>[
             for (final EventAttendee attendee in widget.attendees)
               InputChip(
-                avatar: Icon(_responseIcon(attendee.response), size: rem(1.1)),
+                avatar: Icon(
+                  attendeeResponseIcon(attendee.response),
+                  size: rem(1.1),
+                ),
                 label: Text(attendee.email, textDirection: TextDirection.ltr),
                 tooltip: attendeeResponseLabel(l10n, attendee.response),
                 onDeleted: () => widget.onRemove(attendee.email),
@@ -88,7 +91,8 @@ class _AttendeesFieldState extends State<AttendeesField> {
   }
 }
 
-IconData _responseIcon(AttendeeResponse response) => switch (response) {
+/// The icon of a participant's reply, shared with the event details.
+IconData attendeeResponseIcon(AttendeeResponse response) => switch (response) {
   AttendeeResponse.accepted => Icons.check_circle_outline,
   AttendeeResponse.declined => Icons.cancel_outlined,
   AttendeeResponse.tentative => Icons.help_outline,

@@ -177,6 +177,8 @@
 | `lib/domain/event/significant_date.dart` | M24: חישוב התאריך העברי, כלל החזרה (יארצייט → אדר א׳), המופע הבא ובניית האירועים |
 | `lib/domain/text/text_links.dart` | איתור מספרי טלפון, מיילים וקישורים בטקסט, ומספר לוואטסאפ |
 | `lib/core/widgets/linkified_text.dart` | טקסט שבו מספרים, מיילים וקישורים לחיצים (חיוג/וואטסאפ/העתקה, מייל, דפדפן) |
+| `lib/features/calendar/presentation/widgets/event_attendees_list.dart` | משתתפי האירוע בחלון הפרטים, מייל לחיץ ותשובה |
+| `test/features/calendar/presentation/event_details_links_test.dart` | טסטים: מיקום שהוא קישור, רשימת משתתפים |
 | `test/domain/text/text_links_test.dart` | טסטים לאיתור הקישורים |
 | `test/core/widgets/linkified_text_test.dart` | טסטים ללחיצה על מספר ומייל |
 | `lib/features/calendar/presentation/widgets/add_menu_sheet.dart` | M24: תפריט כפתור ה-+ (אירוע חדש / תאריך משמעותי) |

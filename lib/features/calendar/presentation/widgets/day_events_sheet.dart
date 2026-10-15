@@ -19,6 +19,7 @@ import '../../../event_editor/application/event_repository_provider.dart';
 import '../../../event_editor/presentation/event_editor_screen.dart';
 import '../../../event_editor/presentation/recurring_scope_dialog.dart';
 import '../../application/hebrew_date_engine_provider.dart';
+import 'event_attendees_list.dart';
 import 'location_actions.dart';
 
 /// Bottom sheet listing the event occurrences on a single Hebrew day (title,
@@ -99,7 +100,7 @@ class _DayEventTile extends ConsumerWidget {
     );
     final String location = _event.location.trim();
     final String description = _event.description.trim();
-    if (location.isEmpty && description.isEmpty) {
+    if (location.isEmpty && description.isEmpty && _event.attendees.isEmpty) {
       return tile;
     }
     return Column(
@@ -120,6 +121,8 @@ class _DayEventTile extends ConsumerWidget {
             ),
           ),
         if (location.isNotEmpty) LocationActions(location: location),
+        if (_event.attendees.isNotEmpty)
+          EventAttendeesList(attendees: _event.attendees),
       ],
     );
   }
