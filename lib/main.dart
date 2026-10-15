@@ -15,6 +15,7 @@ import 'features/auth/presentation/auth_gate.dart';
 import 'features/calendar/application/calendar_display_mode_provider.dart';
 import 'features/calendar/application/calendar_view_provider.dart';
 import 'features/settings/application/background_sync_bootstrap.dart';
+import 'features/settings/application/text_size_provider.dart';
 import 'features/settings/application/theme_mode_provider.dart';
 import 'l10n/app_localizations.dart';
 
@@ -48,6 +49,7 @@ void main() {
         // before the first frame.
         await preloadCalendarDisplayMode();
         await preloadCalendarViewType();
+        await preloadTextSize();
         runApp(const ProviderScope(child: HebrewCalendarApp()));
       },
       (Object error, StackTrace stackTrace) {
@@ -126,6 +128,20 @@ class HebrewCalendarApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      // Owner request 2026-10-15: the settings' text size, on top of the
+      // phone's own font size.
+      builder: (BuildContext context, Widget? child) {
+        final double size = ref.watch(textSizeProvider);
+        final MediaQueryData media = MediaQuery.of(context);
+        return MediaQuery(
+          data: size == 1.0
+              ? media
+              : media.copyWith(
+                  textScaler: AppTextScaler(media.textScaler, size),
+                ),
+          child: child!,
+        );
+      },
       home: const AuthGate(),
     );
   }

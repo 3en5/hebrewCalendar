@@ -11,6 +11,7 @@ import '../../application/calendar_view_provider.dart';
 import '../../application/hebrew_date_engine_provider.dart';
 import '../../../zmanim/application/zmanim_settings.dart';
 import '../../../zmanim/presentation/shabbat_times.dart';
+import '../../../settings/application/text_size_provider.dart';
 import 'day_cell.dart';
 import 'day_pop_stack.dart';
 import 'day_swipe_area.dart';
@@ -90,9 +91,20 @@ class MonthGrid extends ConsumerWidget {
               Expanded(
                 child: LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) {
+                    // Larger text (the phone's or the settings' text size,
+                    // owner request 2026-10-15) gets taller rows and a
+                    // larger share of the screen, so the cells grow too.
+                    final double growth = textGrowth(context, bodyRem);
+                    final double share =
+                        (_gridHeightShare + (growth - 1) * 0.25).clamp(
+                          _gridHeightShare,
+                          0.74,
+                        );
                     final double rowHeight =
-                        (constraints.maxHeight * _gridHeightShare / rowCount)
-                            .clamp(rem(2.75), rem(4.5));
+                        (constraints.maxHeight * share / rowCount).clamp(
+                          rem(2.75),
+                          rem(4.5) * growth,
+                        );
                     // The tapped day pops over the grid and the agenda.
                     return DayPopStack(
                       child: Column(

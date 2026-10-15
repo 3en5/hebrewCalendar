@@ -184,9 +184,15 @@ class _HourLabelColumn extends StatelessWidget {
                 ),
                 child: Align(
                   alignment: AlignmentDirectional.topEnd,
-                  child: Text(
-                    '$hour:00',
-                    style: TextStyle(fontSize: captionRem, color: color),
+                  // One line at any text size (owner sketch 2026-10-15:
+                  // at 140% "13:00" broke in two): shrink to the gutter.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '$hour:00',
+                      maxLines: 1,
+                      style: TextStyle(fontSize: captionRem, color: color),
+                    ),
                   ),
                 ),
               ),

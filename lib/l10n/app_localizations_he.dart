@@ -861,6 +861,17 @@ class AppLocalizationsHe extends AppLocalizations {
   String get linkOpenFailed => 'לא ניתן לפתוח';
 
   @override
+  String get settingsTextSizeTitle => 'גודל טקסט';
+
+  @override
+  String get settingsTextSizeSubtitle => 'בנוסף לגודל הגופן שבהגדרות הטלפון';
+
+  @override
+  String settingsTextSizePercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
   String get settingsUserGuide => 'מדריך למשתמש';
 
   @override

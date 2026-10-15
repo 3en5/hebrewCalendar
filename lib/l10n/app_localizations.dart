@@ -1522,6 +1522,24 @@ abstract class AppLocalizations {
   /// **'לא ניתן לפתוח'**
   String get linkOpenFailed;
 
+  /// Settings row: the app's text size.
+  ///
+  /// In he, this message translates to:
+  /// **'גודל טקסט'**
+  String get settingsTextSizeTitle;
+
+  /// Subtitle of the text size row: it adds to the phone's font size.
+  ///
+  /// In he, this message translates to:
+  /// **'בנוסף לגודל הגופן שבהגדרות הטלפון'**
+  String get settingsTextSizeSubtitle;
+
+  /// One text size choice, e.g. 120%.
+  ///
+  /// In he, this message translates to:
+  /// **'{percent}%'**
+  String settingsTextSizePercent(int percent);
+
   /// Settings row: open the user guide on the app's site.
   ///
   /// In he, this message translates to:

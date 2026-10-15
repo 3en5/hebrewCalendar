@@ -20,6 +20,7 @@ import 'about_screen.dart';
 import 'widgets/backup_section.dart';
 import 'widgets/google_sync_section.dart';
 import 'widgets/rate_app_tile.dart';
+import 'widgets/text_size_tile.dart';
 import 'widgets/user_guide_tile.dart';
 
 /// The app's settings screen, reached via the gear icon in
@@ -109,6 +110,7 @@ class SettingsScreen extends ConsumerWidget {
                   ref.read(themeModeProvider.notifier).setDark(value),
             ),
           ),
+          const TextSizeTile(),
           SizedBox(height: spacingMd),
           const ZmanimSettingsSection(),
           SizedBox(height: spacingMd),

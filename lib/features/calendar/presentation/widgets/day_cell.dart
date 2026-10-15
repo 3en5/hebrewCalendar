@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../../domain/hebrew_date/jewish_day_info.dart';
+import '../../../settings/application/text_size_provider.dart';
 import '../../../zmanim/presentation/shabbat_times.dart';
 
 /// Maximum number of event dots drawn under the day numeral; a busier day
@@ -192,9 +193,11 @@ class _DayNumeral extends StatelessWidget {
         ? colorScheme.primary
         : colorScheme.onSurface;
 
+    // The circle grows with the text size, so the numeral grows with it.
+    final double circle = rem(1.75) * textGrowth(context, bodyRem);
     return Container(
-      width: rem(1.75),
-      height: rem(1.75),
+      width: circle,
+      height: circle,
       alignment: Alignment.center,
       // Inner padding keeps scaled-down text off the circle edge.
       padding: EdgeInsetsDirectional.symmetric(horizontal: spacingXs / 2),
@@ -234,16 +237,20 @@ class _DayLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Text(
-      label.shortName,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: rem(0.5625),
-        height: 1.2,
-        fontWeight: FontWeight.w600,
-        color: jewishDayLabelColor(colorScheme, label.kind),
+    // Shrinks to the cell's width rather than cutting the name (owner
+    // sketch 2026-10-15: at a large text size "חול המועד" was cut).
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        label.shortName,
+        maxLines: 1,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: rem(0.5625),
+          height: 1.2,
+          fontWeight: FontWeight.w600,
+          color: jewishDayLabelColor(colorScheme, label.kind),
+        ),
       ),
     );
   }
