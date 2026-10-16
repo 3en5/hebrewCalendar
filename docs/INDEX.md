@@ -195,6 +195,7 @@
 | `lib/domain/text/text_links.dart` | איתור מספרי טלפון, מיילים וקישורים בטקסט, ומספר לוואטסאפ |
 | `lib/core/widgets/linkified_text.dart` | טקסט שבו מספרים, מיילים וקישורים לחיצים (חיוג/וואטסאפ/העתקה, מייל, דפדפן) |
 | `lib/features/event_editor/presentation/delete_event_flow.dart` | `confirmAndDeleteEvent`: אישור ומחיקה של אירוע (בודד או מופע/הבאים/כל הסדרה), משותף לחלון פרטי האירוע ולעורך |
+| `lib/features/calendar/application/agenda_top_date_provider.dart` | היום שבראש רשימת האג'נדה, לכותרת שמציגה את החודש שלו |
 | `lib/features/settings/application/text_size_provider.dart` | גודל הטקסט (100%-140%): `textSizeProvider`, `preloadTextSize`, `AppTextScaler` (מוכפל בהגדרת הטלפון), `textGrowth` לפריסות שגדלות עם הטקסט |
 | `lib/features/settings/presentation/widgets/text_size_tile.dart` | בחירת "גודל טקסט" בהגדרות |
 | `lib/features/settings/presentation/widgets/user_guide_tile.dart` | שורת "מדריך למשתמש" בהגדרות, פותחת את `guide.html` באתר |

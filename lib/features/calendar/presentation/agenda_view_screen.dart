@@ -8,6 +8,7 @@ import '../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../event_editor/presentation/recurring_scope_dialog.dart';
+import '../application/agenda_top_date_provider.dart';
 import '../application/calendar_view_provider.dart';
 import '../application/hebrew_date_engine_provider.dart';
 import '../application/range_events_provider.dart';
@@ -42,11 +43,42 @@ class _AgendaViewScreenState extends ConsumerState<AgendaViewScreen> {
   int _windowMonths = _initialWindowMonths;
   final ScrollController _scrollController = ScrollController();
 
+  /// The built day groups, to find the one at the top of the list.
+  final Map<HebrewDate, BuildContext> _groups = <HebrewDate, BuildContext>{};
+
   @override
   void initState() {
     super.initState();
     _from = ref.read(calendarViewProvider).focusedDate;
-    _scrollController.addListener(_maybeExtendWindow);
+    _scrollController
+      ..addListener(_maybeExtendWindow)
+      ..addListener(_reportTopDate);
+  }
+
+  /// Tells the title which day is at the top: the first group whose bottom
+  /// is still inside the list.
+  void _reportTopDate() {
+    if (!mounted) {
+      return;
+    }
+    final RenderObject? list = context.findRenderObject();
+    if (list is! RenderBox) {
+      return;
+    }
+    HebrewDate? top;
+    double topY = double.infinity;
+    _groups.forEach((HebrewDate date, BuildContext group) {
+      final RenderObject? box = group.findRenderObject();
+      if (box is! RenderBox || !box.attached || !box.hasSize) {
+        return;
+      }
+      final double y = box.localToGlobal(Offset.zero, ancestor: list).dy;
+      if (y + box.size.height > 1 && y < topY) {
+        topY = y;
+        top = date;
+      }
+    });
+    ref.read(agendaTopDateProvider.notifier).set(top ?? _from);
   }
 
   @override
@@ -89,10 +121,12 @@ class _AgendaViewScreenState extends ConsumerState<AgendaViewScreen> {
       rangeEventsProvider((from: _from, to: to)),
     );
 
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reportTopDate());
     return occurrencesAsync.when(
       data: (List<EventOccurrence> occurrences) => _AgendaList(
         scrollController: _scrollController,
         occurrences: occurrences,
+        groups: _groups,
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (Object error, StackTrace stackTrace) => const SizedBox.shrink(),
@@ -104,10 +138,12 @@ class _AgendaList extends StatelessWidget {
   const _AgendaList({
     required this.scrollController,
     required this.occurrences,
+    required this.groups,
   });
 
   final ScrollController scrollController;
   final List<EventOccurrence> occurrences;
+  final Map<HebrewDate, BuildContext> groups;
 
   @override
   Widget build(BuildContext context) {
@@ -131,9 +167,53 @@ class _AgendaList extends StatelessWidget {
       itemCount: dates.length,
       itemBuilder: (BuildContext context, int index) {
         final HebrewDate date = dates[index];
-        return _AgendaDayGroup(date: date, occurrences: groups[date]!);
+        return _Tracked(
+          date: date,
+          registry: this.groups,
+          child: _AgendaDayGroup(date: date, occurrences: groups[date]!),
+        );
       },
     );
+  }
+}
+
+/// Keeps [registry] pointing at the built groups, for the title.
+class _Tracked extends StatefulWidget {
+  const _Tracked({
+    required this.date,
+    required this.registry,
+    required this.child,
+  });
+
+  final HebrewDate date;
+  final Map<HebrewDate, BuildContext> registry;
+  final Widget child;
+
+  @override
+  State<_Tracked> createState() => _TrackedState();
+}
+
+class _TrackedState extends State<_Tracked> {
+  @override
+  void didUpdateWidget(_Tracked old) {
+    super.didUpdateWidget(old);
+    if (old.date != widget.date && old.registry[old.date] == context) {
+      old.registry.remove(old.date);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.registry[widget.date] == context) {
+      widget.registry.remove(widget.date);
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    widget.registry[widget.date] = context;
+    return widget.child;
   }
 }
 

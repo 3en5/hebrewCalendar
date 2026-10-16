@@ -7,6 +7,7 @@ import '../../../../domain/hebrew_date/hebrew_date.dart';
 import '../../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../application/agenda_top_date_provider.dart';
 import '../../application/calendar_display_mode_provider.dart';
 import '../../application/calendar_view_provider.dart';
 import '../../application/hebrew_date_engine_provider.dart';
@@ -15,7 +16,8 @@ import '../../application/hebrew_date_engine_provider.dart';
 /// the same span in the other calendar. In the Hebrew display "חשוון
 /// תשפ״ז" over "אוקטובר–נובמבר 2026"; in the Gregorian display (M23) the
 /// other way round. Tapping it switches between the two displays (owner
-/// request 2026-10-13); the focused day stays selected.
+/// request 2026-10-13); the focused day stays selected. In the agenda the
+/// month is the one of the day at the top of the list.
 class CalendarTitle extends ConsumerWidget {
   const CalendarTitle({super.key});
 
@@ -25,11 +27,12 @@ class CalendarTitle extends ConsumerWidget {
     final CalendarViewState state = ref.watch(calendarViewProvider);
     final CalendarDisplayMode mode = ref.watch(calendarDisplayModeProvider);
     final HebrewDateEngine engine = ref.watch(hebrewDateEngineProvider);
-    if (state.viewType == CalendarViewType.agenda) {
-      return Text(l10n.calendarViewAgenda);
-    }
     final bool gregorian = mode == CalendarDisplayMode.gregorian;
-    final HebrewDate focused = state.focusedDate;
+    // The agenda shows the month of the day at the top of its list (owner
+    // request 2026-10-16: the title read "אג'נדה", like the view menu).
+    final HebrewDate focused = state.viewType == CalendarViewType.agenda
+        ? ref.watch(agendaTopDateProvider) ?? state.focusedDate
+        : state.focusedDate;
     final String title = gregorian
         ? _gregorianMonth(engine.toGregorian(focused))
         : '${engine.monthName(focused.month)} ${hebrewYearNumeral(focused.year)}';
