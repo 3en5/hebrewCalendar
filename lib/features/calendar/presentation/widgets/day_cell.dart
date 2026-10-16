@@ -10,6 +10,16 @@ import '../../../zmanim/presentation/shabbat_times.dart';
 /// still shows this many (the full list is in the agenda below the grid).
 const int _maxDots = 3;
 
+/// Hebrew letters stand lower than digits at the same font size (in Rubik,
+/// measured 2026-10-16: 25 px against 29 px), so a day's letters looked
+/// smaller than the Gregorian numbers (owner report): they are drawn this
+/// much larger to match.
+const double hebrewNumeralBoost = 1.16;
+
+/// The day numeral's circle (today, selected day), in rem: wide enough that
+/// a two-letter numeral like ט״ו keeps its full size inside it.
+const double _numeralCircleRem = 2.0;
+
 /// Where the day's numeral and the event dots sit, as shares of the
 /// cell's height: the space above the numeral and below the dots (owner
 /// tuning 2026-10-15: the first version had them too close to the edges).
@@ -117,7 +127,9 @@ class DayCell extends StatelessWidget {
                       ? hebrewDayNumeral(hebrewDay)
                       : '$gregorianDay',
                   style: TextStyle(
-                    fontSize: rem(0.5625),
+                    fontSize:
+                        rem(0.5625) *
+                        (gregorianPrimary ? hebrewNumeralBoost : 1),
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -125,6 +137,7 @@ class DayCell extends StatelessWidget {
               LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) {
                   final Widget numeral = _DayNumeral(
+                    hebrew: !gregorianPrimary,
                     text: gregorianPrimary
                         ? '$gregorianDay'
                         : hebrewDayNumeral(hebrewDay),
@@ -150,7 +163,7 @@ class DayCell extends StatelessWidget {
                     ],
                   );
                   final double numeralHeight =
-                      rem(1.75) * textGrowth(context, bodyRem);
+                      rem(_numeralCircleRem) * textGrowth(context, bodyRem);
                   final double fixedPart =
                       _cellTopPad + numeralHeight + spacingXs * 2.5;
                   if (constraints.maxHeight < fixedPart + spacingXs) {
@@ -237,9 +250,13 @@ class _DayNumeral extends StatelessWidget {
     required this.text,
     required this.isToday,
     required this.isSelected,
+    required this.hebrew,
   });
 
   final String text;
+
+  /// Whether [text] is a Hebrew numeral (rather than digits).
+  final bool hebrew;
   final bool isToday;
   final bool isSelected;
 
@@ -253,13 +270,13 @@ class _DayNumeral extends StatelessWidget {
         : colorScheme.onSurface;
 
     // The circle grows with the text size, so the numeral grows with it.
-    final double circle = rem(1.75) * textGrowth(context, bodyRem);
+    final double circle = rem(_numeralCircleRem) * textGrowth(context, bodyRem);
     return Container(
       width: circle,
       height: circle,
       alignment: Alignment.center,
       // Inner padding keeps scaled-down text off the circle edge.
-      padding: EdgeInsetsDirectional.symmetric(horizontal: spacingXs / 2),
+      padding: EdgeInsetsDirectional.symmetric(horizontal: spacingXs / 4),
       decoration: isToday
           ? BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle)
           : isSelected
@@ -278,7 +295,7 @@ class _DayNumeral extends StatelessWidget {
           maxLines: 1,
           softWrap: false,
           style: TextStyle(
-            fontSize: bodyRem,
+            fontSize: bodyRem * (hebrew ? hebrewNumeralBoost : 1),
             fontWeight: FontWeight.w600,
             color: textColor,
           ),
