@@ -629,3 +629,7 @@
 - CI רץ על כל push לכל ענף (כ-15 דקות כולל APK), ועוד כ-15–20 דקות לכל גרסה. בשבוע עבודה צפוף זה מגיע ל-2,000.
 - עכשיו: CI רק ב-main וב-PR, לא על שינויי docs/site/distribution, ביטול ריצה קודמת; APK רק בהרצה ידנית; Firestore tests רק ב-main/PR; מטמון Flutter ו-Gradle ב-release וב-CI.
 - בענף העבודה הבדיקות רצות מקומית לפני כל push (format, analyze, tests) — זה הכלל.
+
+## 2026-10-17 — `flutter pub add` שדרג את כל חבילות Firebase
+- הוספת `firebase_analytics` העדכנית ביותר משכה איתה firebase_core 4.15, cloud_firestore 6.10 ו-firebase_auth 6.7, בלי שביקשנו.
+- הפתרון: לנסות גרסאות קודמות של החבילה החדשה עד שה-diff של pubspec.lock רק מוסיף שורות (`git diff pubspec.lock | grep -c '^-    version'` שווה 0). כאן זו הייתה 12.4.0.
