@@ -155,6 +155,13 @@ class MonthDayAgenda extends ConsumerWidget {
 /// How often the list checks which event is next.
 const Duration _nextTick = Duration(seconds: 30);
 
+/// How long the list takes to bring a new next event to the middle.
+const Duration _centerScroll = Duration(milliseconds: 300);
+
+/// How faint an event that is already over is drawn (owner request
+/// 2026-10-18: the past ones a little grey).
+const double _pastOpacity = 0.45;
+
 /// Index in [occurrences] (chronological) of the next timed event at
 /// [nowMinutes] minutes after midnight: the first one starting at or after
 /// it. Null when every timed event has already started.
@@ -170,14 +177,33 @@ int? nextEventIndex(List<EventOccurrence> occurrences, int nowMinutes) {
   return null;
 }
 
-/// The marker behind the next event's title: a highlighter yellow, with
-/// dark text on it in both themes (owner sketch 2026-10-18: a faint yellow
-/// looked muddy in the dark theme).
+/// Whether a timed [event] is over at [nowMinutes]: it started and its end
+/// (its start, when it has none) has passed. An event ending after
+/// midnight runs to the end of the day; an all-day event is never over.
+bool isEventOver(Event event, int nowMinutes) {
+  final EventTimeOfDay? start = event.startTime;
+  if (event.allDay || start == null) {
+    return false;
+  }
+  final int begin = start.minutesFromMidnight;
+  final int? end = event.endTime?.minutesFromMidnight;
+  final int finish = end == null
+      ? begin
+      : end < begin
+      ? 24 * 60
+      : end;
+  return begin < nowMinutes && finish <= nowMinutes;
+}
+
+/// The marker behind the next event's time and title: a highlighter
+/// yellow, with dark text on it in both themes (owner sketch 2026-10-18: a
+/// faint yellow looked muddy in the dark theme).
 const Color nextEventMarkerColor = Color(0xFFFFE066);
 const Color nextEventMarkerTextColor = Color(0xFF1C1B1F);
 
-/// The rows, with today's next event marked like a highlighter (owner
-/// request 2026-10-18); the mark moves on as the time passes.
+/// The rows, on today (owner requests 2026-10-18): the next event marked
+/// like a highlighter and scrolled to the middle of the list, the ones that
+/// are over a little grey. Both move on as the time passes.
 class _AgendaList extends StatefulWidget {
   const _AgendaList({
     required this.date,
@@ -196,7 +222,14 @@ class _AgendaList extends StatefulWidget {
 }
 
 class _AgendaListState extends State<_AgendaList> {
+  final ScrollController _scroll = ScrollController();
+  final GlobalKey _nextKey = GlobalKey();
   Timer? _timer;
+
+  /// The day and next event last brought to the middle, so the list only
+  /// scrolls by itself when the next event changes, not on every rebuild
+  /// (a scroll of the user's own stays).
+  (HebrewDate, int)? _centered;
 
   @override
   void initState() {
@@ -209,34 +242,81 @@ class _AgendaListState extends State<_AgendaList> {
   @override
   void dispose() {
     _timer?.cancel();
+    _scroll.dispose();
     super.dispose();
+  }
+
+  void _centerNext((HebrewDate, int) target) {
+    if (_centered == target) {
+      return;
+    }
+    final bool sameDay = _centered?.$1 == target.$1;
+    _centered = target;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final BuildContext? row = _nextKey.currentContext;
+      if (!mounted || row == null) {
+        return;
+      }
+      unawaited(
+        Scrollable.ensureVisible(
+          row,
+          alignment: 0.5,
+          // A new day opens there at once; on the same day it glides on.
+          duration: sameDay ? _centerScroll : Duration.zero,
+          curve: Curves.easeInOut,
+        ),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final DateTime now = widget.now ?? DateTime.now();
-    final int? next = widget.engine.fromGregorian(now) == widget.date
-        ? nextEventIndex(widget.occurrences, now.hour * 60 + now.minute)
+    final bool isToday = widget.engine.fromGregorian(now) == widget.date;
+    final int nowMinutes = now.hour * 60 + now.minute;
+    final int? next = isToday
+        ? nextEventIndex(widget.occurrences, nowMinutes)
         : null;
-    return ListView.builder(
+    if (next != null) {
+      _centerNext((widget.date, next));
+    } else {
+      _centered = null;
+    }
+    // A day has few events, so all the rows are built (no builder): the
+    // next one always has a context to scroll to.
+    return ListView(
+      controller: _scroll,
       // Bottom padding keeps the last row clear of the FAB.
       padding: EdgeInsetsDirectional.only(bottom: spacingXxl * 2),
-      itemCount: widget.occurrences.length,
-      itemBuilder: (BuildContext context, int index) => _AgendaRow(
-        occurrence: widget.occurrences[index],
-        isNext: index == next,
-      ),
+      children: <Widget>[
+        for (int i = 0; i < widget.occurrences.length; i++)
+          _AgendaRow(
+            key: i == next ? _nextKey : null,
+            occurrence: widget.occurrences[i],
+            isNext: i == next,
+            isOver:
+                isToday && isEventOver(widget.occurrences[i].event, nowMinutes),
+          ),
+      ],
     );
   }
 }
 
 class _AgendaRow extends StatelessWidget {
-  const _AgendaRow({required this.occurrence, this.isNext = false});
+  const _AgendaRow({
+    required this.occurrence,
+    this.isNext = false,
+    this.isOver = false,
+    super.key,
+  });
 
   final EventOccurrence occurrence;
 
-  /// Today's next event, drawn with a marker behind its title.
+  /// Today's next event: its time and title in one marker.
   final bool isNext;
+
+  /// An event of today that is already over, drawn faint.
+  final bool isOver;
 
   @override
   Widget build(BuildContext context) {
@@ -245,6 +325,71 @@ class _AgendaRow extends StatelessWidget {
     final String timeLabel = event.allDay
         ? AppLocalizations.of(context).eventAllDayLabel
         : (event.startTime?.toString() ?? '');
+    final Color? markText = isNext ? nextEventMarkerTextColor : null;
+
+    final Widget time = SizedBox(
+      width: rem(3.5),
+      child: Text(
+        timeLabel,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: markText ?? theme.colorScheme.onSurfaceVariant,
+          fontWeight: isNext ? FontWeight.w700 : null,
+        ),
+      ),
+    );
+    final Widget title = Text(
+      event.title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: markText,
+        fontWeight: isNext ? FontWeight.w600 : null,
+      ),
+    );
+
+    final Widget row = Row(
+      children: <Widget>[
+        Container(
+          width: spacingXs,
+          height: rem(1.125),
+          decoration: BoxDecoration(
+            color: eventColor(event.colorId, theme.colorScheme),
+            borderRadius: BorderRadius.circular(spacingXs / 2),
+          ),
+        ),
+        if (isNext) ...<Widget>[
+          // The marker's inner padding takes the rest of the gap, so the
+          // time stays in line with the other rows.
+          SizedBox(width: spacingSm - spacingXs),
+          Flexible(
+            child: Semantics(
+              label: AppLocalizations.of(context).monthAgendaNextEvent,
+              child: Container(
+                key: const ValueKey<String>('agenda-next-event'),
+                padding: EdgeInsetsDirectional.symmetric(horizontal: spacingXs),
+                decoration: BoxDecoration(
+                  color: nextEventMarkerColor,
+                  borderRadius: BorderRadius.circular(spacingXs / 2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    time,
+                    Flexible(child: title),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ] else ...<Widget>[
+          SizedBox(width: spacingSm),
+          time,
+          Expanded(child: title),
+        ],
+      ],
+    );
 
     return InkWell(
       onTap: () => unawaited(
@@ -262,66 +407,7 @@ class _AgendaRow extends StatelessWidget {
           horizontal: spacingMd,
           vertical: spacingSm,
         ),
-        child: Row(
-          children: <Widget>[
-            Container(
-              width: spacingXs,
-              height: rem(1.125),
-              decoration: BoxDecoration(
-                color: eventColor(event.colorId, theme.colorScheme),
-                borderRadius: BorderRadius.circular(spacingXs / 2),
-              ),
-            ),
-            SizedBox(width: spacingSm),
-            SizedBox(
-              width: rem(3.5),
-              child: Text(
-                timeLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            Expanded(
-              child: isNext
-                  ? Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: Container(
-                        key: const ValueKey<String>('agenda-next-event'),
-                        padding: EdgeInsetsDirectional.symmetric(
-                          horizontal: spacingXs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: nextEventMarkerColor,
-                          borderRadius: BorderRadius.circular(spacingXs / 2),
-                        ),
-                        child: Semantics(
-                          label: AppLocalizations.of(
-                            context,
-                          ).monthAgendaNextEvent,
-                          child: Text(
-                            event.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: nextEventMarkerTextColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  : Text(
-                      event.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-            ),
-          ],
-        ),
+        child: isOver ? Opacity(opacity: _pastOpacity, child: row) : row,
       ),
     );
   }

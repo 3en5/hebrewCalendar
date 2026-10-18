@@ -1,6 +1,8 @@
 // Today's next event in the month view's day agenda is marked like a
-// highlighter (owner request 2026-10-18): the first timed event that has
-// not started yet, only on today, never an all-day event.
+// highlighter (owner requests 2026-10-18): the first timed event that has
+// not started yet, only on today, never an all-day event; its time and
+// title share one marker, it is scrolled to the middle of a long list, and
+// the events that are over are drawn faint.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -62,15 +64,26 @@ Future<void> _pump(
   await tester.pump();
 }
 
-String? _marked(WidgetTester tester) {
-  final Finder marker = find.byKey(const ValueKey<String>('agenda-next-event'));
-  if (marker.evaluate().isEmpty) {
+final Finder _marker = find.byKey(const ValueKey<String>('agenda-next-event'));
+
+/// The texts inside the marker (time, then title), or null without one.
+List<String?>? _marked(WidgetTester tester) {
+  if (_marker.evaluate().isEmpty) {
     return null;
   }
   return tester
-      .widget<Text>(find.descendant(of: marker, matching: find.byType(Text)))
-      .data;
+      .widgetList<Text>(
+        find.descendant(of: _marker, matching: find.byType(Text)),
+      )
+      .map((Text t) => t.data)
+      .toList();
 }
+
+/// Whether the row titled [title] is drawn faint.
+bool _faint(WidgetTester tester, String title) => find
+    .ancestor(of: find.text(title), matching: find.byType(Opacity))
+    .evaluate()
+    .isNotEmpty;
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
@@ -91,13 +104,51 @@ void main() {
     expect(nextEventIndex(list, 21 * 60), isNull);
   });
 
+  test('isEventOver once the end has passed', () {
+    final Event morning = _occ(today, 'morning', 8).event; // 08:00-08:30
+    expect(isEventOver(morning, 8 * 60 + 10), isFalse); // still on
+    expect(isEventOver(morning, 8 * 60 + 30), isTrue);
+    expect(isEventOver(_occ(today, 'all day', null).event, 23 * 60), isFalse);
+  });
+
+  testWidgets('events that are over are faint, the rest are not', (
+    WidgetTester tester,
+  ) async {
+    await _pump(tester, today, <EventOccurrence>[
+      _occ(today, 'ציפורניים', 8),
+      _occ(today, 'כל היום', null),
+      _occ(today, 'כדורגל', 17),
+    ], now);
+    expect(_faint(tester, 'ציפורניים'), isTrue);
+    expect(_faint(tester, 'כל היום'), isFalse);
+    expect(_faint(tester, 'כדורגל'), isFalse);
+  });
+
+  testWidgets('a long day opens with the next event in the middle', (
+    WidgetTester tester,
+  ) async {
+    final List<EventOccurrence> many = <EventOccurrence>[
+      for (int h = 0; h < 24; h++) _occ(today, 'אירוע $h', h),
+    ];
+    await _pump(tester, today, many, now);
+    await tester.pumpAndSettle();
+    expect(_marked(tester), <String>['17:00', 'אירוע 17']);
+    final Rect list = tester.getRect(
+      find.byWidgetPredicate(
+        (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+      ),
+    );
+    final double centre = tester.getCenter(_marker).dy;
+    expect((centre - list.center.dy).abs(), lessThan(list.height * 0.15));
+  });
+
   testWidgets('marks today\'s next event', (WidgetTester tester) async {
     await _pump(tester, today, <EventOccurrence>[
       _occ(today, 'ציפורניים', 8),
       _occ(today, 'כדורגל', 17),
       _occ(today, 'תרופות', 20),
     ], now);
-    expect(_marked(tester), 'כדורגל');
+    expect(_marked(tester), <String>['17:00', 'כדורגל']);
   });
 
   testWidgets('no mark on another day', (WidgetTester tester) async {

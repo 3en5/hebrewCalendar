@@ -9,7 +9,8 @@
 - בקשת הבעלים: הדגשה כמו מרקר על הפגישה הבאה לפי השעה, ברשימה שמתחת לחודש.
 - `month_day_agenda.dart`: `nextEventIndex` (האירוע הראשון עם שעה שעוד לא התחיל; לא אירוע של כל היום), רק כשהיום שנבחר הוא היום. `_AgendaList` בודקת כל 30 שניות (Timer שמבוטל ב-dispose). רקע צהוב `0xFFFFE066` מאחורי הכותרת, וטקסט כהה בשני המצבים.
 - מחרוזת חדשה `monthAgendaNextEvent` לקורא מסך. המדריך באתר (פרק התצוגות) עודכן.
-- בדיקות: `test/features/calendar/presentation/next_event_marker_test.dart` (4).
+- המשך (סקיצה 66, בקשת הבעלים): השעה והשם בהדגשה אחת רצופה; אירועים שנגמרו (`isEventOver`: הסוף עבר, אירוע שחוצה חצות רץ עד סוף היום) בשקיפות 0.45; הרשימה גוללת כך שהאירוע הבא באמצע (`Scrollable.ensureVisible`, alignment 0.5), רק כשהאירוע הבא מתחלף, כך שגלילה של המשתמש נשארת. הרשימה בונה את כל השורות (ListView בלי builder), כי ביום יש מעט אירועים.
+- בדיקות: `test/features/calendar/presentation/next_event_marker_test.dart` (7).
 - בענף בלבד, ייצא בגרסה הבאה.
 
 ## 2026-10-17 — סטטיסטיקת שימוש (Firebase Analytics)
