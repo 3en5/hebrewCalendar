@@ -580,6 +580,10 @@
   "@monthAgendaEmpty": {
     "description": "Shown in the month view's day agenda (below the grid) when the selected day has no events."
   },
+  "monthAgendaNextEvent": "האירוע הבא",
+  "@monthAgendaNextEvent": {
+    "description": "Screen-reader label for today's next event, marked in the month view's day agenda."
+  },
   "monthAgendaDayHeader": "יום {weekday}, {day} {month}",
   "@monthAgendaDayHeader": {
     "description": "Header of the month view's day agenda, e.g. 'יום שני, א׳ חשוון'.",

@@ -559,6 +559,9 @@ class AppLocalizationsHe extends AppLocalizations {
   String get monthAgendaEmpty => 'אין אירועים ביום זה';
 
   @override
+  String get monthAgendaNextEvent => 'האירוע הבא';
+
+  @override
   String monthAgendaDayHeader(String weekday, String day, String month) {
     return 'יום $weekday, $day $month';
   }

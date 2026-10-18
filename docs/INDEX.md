@@ -110,6 +110,7 @@
 | `test/features/calendar/presentation/month_day_swipe_test.dart` | טסטים להחלקה בין ימים ובין חודשים |
 | `lib/features/calendar/presentation/widgets/location_actions.dart` | M20: מיקום האירוע בפרטי האירוע עם כפתורי Google Maps ו-Waze (`url_launcher`) |
 | `test/features/calendar/presentation/location_actions_test.dart` | טסט לקישורי Maps/Waze |
+| `test/features/calendar/presentation/next_event_marker_test.dart` | טסטים להדגשת האירוע הבא ברשימה שמתחת לחודש |
 | `lib/domain/zmanim/zmanim.dart` | M21: `computeZmanim` — זמני היום, הדלקת נרות וצאת שבת (`kosher_dart`) |
 | `lib/domain/zmanim/zmanim_location.dart` | M21: `ZmanimLocation` ורשימת הערים עם מנהג הדלקת הנרות |
 | `lib/features/zmanim/application/zmanim_settings.dart` | M21: `ZmanimSettings`/`zmanimSettingsProvider` — העדפות זמני היום במכשיר, מיקום מהטלפון (`geolocator`) |

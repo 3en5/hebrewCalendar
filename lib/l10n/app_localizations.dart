@@ -1060,6 +1060,12 @@ abstract class AppLocalizations {
   /// **'אין אירועים ביום זה'**
   String get monthAgendaEmpty;
 
+  /// Screen-reader label for today's next event, marked in the month view's day agenda.
+  ///
+  /// In he, this message translates to:
+  /// **'האירוע הבא'**
+  String get monthAgendaNextEvent;
+
   /// Header of the month view's day agenda, e.g. 'יום שני, א׳ חשוון'.
   ///
   /// In he, this message translates to:
