@@ -4,7 +4,8 @@ A video is a title card and then scenes. Each scene is one real app
 screen (from capture_guide_videos_test.dart) with effects on the marks the
 capture recorded: an orange frame that pulses, a yellow marker swept over
 text (right to left, as Hebrew is read), a speech bubble pointing at a mark,
-and a finger that presses the "tap" mark before the next screen comes in.
+and a finger that presses the "tap" mark before the next screen comes in,
+swipes across the "swipe" mark, or is held down on a mark.
 make_guide_videos.py says what each video shows; this file draws it.
 """
 
@@ -174,6 +175,41 @@ def finger(overlay, box, t, press_at):
     overlay.alpha_composite(layer)
 
 
+def swipe(overlay, box, t, start, rightward):
+    """A fingertip that slides across [box] from [start], with a trail."""
+    k = ease((t - start) / 0.7)
+    if t < start - 0.3 or t > start + 1.1:
+        return
+    appear = ease((t - start + 0.3) / 0.3) * (1 - ease((t - start - 0.8) / 0.3))
+    cy = (box[1] + box[3]) / 2
+    a, b = box[0] + 90, box[2] - 90
+    if not rightward:
+        a, b = b, a
+    cx = a + (b - a) * k
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    if k > 0:
+        d.line([(a, cy), (cx, cy)], fill=ORANGE + (int(150 * appear),),
+               width=14)
+    d.ellipse([cx - 38, cy - 38, cx + 38, cy + 38],
+              fill=(255, 255, 255, int(150 * appear)),
+              outline=(60, 60, 60, int(200 * appear)), width=4)
+    overlay.alpha_composite(layer)
+
+
+def press(overlay, box, t):
+    """A fingertip held down on [box] for the whole scene."""
+    cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+    pulse = 46 + 10 * (1 + math.sin(t * 6))
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    d.ellipse([cx - pulse, cy - pulse, cx + pulse, cy + pulse],
+              outline=ORANGE + (170,), width=5)
+    d.ellipse([cx - 32, cy - 32, cx + 32, cy + 32],
+              fill=(255, 255, 255, 140), outline=(60, 60, 60, 200), width=4)
+    overlay.alpha_composite(layer)
+
+
 # ---- the video ----
 
 def load(raw, name):
@@ -222,6 +258,11 @@ def scene_frame(img, scene, marks, t):
         text, target, where = scene["bubble"]
         bubble(overlay, text, box_of(m, target) if target else None, where,
                t - start - 0.15)
+    if "swipe" in scene:
+        swipe(overlay, box_of(m, "swipe", pad=0), t, scene["dur"] - 1.2,
+              scene["swipe"] == "right")
+    if "press" in scene:
+        press(overlay, box_of(m, scene["press"], pad=0), t)
     if scene.get("tap"):
         finger(overlay, box_of(m, "tap", pad=0), t, scene["dur"] - 0.45)
     return Image.alpha_composite(out, overlay)

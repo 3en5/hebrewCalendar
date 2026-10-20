@@ -1,155 +1,220 @@
-// Captures the steps of the user guide's short videos (site/guide.html)
-// from the real app widgets, and where each thing a step points at is
-// (not run in CI: it lives outside test/). Run from the repo root:
+// Captures the steps of the user guide's short videos for chapter 1,
+// "צעדים ראשונים" (site/guide.html), from the real app widgets (not run in
+// CI: it lives outside test/). Chapters 2 and 4-7 are in
+// capture_guide_videos_events_test.dart and _learning_test.dart. Run from
+// the repo root:
 //   TZ=Asia/Jerusalem flutter test tool/screenshots/capture_guide_videos_test.dart
 // then animate them: python3 tool/screenshots/make_guide_videos.py
-// Output: build/store_raw/v_<video>_<n>.png and build/store_raw/video_marks.json.
+// Output: build/store_raw/v_*.png and build/store_raw/video_marks_start.json.
 
 // A test file kept outside test/, so the analyzer doesn't know it is one.
 // ignore_for_file: invalid_use_of_visible_for_testing_member
-
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
+import 'package:hebrew_calendar/features/calendar/application/calendar_display_mode_provider.dart';
 import 'package:hebrew_calendar/features/calendar/application/calendar_view_provider.dart';
-import 'package:hebrew_calendar/features/calendar/presentation/widgets/day_cell.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hebrew_calendar/features/settings/application/text_size_provider.dart';
+import 'package:hebrew_calendar/features/settings/presentation/widgets/text_size_tile.dart';
 
 import 'screens_harness.dart';
-
-/// Step image name -> mark name -> [left, top, right, bottom] in image
-/// pixels. The mark "tap" is what the next step's finger presses.
-final Map<String, Map<String, List<double>>> _marks =
-    <String, Map<String, List<double>>>{};
-
-List<double> _box(String name, String key, Finder finder) {
-  Rect? box;
-  for (final Element e in finder.evaluate()) {
-    final RenderBox r = e.renderObject! as RenderBox;
-    final Rect rect = MatrixUtils.transformRect(
-      r.getTransformTo(null),
-      Offset.zero & r.size,
-    );
-    box = box == null ? rect : box.expandToInclude(rect);
-  }
-  if (box == null) {
-    throw StateError('$name: nothing found for $key');
-  }
-  return <double>[
-    box.left * shotDpr,
-    box.top * shotDpr,
-    box.right * shotDpr,
-    box.bottom * shotDpr,
-  ];
-}
-
-/// Shoots step [name] and records [marks]; [tap] is then pressed.
-Future<void> _step(
-  WidgetTester tester,
-  String name, {
-  Map<String, Finder> marks = const <String, Finder>{},
-  Finder? tap,
-}) async {
-  // Not [shot]: it turns shadows off after each step, and widgets built
-  // after that would keep the flat outline (the test resets it at its end).
-  await tester.pumpAndSettle();
-  await shotNow(tester, name);
-  _marks[name] = <String, List<double>>{
-    for (final MapEntry<String, Finder> m in marks.entries)
-      m.key: _box(name, m.key, m.value),
-    if (tap != null) 'tap': _box(name, 'tap', tap),
-  };
-  if (tap != null) {
-    await tester.tap(tap);
-    await tester.pumpAndSettle();
-  }
-}
-
-Finder _tile(String text) =>
-    find.ancestor(of: find.text(text).last, matching: find.byType(ListTile));
-
-Finder _day(int hebrewDay) => find.byWidgetPredicate(
-  (Widget w) => w is DayCell && w.onTap != null && w.hebrewDay == hebrewDay,
-);
+import 'video_steps.dart';
 
 void main() {
-  setUpAll(() async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    await loadShotFonts();
-  });
-  setUp(() => SharedPreferences.setMockInitialValues(shotPrefs()));
-  tearDownAll(() {
-    File(
-      'build/store_raw/video_marks.json',
-    ).writeAsStringSync(const JsonEncoder.withIndent(' ').convert(_marks));
-  });
+  setUpVideos('start');
 
-  // "אירוע חוזר לפי התאריך העברי": a birthday on 10 Adar II, every year.
-  testWidgets('recurrence video', (WidgetTester tester) async {
+  testWidgets('views', (WidgetTester tester) async {
     final ProviderContainer c = await pumpShotApp(
       tester,
       mode: ThemeMode.light,
     );
     final CalendarViewNotifier view = c.read(calendarViewProvider.notifier);
-    view.setFocusedDate(
-      const HebrewDate(year: 5787, month: HebrewMonth.adarII, day: 10),
-    );
-    await tester.pumpAndSettle();
-    await _step(tester, 'v_rec_1', tap: find.byType(FloatingActionButton));
-    await _step(
+    await step(
       tester,
-      'v_rec_2',
-      tap: find.byKey(const ValueKey<String>('add-menu-new-event')),
+      'v_views_1',
+      tap: find.byIcon(Icons.arrow_drop_down).first,
     );
-    await tester.enterText(find.byType(TextField).first, 'יום הולדת לדוד');
+    await step(
+      tester,
+      'v_views_2',
+      marks: <String, Finder>{
+        'menu': find.byType(PopupMenuItem<CalendarViewType>),
+      },
+      tap: find.text('שבוע').last,
+    );
+    await step(tester, 'v_views_3');
+    view.setViewType(CalendarViewType.day);
+    await step(tester, 'v_views_4', tap: find.byType(ExpansionTile).first);
+    await step(
+      tester,
+      'v_views_5',
+      marks: <String, Finder>{'zmanim': find.byType(ExpansionTile).first},
+    );
+    view.setViewType(CalendarViewType.agenda);
+    await step(tester, 'v_views_6');
+    endVideo();
+  });
+
+  testWidgets('swipe', (WidgetTester tester) async {
+    await pumpShotApp(tester, mode: ThemeMode.light);
+    final Finder grid = find.byType(PageView).first;
+    await step(
+      tester,
+      'v_swipe_1',
+      swipe: grid,
+      marks: <String, Finder>{'title': byKey('calendar-title')},
+    );
+    await step(
+      tester,
+      'v_swipe_2',
+      marks: <String, Finder>{'title': byKey('calendar-title')},
+      swipe: byKey('day-swipe-area'),
+    );
+    await step(
+      tester,
+      'v_swipe_3',
+      marks: <String, Finder>{'day': byKey('day-swipe-area')},
+    );
+    endVideo();
+  });
+
+  testWidgets('day pop', (WidgetTester tester) async {
+    await pumpShotApp(tester, mode: ThemeMode.light);
+    final Finder cell = dayCell(10);
+    await step(tester, 'v_pop_1', marks: <String, Finder>{'tap': cell});
+    final TestGesture finger = await tester.startGesture(
+      tester.getCenter(cell),
+    );
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(seconds: 1));
+    await step(
+      tester,
+      'v_pop_2',
+      settle: false,
+      marks: <String, Finder>{'pop': byKey('day-pop')},
+    );
+    await finger.up();
+    await tester.pumpAndSettle();
+    endVideo();
+  });
+
+  testWidgets('go to', (WidgetTester tester) async {
+    await pumpShotApp(tester, mode: ThemeMode.light);
+    await step(tester, 'v_goto_1', tap: find.byTooltip('מעבר לתאריך'));
+    await step(
+      tester,
+      'v_goto_2',
+      marks: <String, Finder>{
+        'items': find.ancestor(
+          of: find.byType(ListTile),
+          matching: find.byType(BottomSheet),
+        ),
+      },
+      tap: find.text('דילוג לתאריך עברי'),
+    );
+    await step(
+      tester,
+      'v_goto_3',
+      tap: find.byType(DropdownButtonFormField<HebrewMonth>),
+    );
+    await step(tester, 'v_goto_4', tap: find.text('כסלו').last);
+    await step(
+      tester,
+      'v_goto_5',
+      marks: <String, Finder>{
+        'month': find.byType(DropdownButtonFormField<HebrewMonth>),
+      },
+      tap: find.text('אישור'),
+    );
+    await step(
+      tester,
+      'v_goto_6',
+      marks: <String, Finder>{'title': byKey('calendar-title')},
+    );
+    endVideo();
+  });
+
+  testWidgets('gregorian', (WidgetTester tester) async {
+    final ProviderContainer c = await pumpShotApp(
+      tester,
+      mode: ThemeMode.light,
+    );
+    await step(tester, 'v_greg_1', tap: byKey('calendar-title'));
+    await step(tester, 'v_greg_2', tap: find.text('תצוגה לועזית').last);
+    await step(
+      tester,
+      'v_greg_3',
+      marks: <String, Finder>{
+        'title': byKey('calendar-title'),
+        'cell': find.byType(PageView).first,
+      },
+    );
+    // Kept by the app past this test; the next videos are Hebrew again.
+    await c
+        .read(calendarDisplayModeProvider.notifier)
+        .set(CalendarDisplayMode.hebrew);
+    await tester.pumpAndSettle();
+    endVideo();
+  });
+
+  testWidgets('search', (WidgetTester tester) async {
+    await pumpShotApp(tester, mode: ThemeMode.light);
+    await step(tester, 'v_search_1', tap: find.byIcon(Icons.search));
+    await tester.enterText(find.byType(TextField).first, 'יום');
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await _step(
+    await step(
       tester,
-      'v_rec_3',
-      marks: <String, Finder>{'title': find.byType(TextField).first},
-      tap: find.byIcon(Icons.repeat),
+      'v_search_2',
+      marks: <String, Finder>{'field': find.byType(TextField).first},
+      tap: find.text('יום נישואין').last,
     );
-    await _step(tester, 'v_rec_4', tap: _tile('כל שנה (עברי)'));
-    await _step(
+    await step(tester, 'v_search_3');
+    endVideo();
+  });
+
+  testWidgets('text size', (WidgetTester tester) async {
+    final ProviderContainer c = await pumpShotApp(
       tester,
-      'v_rec_5',
-      marks: <String, Finder>{
-        'yearly': _tile('כל שנה (עברי)'),
-        'adar': find.byType(ChoiceChip),
-      },
-      tap: find.text('סיום'),
+      mode: ThemeMode.light,
     );
-    await _step(
+    await step(tester, 'v_size_1', tap: find.byIcon(Icons.more_vert));
+    await step(tester, 'v_size_2', tap: find.text('הגדרות'));
+    await scrollSettingsTo(tester, find.byType(TextSizeTile));
+    await step(
       tester,
-      'v_rec_6',
-      marks: <String, Finder>{'repeat': find.text('כל שנה (עברי)')},
-      tap: find.byIcon(Icons.check),
+      'v_size_3',
+      marks: <String, Finder>{'size': find.byType(TextSizeTile)},
+      swipe: byKey('text-size-slider'),
+      by: const Offset(-160, 0),
     );
-    await _step(
+    await c.read(textSizeProvider.notifier).set(1.25);
+    await step(
       tester,
-      'v_rec_7',
-      marks: <String, Finder>{
-        'event': find.text('יום הולדת לדוד').first,
-        'cell': _day(10),
-      },
+      'v_size_4',
+      marks: <String, Finder>{'size': find.byType(TextSizeTile)},
+      tap: backButton(),
     );
-    // A year later: 5788 has one Adar, and the birthday is there.
-    view.setFocusedDate(
-      const HebrewDate(year: 5788, month: HebrewMonth.adar, day: 10),
-    );
+    await step(tester, 'v_size_5');
+    await c.read(textSizeProvider.notifier).set(1.0);
     await tester.pumpAndSettle();
-    await _step(
+    endVideo();
+  });
+
+  testWidgets('dark', (WidgetTester tester) async {
+    await pumpShotApp(tester, mode: ThemeMode.light);
+    await openSettings(tester);
+    await scrollSettingsTo(tester, byKey('dark-mode-switch'));
+    await step(tester, 'v_dark_1', tap: byKey('dark-mode-switch'));
+    await step(
       tester,
-      'v_rec_8',
-      marks: <String, Finder>{
-        'event': find.text('יום הולדת לדוד').first,
-        'cell': _day(10),
-      },
+      'v_dark_2',
+      marks: <String, Finder>{'switch': byKey('dark-mode-switch')},
+      tap: backButton(),
     );
-    debugDisableShadows = true;
+    await step(tester, 'v_dark_3');
+    endVideo();
   });
 }
