@@ -44,7 +44,10 @@ const String kDeviceZmanimLocationId = 'device';
 /// the common Israeli calendars and Hebcal compute them (owner decision
 /// 2026-10-15: Jerusalem's 754 m and Ma'ale Adumim's 500 m moved sunset
 /// and candle lighting away from the printed times). Candle lighting:
-/// Jerusalem, Ma'ale Adumim and Petah Tikva 40, by local custom.
+/// Jerusalem, Ma'ale Adumim and Petah Tikva 40, by local custom; Haifa,
+/// Zichron Ya'akov and Safed 30 (Hebcal, Kipa); Bnei Brak, Modi'in Illit
+/// and Beit Shemesh 30 as their communities light early (owner decision
+/// 2026-10-20, as Modi'in and Ariel moved to the common 20).
 const List<ZmanimLocation> kZmanimCities = <ZmanimLocation>[
   ZmanimLocation(
     id: 'jerusalem',
@@ -79,7 +82,7 @@ const List<ZmanimLocation> kZmanimCities = <ZmanimLocation>[
     name: 'מודיעין',
     latitude: 31.8980,
     longitude: 35.0104,
-    candleLightingMinutes: 30,
+    candleLightingMinutes: 20,
   ),
   ZmanimLocation(
     id: 'modiin_illit',
@@ -191,7 +194,7 @@ const List<ZmanimLocation> kZmanimCities = <ZmanimLocation>[
     name: 'אריאל',
     latitude: 32.1060,
     longitude: 35.1870,
-    candleLightingMinutes: 30,
+    candleLightingMinutes: 20,
   ),
   ZmanimLocation(
     id: 'hadera',
@@ -199,6 +202,13 @@ const List<ZmanimLocation> kZmanimCities = <ZmanimLocation>[
     latitude: 32.4340,
     longitude: 34.9196,
     candleLightingMinutes: 20,
+  ),
+  ZmanimLocation(
+    id: 'zichron_yaakov',
+    name: 'זכרון יעקב',
+    latitude: 32.5707,
+    longitude: 34.9532,
+    candleLightingMinutes: 30,
   ),
   ZmanimLocation(
     id: 'afula',

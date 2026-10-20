@@ -45,9 +45,9 @@ dependencies:
   # Anonymous usage counts (active users, app version) for the owner;
   # automatic events only, no advertising ID (AndroidManifest.xml).
   firebase_analytics: ^12.4.0
-  # The in-app "new version" prompt (Google Play In-App Updates). Pinned:
-  # 4.2.5 needs Kotlin 2.2, the app builds with 2.1.
-  in_app_update: 4.2.4
+  # The in-app "new version" prompt (Google Play In-App Updates). 4.2.5+
+  # needs Kotlin 2.2 (android/settings.gradle.kts).
+  in_app_update: ^4.2.5
   google_sign_in: ^7.2.0
   google_sign_in_platform_interface: ^3.1.0
   flutter_local_notifications: ^20.1.0
