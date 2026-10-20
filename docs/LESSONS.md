@@ -633,3 +633,8 @@
 ## 2026-10-17 — `flutter pub add` שדרג את כל חבילות Firebase
 - הוספת `firebase_analytics` העדכנית ביותר משכה איתה firebase_core 4.15, cloud_firestore 6.10 ו-firebase_auth 6.7, בלי שביקשנו.
 - הפתרון: לנסות גרסאות קודמות של החבילה החדשה עד שה-diff של pubspec.lock רק מוסיף שורות (`git diff pubspec.lock | grep -c '^-    version'` שווה 0). כאן זו הייתה 12.4.0.
+
+## 2026-10-20 — העלאה למסלול Alpha באפליקציה שעוד לא פורסמה
+- `release.yml` עם `track: alpha` בנה בהצלחה, אבל נכשל ב-commit של ה-Edit: "Only releases with status draft may be created on draft app".
+- כל עוד לאפליקציה אין גרסה במסלול ציבורי, ה-API יוצר מחוץ למסלול הפנימי רק טיוטות. מריצים עם `draft: true`, ואז הבעלים שולח לבדיקה מ-Play Console.
+
