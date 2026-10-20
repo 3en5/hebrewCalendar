@@ -45,7 +45,7 @@ const String kDeviceZmanimLocationId = 'device';
 /// 2026-10-15: Jerusalem's 754 m and Ma'ale Adumim's 500 m moved sunset
 /// and candle lighting away from the printed times). Candle lighting:
 /// Jerusalem, Ma'ale Adumim and Petah Tikva 40, by local custom; Haifa,
-/// Zichron Ya'akov and Safed 30 (Hebcal, Kipa); Bnei Brak, Modi'in Illit
+/// Zichron Ya'akov, Tiberias and Safed 30 (Hebcal, Kipa); Bnei Brak, Modi'in Illit
 /// and Beit Shemesh 30 as their communities light early (owner decision
 /// 2026-10-20, as Modi'in and Ariel moved to the common 20).
 const List<ZmanimLocation> kZmanimCities = <ZmanimLocation>[
@@ -222,7 +222,7 @@ const List<ZmanimLocation> kZmanimCities = <ZmanimLocation>[
     name: 'טבריה',
     latitude: 32.7959,
     longitude: 35.5310,
-    candleLightingMinutes: 20,
+    candleLightingMinutes: 30,
   ),
   ZmanimLocation(
     id: 'safed',
