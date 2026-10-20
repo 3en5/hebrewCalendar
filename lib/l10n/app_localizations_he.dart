@@ -1052,4 +1052,19 @@ class AppLocalizationsHe extends AppLocalizations {
   String dailyLearningSummaryParsha(String mode) {
     return 'פרשת השבוע ($mode)';
   }
+
+  @override
+  String get updateAvailable => 'יש גרסה חדשה של לוח עברי.';
+
+  @override
+  String get updateNow => 'עדכון';
+
+  @override
+  String get updateLater => 'לא עכשיו';
+
+  @override
+  String get updateDownloaded => 'העדכון ירד. כדי להשתמש בו צריך להפעיל מחדש.';
+
+  @override
+  String get updateRestart => 'הפעלה מחדש';
 }

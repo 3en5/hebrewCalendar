@@ -895,5 +895,15 @@
   "parshaAliyah": "{n, select, 1{ראשון} 2{שני} 3{שלישי} 4{רביעי} 5{חמישי} 6{שישי} other{שביעי}}",
   "@parshaAliyah": {"description": "The aliyah of the day, 1 to 7 (M26).", "placeholders": {"n": {"type": "String"}}},
   "dailyLearningSummaryParsha": "פרשת השבוע ({mode})",
-  "@dailyLearningSummaryParsha": {"description": "Daily learning row subtitle part: the portion and its mode (M26).", "placeholders": {"mode": {"type": "String"}}}
+  "@dailyLearningSummaryParsha": {"description": "Daily learning row subtitle part: the portion and its mode (M26).", "placeholders": {"mode": {"type": "String"}}},
+  "updateAvailable": "יש גרסה חדשה של לוח עברי.",
+  "@updateAvailable": {"description": "Banner: Google Play has a newer version."},
+  "updateNow": "עדכון",
+  "@updateNow": {"description": "Banner button: download the update in the background."},
+  "updateLater": "לא עכשיו",
+  "@updateLater": {"description": "Banner button: hide it for a few days."},
+  "updateDownloaded": "העדכון ירד. כדי להשתמש בו צריך להפעיל מחדש.",
+  "@updateDownloaded": {"description": "Snackbar: the update finished downloading."},
+  "updateRestart": "הפעלה מחדש",
+  "@updateRestart": {"description": "Snackbar action: install the downloaded update and restart."}
 }

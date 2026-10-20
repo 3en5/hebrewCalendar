@@ -1839,6 +1839,36 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'פרשת השבוע ({mode})'**
   String dailyLearningSummaryParsha(String mode);
+
+  /// Banner: Google Play has a newer version.
+  ///
+  /// In he, this message translates to:
+  /// **'יש גרסה חדשה של לוח עברי.'**
+  String get updateAvailable;
+
+  /// Banner button: download the update in the background.
+  ///
+  /// In he, this message translates to:
+  /// **'עדכון'**
+  String get updateNow;
+
+  /// Banner button: hide it for a few days.
+  ///
+  /// In he, this message translates to:
+  /// **'לא עכשיו'**
+  String get updateLater;
+
+  /// Snackbar: the update finished downloading.
+  ///
+  /// In he, this message translates to:
+  /// **'העדכון ירד. כדי להשתמש בו צריך להפעיל מחדש.'**
+  String get updateDownloaded;
+
+  /// Snackbar action: install the downloaded update and restart.
+  ///
+  /// In he, this message translates to:
+  /// **'הפעלה מחדש'**
+  String get updateRestart;
 }
 
 class _AppLocalizationsDelegate

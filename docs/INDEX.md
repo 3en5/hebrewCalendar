@@ -207,6 +207,11 @@
 | `lib/features/learning/presentation/daily_learning_launcher.dart` | M26: טעינת קטע היום ופתיחת חלון הלימוד |
 | `lib/features/learning/presentation/daily_learning_settings_screen.dart` | M26: שורת "לימוד יומי" בהגדרות והעמוד שלה |
 | `test/domain/learning/daily_parsha_test.dart`, `test/features/learning/daily_learning_test.dart` | M26: טסטים לבחירת העלייה, לקבצים, ללשוניות ולעמוד ההגדרות |
+| `lib/domain/update/update_decision.dart` | M27: `decideUpdatePrompt` (אין / באנר / עדכון מלא) ו-`kUpdateSnooze` |
+| `lib/data/update/app_update_gateway.dart` | M27: עטיפה ל-Google Play In-App Updates, ו-`fetchMinVersionCode` מהאתר |
+| `lib/features/update/app_update_launcher.dart` | M27: בדיקה בפתיחה ובחזרה לאפליקציה, באנר העדכון והודעת "הפעלה מחדש" |
+| `site/min-version.json` | M27: מתג חירום לעדכון חובה (RELEASE.md §8) |
+| `test/domain/update/update_decision_test.dart`, `test/features/update/app_update_launcher_test.dart` | M27: טסטים להחלטה ולבאנר, עם Play מזויף |
 | `lib/domain/text/text_links.dart` | איתור מספרי טלפון, מיילים וקישורים בטקסט, ומספר לוואטסאפ |
 | `lib/core/widgets/linkified_text.dart` | טקסט שבו מספרים, מיילים וקישורים לחיצים (חיוג/וואטסאפ/העתקה, מייל, דפדפן) |
 | `lib/features/event_editor/presentation/delete_event_flow.dart` | `confirmAndDeleteEvent`: אישור ומחיקה של אירוע (בודד או מופע/הבאים/כל הסדרה), משותף לחלון פרטי האירוע ולעורך |

@@ -232,6 +232,7 @@ Future<void> shotNow(WidgetTester tester, String name) async {
 Future<ProviderContainer> pumpShotApp(
   WidgetTester tester, {
   required ThemeMode mode,
+  List<Override> extraOverrides = const <Override>[],
 }) async {
   // `flutter test` draws shadows as solid outlines by default; restored
   // at the end of [shot] (the test framework checks it is reset).
@@ -262,6 +263,7 @@ Future<ProviderContainer> pumpShotApp(
           appVersionProvider.overrideWith((Ref ref) async => '1.0.0'),
           dailyHalachaSourceProvider.overrideWithValue(localHalacha()),
           dailyParshaSourceProvider.overrideWithValue(localParsha()),
+          ...extraOverrides,
           halachaCloudProvider.overrideWithValue(ShotHalachaCloud()),
           backgroundSyncSchedulerProvider.overrideWithValue(
             FakeBackgroundSyncScheduler(),

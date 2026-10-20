@@ -27,6 +27,7 @@ import 'event_search_screen.dart';
 import 'month_view_body.dart';
 import 'week_view_screen.dart';
 import 'widgets/add_menu_sheet.dart';
+import '../../update/app_update_launcher.dart';
 import 'widgets/calendar_title.dart';
 import 'widgets/go_to_date_sheet.dart';
 import 'widgets/sync_progress_strip.dart';
@@ -88,125 +89,128 @@ class CalendarShellScreen extends ConsumerWidget {
       });
     }
 
-    // M25: the day's first visit opens the daily halacha.
-    return DailyHalachaLauncher(
-      child: Scaffold(
-        appBar: AppBar(
-          // The month/year, with the other calendar's span below; tapping it
-          // switches between the Hebrew and Gregorian displays (M23).
-          title: const CalendarTitle(),
-          actions: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.search),
-              tooltip: l10n.searchTooltip,
-              onPressed: () => Navigator.of(context).push(
+    // M25: the day's first visit opens the daily halacha; a newer version
+    // on Google Play shows a banner (owner request 2026-10-20).
+    return AppUpdateLauncher(
+      child: DailyHalachaLauncher(
+        child: Scaffold(
+          appBar: AppBar(
+            // The month/year, with the other calendar's span below; tapping it
+            // switches between the Hebrew and Gregorian displays (M23).
+            title: const CalendarTitle(),
+            actions: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.search),
+                tooltip: l10n.searchTooltip,
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const EventSearchScreen(),
+                  ),
+                ),
+              ),
+              // M12: today, or jump to any Hebrew/Gregorian date.
+              IconButton(
+                icon: const Icon(Icons.today),
+                tooltip: l10n.goToDateTooltip,
+                onPressed: () => openGoToDateSheet(context, ref),
+              ),
+              _ViewSwitcher(current: state.viewType, l10n: l10n),
+              // KALFAPP style (as in PowerWatch): settings, about and sign-out
+              // live in the overflow menu, leaving room for a centered title.
+              PopupMenuButton<_OverflowAction>(
+                onSelected: (_OverflowAction action) {
+                  switch (action) {
+                    case _OverflowAction.settings:
+                      unawaited(
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const SettingsScreen(),
+                          ),
+                        ),
+                      );
+                    case _OverflowAction.guide:
+                      unawaited(openUserGuide(context));
+                    case _OverflowAction.about:
+                      unawaited(
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const AboutScreen(),
+                          ),
+                        ),
+                      );
+                    case _OverflowAction.signOut:
+                      if (demoMode) {
+                        // Task brief #5: leaving demo mode just clears the flag
+                        // — there is no real session to sign out of, and the
+                        // auth gate immediately swaps back to `SignInScreen`.
+                        ref.read(demoModeProvider.notifier).disable();
+                      } else {
+                        unawaited(_confirmSignOut(context, ref, l10n));
+                      }
+                  }
+                },
+                itemBuilder: (BuildContext context) =>
+                    <PopupMenuEntry<_OverflowAction>>[
+                      PopupMenuItem<_OverflowAction>(
+                        value: _OverflowAction.settings,
+                        child: Text(l10n.settingsTooltip),
+                      ),
+                      PopupMenuItem<_OverflowAction>(
+                        value: _OverflowAction.guide,
+                        child: Text(l10n.settingsUserGuide),
+                      ),
+                      PopupMenuItem<_OverflowAction>(
+                        value: _OverflowAction.about,
+                        child: Text(l10n.settingsAboutTooltip),
+                      ),
+                      PopupMenuItem<_OverflowAction>(
+                        value: _OverflowAction.signOut,
+                        child: Text(
+                          demoMode
+                              ? l10n.signInReturnToSignInAction
+                              : l10n.signOutAction,
+                        ),
+                      ),
+                    ],
+              ),
+            ],
+          ),
+          // Device feedback: pulling any view down runs a Google sync. Only
+          // vertical scrolls count (the views page horizontally), from any
+          // depth, so the pull works on the month page and its agenda alike.
+          body: Column(
+            children: <Widget>[
+              // Device request 2026-10-12: show a running sync's progress.
+              if (!demoMode) const SyncProgressStrip(),
+              Expanded(
+                child: RefreshIndicator(
+                  notificationPredicate: (ScrollNotification notification) =>
+                      notification.metrics.axis == Axis.vertical,
+                  onRefresh: () =>
+                      _pullToSync(context, ref, l10n, demoMode: demoMode),
+                  child: switch (state.viewType) {
+                    CalendarViewType.month => const MonthViewBody(),
+                    CalendarViewType.week => const WeekViewScreen(),
+                    CalendarViewType.day => const DayViewScreen(),
+                    CalendarViewType.agenda => const AgendaViewScreen(),
+                  },
+                ),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => showAddMenuSheet(
+              context,
+              onNewEvent: () => _openEditorForNewEvent(context, state),
+              onSignificantDate: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => const EventSearchScreen(),
+                  builder: (_) => const SignificantDateScreen(),
                 ),
               ),
             ),
-            // M12: today, or jump to any Hebrew/Gregorian date.
-            IconButton(
-              icon: const Icon(Icons.today),
-              tooltip: l10n.goToDateTooltip,
-              onPressed: () => openGoToDateSheet(context, ref),
-            ),
-            _ViewSwitcher(current: state.viewType, l10n: l10n),
-            // KALFAPP style (as in PowerWatch): settings, about and sign-out
-            // live in the overflow menu, leaving room for a centered title.
-            PopupMenuButton<_OverflowAction>(
-              onSelected: (_OverflowAction action) {
-                switch (action) {
-                  case _OverflowAction.settings:
-                    unawaited(
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const SettingsScreen(),
-                        ),
-                      ),
-                    );
-                  case _OverflowAction.guide:
-                    unawaited(openUserGuide(context));
-                  case _OverflowAction.about:
-                    unawaited(
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const AboutScreen(),
-                        ),
-                      ),
-                    );
-                  case _OverflowAction.signOut:
-                    if (demoMode) {
-                      // Task brief #5: leaving demo mode just clears the flag
-                      // — there is no real session to sign out of, and the
-                      // auth gate immediately swaps back to `SignInScreen`.
-                      ref.read(demoModeProvider.notifier).disable();
-                    } else {
-                      unawaited(_confirmSignOut(context, ref, l10n));
-                    }
-                }
-              },
-              itemBuilder: (BuildContext context) =>
-                  <PopupMenuEntry<_OverflowAction>>[
-                    PopupMenuItem<_OverflowAction>(
-                      value: _OverflowAction.settings,
-                      child: Text(l10n.settingsTooltip),
-                    ),
-                    PopupMenuItem<_OverflowAction>(
-                      value: _OverflowAction.guide,
-                      child: Text(l10n.settingsUserGuide),
-                    ),
-                    PopupMenuItem<_OverflowAction>(
-                      value: _OverflowAction.about,
-                      child: Text(l10n.settingsAboutTooltip),
-                    ),
-                    PopupMenuItem<_OverflowAction>(
-                      value: _OverflowAction.signOut,
-                      child: Text(
-                        demoMode
-                            ? l10n.signInReturnToSignInAction
-                            : l10n.signOutAction,
-                      ),
-                    ),
-                  ],
-            ),
-          ],
-        ),
-        // Device feedback: pulling any view down runs a Google sync. Only
-        // vertical scrolls count (the views page horizontally), from any
-        // depth, so the pull works on the month page and its agenda alike.
-        body: Column(
-          children: <Widget>[
-            // Device request 2026-10-12: show a running sync's progress.
-            if (!demoMode) const SyncProgressStrip(),
-            Expanded(
-              child: RefreshIndicator(
-                notificationPredicate: (ScrollNotification notification) =>
-                    notification.metrics.axis == Axis.vertical,
-                onRefresh: () =>
-                    _pullToSync(context, ref, l10n, demoMode: demoMode),
-                child: switch (state.viewType) {
-                  CalendarViewType.month => const MonthViewBody(),
-                  CalendarViewType.week => const WeekViewScreen(),
-                  CalendarViewType.day => const DayViewScreen(),
-                  CalendarViewType.agenda => const AgendaViewScreen(),
-                },
-              ),
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => showAddMenuSheet(
-            context,
-            onNewEvent: () => _openEditorForNewEvent(context, state),
-            onSignificantDate: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const SignificantDateScreen(),
-              ),
-            ),
+            tooltip: l10n.addEventTooltip,
+            child: const Icon(Icons.add),
           ),
-          tooltip: l10n.addEventTooltip,
-          child: const Icon(Icons.add),
         ),
       ),
     );
