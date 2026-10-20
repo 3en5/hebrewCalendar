@@ -18,6 +18,7 @@ import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/features/calendar/application/calendar_view_provider.dart';
 import 'package:hebrew_calendar/features/calendar/presentation/widgets/day_cell.dart';
 import 'package:hebrew_calendar/features/calendar/presentation/widgets/event_block.dart';
+import 'package:hebrew_calendar/features/settings/application/text_size_provider.dart';
 import 'package:hebrew_calendar/features/settings/presentation/widgets/text_size_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -318,10 +319,13 @@ void main() {
   });
 
   testWidgets('text size', (WidgetTester tester) async {
-    await pumpShotApp(tester, mode: ThemeMode.light);
+    final ProviderContainer container = await pumpShotApp(
+      tester,
+      mode: ThemeMode.light,
+    );
     await _openSettings(tester);
     await tester.drag(find.byType(ListView).first, const Offset(0, -350));
-    await tester.tap(find.byKey(const ValueKey<String>('text-size-120')));
+    await container.read(textSizeProvider.notifier).set(1.2);
     await shot(tester, 'g_text_size');
     _mark('g_text_size', <String, Finder>{'size': find.byType(TextSizeTile)});
   });

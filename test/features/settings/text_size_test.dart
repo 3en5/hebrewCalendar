@@ -1,4 +1,4 @@
-// Owner request 2026-10-15: a text size in settings (100%-140%), on top
+// Owner requests 2026-10-15/20: a text size in settings (90%-140%), on top
 // of the phone's font size, that also grows the month view's cells.
 
 import 'package:flutter/material.dart';
@@ -106,6 +106,23 @@ void main() {
     expect(total(1.3, 1.4), moreOrLessEquals(kMaxTotalTextScale));
     // A phone already above the cap keeps its own size.
     expect(total(2.0, 1.4), moreOrLessEquals(2.0));
+    // Owner request 2026-10-20: 90% shrinks, even on a large phone font.
+    expect(total(1.0, 0.9), moreOrLessEquals(0.9));
+    expect(total(2.0, 0.9), moreOrLessEquals(1.8));
+  });
+
+  test('sizes snap to the 5% steps of the range', () {
+    expect(snapTextSize(0.8), 0.9);
+    expect(snapTextSize(1.12), 1.1);
+    expect(snapTextSize(1.13), 1.15);
+    expect(snapTextSize(2.0), 1.4);
+  });
+
+  testWidgets('the month view at 90% has no overflow', (
+    WidgetTester tester,
+  ) async {
+    await _pump(tester, 0.9);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('the month cells grow with the text size, without overflow', (
@@ -137,7 +154,20 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.byKey(const ValueKey<String>('text-size-130')));
+    final Slider slider = tester.widget<Slider>(
+      find.byKey(const ValueKey<String>('text-size-slider')),
+    );
+    expect(slider.min, 0.9);
+    expect(slider.max, 1.4);
+    expect(slider.divisions, 10);
+    // Dragging previews without storing; lifting the finger keeps it.
+    slider.onChanged!(1.2499);
+    await tester.pump();
+    expect(container.read(textSizeProvider), 1.25);
+    expect(find.text('125%'), findsWidgets);
+    final SharedPreferences before = await SharedPreferences.getInstance();
+    expect(before.getDouble('app_text_size_v1'), isNull);
+    slider.onChangeEnd!(1.3);
     await tester.pumpAndSettle();
     expect(container.read(textSizeProvider), 1.3);
     final SharedPreferences prefs = await SharedPreferences.getInstance();
