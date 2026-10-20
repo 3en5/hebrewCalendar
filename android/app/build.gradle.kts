@@ -43,10 +43,6 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "il.co.natanor.kalfapp.hebrewcalendar"
@@ -119,4 +115,11 @@ dependencies {
     // Required by isCoreLibraryDesugaringEnabled (flutter_local_notifications
     // needs desugar_jdk_libs >= 2.1.4).
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
+
+// Kotlin 2.2 no longer accepts android { kotlinOptions { } }.
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+    }
 }
