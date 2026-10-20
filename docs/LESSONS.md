@@ -637,4 +637,5 @@
 ## 2026-10-20 — העלאה למסלול Alpha באפליקציה שעוד לא פורסמה
 - `release.yml` עם `track: alpha` בנה בהצלחה, אבל נכשל ב-commit של ה-Edit: "Only releases with status draft may be created on draft app".
 - כל עוד לאפליקציה אין גרסה במסלול ציבורי, ה-API יוצר מחוץ למסלול הפנימי רק טיוטות. מריצים עם `draft: true`, ואז הבעלים שולח לבדיקה מ-Play Console.
+- באותו ערב: שתי ריצות release במקביל (internal ו-alpha) נכשלו בגלל "This edit has expired". ב-Play יש Edit פתוח אחד לאפליקציה, והשני מבטל את הראשון. הפתרון: `concurrency: play-upload` ב-release.yml, כך שהריצות עומדות בתור.
 

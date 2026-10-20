@@ -26,6 +26,13 @@ on:
         type: boolean
         default: false
 
+# Google Play allows one open edit per app: a second upload at the same time
+# expires the first ("This edit has expired", 2026-10-20). Queue runs instead
+# of cancelling them.
+concurrency:
+  group: play-upload
+  cancel-in-progress: false
+
 env:
   FLUTTER_VERSION: "3.32.5"
 
