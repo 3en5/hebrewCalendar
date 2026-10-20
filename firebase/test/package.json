@@ -1,13 +1,19 @@
 {
   "name": "hebrewcalendar-firestore-rules-tests",
   "private": true,
-  "description": "Firestore Security Rules tests (RULES.md §5, TESTING_AND_DEPLOY.md). Run via `npm test` from this directory; starts the Firestore emulator.",
+  "description": "Firestore Security Rules tests (RULES.md \u00a75, TESTING_AND_DEPLOY.md). Run via `npm test` from this directory; starts the Firestore emulator.",
   "scripts": {
     "test": "firebase emulators:exec --only firestore --project demo-hebrewcalendar --config ../../firebase.json \"node --test rules.test.mjs\""
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^4.0.1",
-    "firebase": "^11.0.0",
-    "firebase-tools": "^14.0.0"
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0",
+    "firebase-tools": "^15.34.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.6",
+    "re2": "^1.27.0",
+    "uuid": "^11.1.1",
+    "@opentelemetry/core": "^2.8.0"
   }
 }

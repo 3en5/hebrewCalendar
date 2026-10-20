@@ -5,6 +5,12 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-20 — עדכון כלי הבדיקה של Firestore (התראת Dependabot)
+- Dependabot התריע על 10 ספריות פגיעות (`tar` קריטית; `@grpc/grpc-js`, `basic-ftp` גבוהה; ועוד). כולן מ-`firebase/test/package-lock.json`, הכלים שמריצים את בדיקות ה-Rules ואת פרסומן ב-CI. לא באפליקציה ולא באתר.
+- `firebase/test/package.json`: firebase-tools 14→15.34, firebase 11→12.19, @firebase/rules-unit-testing 4→5.0.2. firebase 13 ו-rules-unit-testing 6 דורשים Node 24, ו-CI רץ על Node 22. `overrides`: `@grpc/grpc-js` ^1.14.6, `re2` ^1.27.0, `uuid` ^11.1.1, `@opentelemetry/core` ^2.8.0.
+- נשאר רק `braces` (דרך chokidar של firebase-tools): לחולשה אין גרסה מתוקנת בכלל. זו מניעת שירות בתבניות מקוננות של מעקב קבצים, ולא רלוונטית לבדיקות.
+- 22 בדיקות ה-Rules עוברות באמולטור עם הגרסאות החדשות. בענף בלבד, ייכנס עם המיזוג הבא (firestore.yml יפרסם את ה-Rules עם firebase-tools 15).
+
 ## 2026-10-19 — קישור "הוראות לבודקים" בתחתית האתר
 - בקשת הבעלים: לעמוד `site/testers.html` לא היה קישור מאף מקום. נוסף קישור "הוראות לבודקים" בתחתית כל העמודים (index, guide, privacy, terms, testers).
 - בענף בלבד, יעלה לאתר עם המיזוג הבא ל-main.
