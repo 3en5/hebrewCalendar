@@ -9,6 +9,13 @@ const String rubikLicenseAsset = 'assets/fonts/OFL-Rubik.txt';
 const String hebcalLearningLicenseAsset =
     'assets/licenses/hebcal-learning-BSD-2.txt';
 
+/// M26: Noto Serif Hebrew (OFL) draws the Torah's cantillation marks, and
+/// the weekly portion's aliyot come from @hebcal/leyning (BSD 2-Clause).
+const String notoSerifHebrewLicenseAsset =
+    'assets/fonts/OFL-NotoSerifHebrew.txt';
+const String hebcalLeyningLicenseAsset =
+    'assets/licenses/hebcal-leyning-BSD-2.txt';
+
 /// Adds the bundled fonts' and data's licenses to Flutter's licenses page,
 /// as the OFL and BSD licenses require.
 void registerFontLicenses() {
@@ -20,6 +27,18 @@ void registerFontLicenses() {
     final String text = await rootBundle.loadString(hebcalLearningLicenseAsset);
     yield LicenseEntryWithLineBreaks(const <String>[
       'Hebcal Learning (לוח הלימוד של ההלכה היומית)',
+    ], text);
+  });
+  LicenseRegistry.addLicense(() async* {
+    final String text = await rootBundle.loadString(
+      notoSerifHebrewLicenseAsset,
+    );
+    yield LicenseEntryWithLineBreaks(const <String>['Noto Serif Hebrew'], text);
+  });
+  LicenseRegistry.addLicense(() async* {
+    final String text = await rootBundle.loadString(hebcalLeyningLicenseAsset);
+    yield LicenseEntryWithLineBreaks(const <String>[
+      'Hebcal Leyning (חלוקת העליות של פרשת השבוע)',
     ], text);
   });
 }

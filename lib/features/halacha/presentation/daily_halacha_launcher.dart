@@ -11,6 +11,9 @@ import '../../../domain/hebrew_date/hebrew_date_engine.dart';
 import '../../../domain/hebrew_date/hebrew_numerals.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../calendar/application/hebrew_date_engine_provider.dart';
+import '../../calendar/application/jewish_day_labels_provider.dart';
+import '../../learning/application/daily_parsha_providers.dart';
+import '../../learning/presentation/daily_learning_launcher.dart';
 import '../application/daily_halacha_providers.dart';
 import 'daily_halacha_dialog.dart';
 
@@ -67,7 +70,16 @@ Future<void> openDailyHalacha(
   );
   switch (result) {
     case DailyHalachaResult.learned:
-      unawaited(cloud.recordLearned(now));
+      // One "learned" a day per device, whichever study it was (M26).
+      if (!learnedOn(
+        ref.read(dailyParshaSettingsProvider),
+        dedicationDayKey(now),
+      )) {
+        unawaited(cloud.recordLearned(now));
+      }
+      unawaited(
+        ref.read(dailyParshaSettingsProvider.notifier).markHalachaDone(now),
+      );
       if (firstTime) {
         await settings.setEnabled(true);
       }
@@ -79,8 +91,9 @@ Future<void> openDailyHalacha(
 }
 
 /// Wraps the calendar home: on the day's first visit (app start or back
-/// from the background), opens the daily halacha, and keeps the coming
-/// week's readings downloaded.
+/// from the background), opens the daily learning (the halacha and, when
+/// on, the weekly portion, M26), and keeps the coming week's readings
+/// downloaded.
 class DailyHalachaLauncher extends ConsumerStatefulWidget {
   const DailyHalachaLauncher({required this.child, super.key});
 
@@ -122,14 +135,16 @@ class _DailyHalachaLauncherState extends ConsumerState<DailyHalachaLauncher>
     _busy = true;
     try {
       await ref.read(dailyHalachaSettingsProvider.notifier).ready;
+      await ref.read(dailyParshaSettingsProvider.notifier).ready;
       final DateTime now = DateTime.now();
       final DailyHalachaSettings settings = ref.read(
         dailyHalachaSettingsProvider,
       );
-      if (settings.enabled &&
+      final bool parshaOn = ref.read(dailyParshaSettingsProvider).enabled;
+      if ((settings.enabled || parshaOn) &&
           settings.lastShownDay != dedicationDayKey(now) &&
           mounted) {
-        await openDailyHalacha(context, ref, auto: true);
+        await openDailyLearning(context, ref, auto: true);
       }
       if (mounted) {
         unawaited(_prefetch(now));
@@ -139,14 +154,28 @@ class _DailyHalachaLauncherState extends ConsumerState<DailyHalachaLauncher>
     }
   }
 
-  Future<void> _prefetch(DateTime now) {
+  Future<void> _prefetch(DateTime now) async {
     final HebrewDateEngine engine = ref.read(hebrewDateEngineProvider);
     final DailyHalachaSource source = ref.read(dailyHalachaSourceProvider);
     final HebrewDate today = engine.fromGregorian(now);
-    return source.keepOnly(<String>[
+    final bool parshaOn = ref.read(dailyParshaSettingsProvider).enabled;
+    final bool inIsrael = ref.read(inIsraelProvider);
+    await source.keepOnly(<String>[
       for (int i = 0; i < kDailyHalachaDaysAhead; i++)
         ?dailyHalachaKey(engine.addDays(today, i)),
     ]);
+    if (parshaOn) {
+      await ref
+          .read(dailyParshaSourceProvider)
+          .keepOnly(
+            dailyParshaKeysAhead(
+              engine,
+              today,
+              inIsrael: inIsrael,
+              days: kDailyHalachaDaysAhead,
+            ),
+          );
+    }
   }
 
   @override

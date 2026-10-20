@@ -13,10 +13,11 @@ import 'package:hebrew_calendar/data/halacha/halacha_cloud.dart';
 import 'package:hebrew_calendar/domain/halacha/daily_halacha.dart';
 import 'package:hebrew_calendar/features/halacha/application/daily_halacha_providers.dart';
 import 'package:hebrew_calendar/features/halacha/presentation/daily_halacha_launcher.dart';
-import 'package:hebrew_calendar/features/halacha/presentation/daily_halacha_settings_section.dart';
 import 'package:hebrew_calendar/l10n/app_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:hebrew_calendar/features/learning/application/daily_parsha_providers.dart';
+import 'package:hebrew_calendar/features/learning/presentation/daily_learning_settings_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeCloud implements HalachaCloud {
@@ -168,7 +169,7 @@ void main() {
     );
   });
 
-  testWidgets('settings show the share of users who keep it on', (
+  testWidgets('the daily learning page shows the share of learners', (
     WidgetTester tester,
   ) async {
     final _FakeCloud cloud = _FakeCloud();
@@ -187,12 +188,12 @@ void main() {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: Scaffold(body: DailyHalachaSettingsSection()),
+          home: DailyLearningSettingsScreen(),
         ),
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('45% קוראים הלכה יומית'), findsOneWidget);
+    expect(find.text('45% לומדים כל יום'), findsOneWidget);
     await tester.tap(
       find.byKey(const ValueKey<String>('daily-halacha-switch')),
     );
@@ -201,5 +202,35 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(cloud.calls, <String>['choice null->false']);
+  });
+
+  testWidgets('the vote counts anyone with any daily study on', (
+    WidgetTester tester,
+  ) async {
+    // Owner request 2026-10-20: the share is of users who learn anything.
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'daily_halacha_mode_v1': 'on',
+      'daily_parsha_enabled_v1': true,
+    });
+    final _FakeCloud cloud = _FakeCloud();
+    final ProviderContainer container = ProviderContainer(
+      overrides: <Override>[halachaCloudProvider.overrideWithValue(cloud)],
+    );
+    addTearDown(container.dispose);
+    await container.read(dailyHalachaSettingsProvider.notifier).ready;
+    await container.read(dailyParshaSettingsProvider.notifier).ready;
+    // The halacha off, the portion still on: still learning, no change.
+    await container
+        .read(dailyHalachaSettingsProvider.notifier)
+        .setEnabled(false);
+    expect(cloud.calls, isEmpty);
+    // The portion off too: now not learning.
+    await container
+        .read(dailyParshaSettingsProvider.notifier)
+        .setEnabled(false);
+    expect(cloud.calls, <String>['choice true->false']);
+    // Either one on again: learning.
+    await container.read(dailyParshaSettingsProvider.notifier).setEnabled(true);
+    expect(cloud.calls, <String>['choice true->false', 'choice false->true']);
   });
 }

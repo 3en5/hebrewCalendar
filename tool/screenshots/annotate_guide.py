@@ -49,6 +49,8 @@ SHOTS = {
     "g_text_size": ("text-size", [("size", "frame")]),
     "g_settings_more": ("settings-more", [("backup", "frame"), ("guide", "frame")]),
     "g_halacha": ("halacha", [("dedication", "frame"), ("learned", "frame")]),
+    "g_learning_settings": ("learning-settings", [("modes", "frame")]),
+    "g_parsha": ("parsha", [("tabs", "frame"), ("rashi", "arrow")]),
 }
 
 

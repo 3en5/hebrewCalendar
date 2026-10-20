@@ -14,9 +14,10 @@ Times of day and Shabbat
 • Dawn, sunrise, latest Shema and prayer, midday, mincha, sunset and nightfall
 • Candle lighting and Havdalah by the city's custom, by city or by the phone's location
 
-Daily halacha
+Daily learning
 • On the first visit each day: the day's Kitzur Shulchan Aruch reading, in a cycle that finishes the book every year
-• Turn it off or open it again in settings
+• The weekly Torah portion, an aliyah a day: Shnayim Mikra with Onkelos, with Rashi, or Chumash with Rashi
+• Choose in settings, under "Daily learning"
 
 Events that repeat by the Hebrew date
 • Hebrew birthdays, anniversaries, yahrzeits, or any event on the same Hebrew date

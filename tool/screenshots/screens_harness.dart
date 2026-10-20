@@ -29,6 +29,8 @@ import 'package:hebrew_calendar/features/settings/application/google_sync_provid
 import 'package:hebrew_calendar/features/settings/application/theme_mode_provider.dart';
 import 'package:hebrew_calendar/data/halacha/daily_halacha_source.dart';
 import 'package:hebrew_calendar/data/halacha/halacha_cloud.dart';
+import 'package:hebrew_calendar/data/learning/daily_parsha_source.dart';
+import 'package:hebrew_calendar/features/learning/application/daily_parsha_providers.dart';
 import 'package:hebrew_calendar/domain/halacha/daily_halacha.dart';
 import 'package:hebrew_calendar/features/halacha/application/daily_halacha_providers.dart';
 import 'package:hebrew_calendar/features/settings/application/app_version_provider.dart';
@@ -68,6 +70,17 @@ DailyHalachaSource localHalacha() => DailyHalachaSource(
   ),
 );
 
+/// M26: the weekly portion from `site/learning/parsha/`.
+DailyParshaSource localParsha() => DailyParshaSource(
+  baseUrl: 'https://example.test/parsha',
+  client: MockClient(
+    (http.Request r) async => http.Response.bytes(
+      File('site/learning/parsha/${r.url.pathSegments.last}').readAsBytesSync(),
+      200,
+    ),
+  ),
+);
+
 /// Preferences for every shot: the daily halacha already shown today, so
 /// it opens only in its own shot.
 Map<String, Object> shotPrefs() => <String, Object>{
@@ -80,6 +93,9 @@ const double shotDpr = 2.625;
 final GlobalKey shotBoundary = GlobalKey();
 
 Future<void> loadShotFonts() async {
+  final FontLoader mikra = FontLoader('NotoSerifHebrew')
+    ..addFont(rootBundle.load('assets/fonts/NotoSerifHebrew.ttf'));
+  await mikra.load();
   final FontLoader rubik = FontLoader('Rubik');
   for (final String w in <String>['Regular', 'Medium', 'SemiBold', 'Bold']) {
     rubik.addFont(rootBundle.load('assets/fonts/Rubik-$w.ttf'));
@@ -245,6 +261,7 @@ Future<ProviderContainer> pumpShotApp(
           syncSettingsStoreProvider.overrideWithValue(store),
           appVersionProvider.overrideWith((Ref ref) async => '1.0.0'),
           dailyHalachaSourceProvider.overrideWithValue(localHalacha()),
+          dailyParshaSourceProvider.overrideWithValue(localParsha()),
           halachaCloudProvider.overrideWithValue(ShotHalachaCloud()),
           backgroundSyncSchedulerProvider.overrideWithValue(
             FakeBackgroundSyncScheduler(),

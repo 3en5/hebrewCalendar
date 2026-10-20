@@ -90,45 +90,9 @@ class _DailyHalachaDialog extends StatelessWidget {
             child: SingleChildScrollView(
               key: const ValueKey<String>('daily-halacha-scroll'),
               padding: EdgeInsets.all(spacingMd),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Text(
-                    l10n.dailyHalachaTitle,
-                    style: TextStyle(
-                      fontSize: titleLargeRem,
-                      fontWeight: FontWeight.w700,
-                      color: colors.primary,
-                    ),
-                  ),
-                  SizedBox(height: spacingXs),
-                  Text(
-                    '${l10n.dailyHalachaBook} · ${halacha.title} · $dateLabel',
-                    style: TextStyle(
-                      fontSize: bodySmallRem,
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: spacingSm),
-                    child: const Divider(height: 1),
-                  ),
-                  for (int i = 0; i < halacha.sections.length; i++)
-                    _Section(
-                      section: halacha.sections[i],
-                      showSiman:
-                          i > 0 &&
-                          halacha.sections[i].siman !=
-                              halacha.sections[i - 1].siman,
-                    ),
-                  Text(
-                    l10n.dailyHalachaSource,
-                    style: TextStyle(
-                      fontSize: captionRem,
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+              child: DailyHalachaContent(
+                halacha: halacha,
+                dateLabel: dateLabel,
               ),
             ),
           ),
@@ -162,6 +126,64 @@ class _DailyHalachaDialog extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The day's halacha: the title, the book and date, the sections and the
+/// source line. Shared by this dialog and the daily learning window (M26).
+class DailyHalachaContent extends StatelessWidget {
+  const DailyHalachaContent({
+    required this.halacha,
+    required this.dateLabel,
+    super.key,
+  });
+
+  final DailyHalacha halacha;
+  final String dateLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          l10n.dailyHalachaTitle,
+          style: TextStyle(
+            fontSize: titleLargeRem,
+            fontWeight: FontWeight.w700,
+            color: colors.primary,
+          ),
+        ),
+        SizedBox(height: spacingXs),
+        Text(
+          '${l10n.dailyHalachaBook} · ${halacha.title} · $dateLabel',
+          style: TextStyle(
+            fontSize: bodySmallRem,
+            color: colors.onSurfaceVariant,
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: spacingSm),
+          child: const Divider(height: 1),
+        ),
+        for (int i = 0; i < halacha.sections.length; i++)
+          _Section(
+            section: halacha.sections[i],
+            showSiman:
+                i > 0 &&
+                halacha.sections[i].siman != halacha.sections[i - 1].siman,
+          ),
+        Text(
+          l10n.dailyHalachaSource,
+          style: TextStyle(
+            fontSize: captionRem,
+            color: colors.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

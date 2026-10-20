@@ -930,7 +930,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String dailyHalachaSettingShare(String percent) {
-    return '$percent% קוראים הלכה יומית';
+    return '$percent% לומדים כל יום';
   }
 
   @override
@@ -942,4 +942,114 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get dailyHalachaUnavailable =>
       'ההלכה של היום עדיין לא ירדה. נסו שוב כשיש חיבור לאינטרנט.';
+
+  @override
+  String get dailyLearningTitle => 'לימוד יומי';
+
+  @override
+  String get dailyLearningIntro =>
+      'מה יופיע בחלון הלימוד כשפותחים את האפליקציה בבוקר.';
+
+  @override
+  String get dailyLearningOff => 'כבוי';
+
+  @override
+  String get dailyLearningTabHalacha => 'הלכה';
+
+  @override
+  String get dailyLearningTabParsha => 'פרשה';
+
+  @override
+  String get parshaSection => 'פרשת השבוע';
+
+  @override
+  String get parshaSwitch => 'לימוד הפרשה';
+
+  @override
+  String get parshaSwitchHint => 'עלייה אחת ביום, ראשון עד שבת';
+
+  @override
+  String get parshaModeTargum => 'שניים מקרא ואחד תרגום';
+
+  @override
+  String get parshaModeTargumHint => 'כל פסוק פעמיים, ותרגום אונקלוס';
+
+  @override
+  String get parshaModeTargumRashi => 'שניים מקרא, תרגום ורש״י';
+
+  @override
+  String get parshaModeTargumRashiHint => 'כמו הקודם, ופירוש רש״י מתחת לפסוק';
+
+  @override
+  String get parshaModeChumashRashi => 'חומש עם רש״י';
+
+  @override
+  String get parshaModeChumashRashiHint => 'הפסוק פעם אחת, ופירוש רש״י מתחתיו';
+
+  @override
+  String get parshaCalendarIsrael =>
+      'הפרשות לפי לוח ארץ ישראל (מתוך ההגדרות הכלליות).';
+
+  @override
+  String get parshaCalendarDiaspora =>
+      'הפרשות לפי לוח חו״ל (מתוך ההגדרות הכלליות).';
+
+  @override
+  String get parshaOpenToday => 'הפרשה של היום';
+
+  @override
+  String get parshaUnavailable =>
+      'הפרשה של היום עדיין לא ירדה. נסו שוב כשיש חיבור לאינטרנט.';
+
+  @override
+  String get parshaTwiceNote =>
+      'כל פסוק קוראים פעמיים, ואחריו את התרגום פעם אחת.';
+
+  @override
+  String get parshaTwiceTag => 'פעמיים';
+
+  @override
+  String get parshaTargumTag => 'ת״א';
+
+  @override
+  String get parshaRashiTag => 'רש״י';
+
+  @override
+  String get parshaDone => 'סיימתי';
+
+  @override
+  String get parshaSourceTargum =>
+      'מקרא על פי המסורה (CC-BY-SA) · תרגום אונקלוס, תורת אמת (נחלת הכלל)';
+
+  @override
+  String get parshaSourceTargumRashi =>
+      'מקרא על פי המסורה (CC-BY-SA) · אונקלוס, תורת אמת · רש״י, מהדורת רוזנבאום-זילברמן (נחלת הכלל)';
+
+  @override
+  String get parshaSourceRashi =>
+      'מקרא על פי המסורה (CC-BY-SA) · רש״י, מהדורת רוזנבאום-זילברמן (נחלת הכלל)';
+
+  @override
+  String parshaMeta(String parsha, String aliyah, String range, String date) {
+    return 'פרשת $parsha · $aliyah · $range · $date';
+  }
+
+  @override
+  String parshaAliyah(String n) {
+    String _temp0 = intl.Intl.selectLogic(n, {
+      '1': 'ראשון',
+      '2': 'שני',
+      '3': 'שלישי',
+      '4': 'רביעי',
+      '5': 'חמישי',
+      '6': 'שישי',
+      'other': 'שביעי',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String dailyLearningSummaryParsha(String mode) {
+    return 'פרשת השבוע ($mode)';
+  }
 }

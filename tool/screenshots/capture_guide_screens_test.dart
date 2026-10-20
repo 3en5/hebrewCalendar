@@ -14,10 +14,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hebrew_calendar/domain/halacha/daily_halacha.dart';
 import 'package:hebrew_calendar/domain/hebrew_date/hebrew_date.dart';
 import 'package:hebrew_calendar/features/calendar/application/calendar_view_provider.dart';
 import 'package:hebrew_calendar/features/calendar/presentation/widgets/day_cell.dart';
 import 'package:hebrew_calendar/features/calendar/presentation/widgets/event_block.dart';
+import 'package:hebrew_calendar/features/learning/application/daily_parsha_providers.dart';
 import 'package:hebrew_calendar/features/settings/application/text_size_provider.dart';
 import 'package:hebrew_calendar/features/settings/presentation/widgets/text_size_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -344,6 +346,50 @@ void main() {
         const ValueKey<String>('daily-halacha-dedication'),
       ),
       'learned': find.byKey(const ValueKey<String>('daily-halacha-learned')),
+    });
+  });
+
+  testWidgets('daily learning page', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      ...shotPrefs(),
+      'daily_parsha_enabled_v1': true,
+      'daily_parsha_mode_v1': 'targumRashi',
+    });
+    await pumpShotApp(tester, mode: ThemeMode.light);
+    await _openSettings(tester);
+    final Finder tile = find.byKey(
+      const ValueKey<String>('daily-learning-tile'),
+    );
+    await tester.scrollUntilVisible(
+      tile,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(tile);
+    await tester.pumpAndSettle();
+    await shot(tester, 'g_learning_settings');
+    _mark('g_learning_settings', <String, Finder>{
+      'modes': find.byWidgetPredicate(
+        (Widget w) => w is RadioListTile<ParshaStudyMode>,
+      ),
+    });
+  });
+
+  testWidgets('weekly portion', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'daily_halacha_mode_v1': 'on',
+      'daily_halacha_done_v1': dedicationDayKey(DateTime.now()),
+      'daily_parsha_enabled_v1': true,
+      'daily_parsha_mode_v1': 'targumRashi',
+    });
+    await pumpShotApp(tester, mode: ThemeMode.light);
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 300)),
+    );
+    await shot(tester, 'g_parsha');
+    _mark('g_parsha', <String, Finder>{
+      'tabs': find.byType(TabBar),
+      'rashi': find.byKey(const ValueKey<String>('parsha-rashi')).first,
     });
   });
 }

@@ -9,7 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../auth/application/demo_mode_provider.dart';
 import '../../calendar/application/calendar_display_mode_provider.dart';
 import '../../calendar/application/jewish_day_labels_provider.dart';
-import '../../halacha/presentation/daily_halacha_settings_section.dart';
+import '../../learning/presentation/daily_learning_settings_screen.dart';
 import '../../zmanim/presentation/zmanim_settings_section.dart';
 import '../application/app_version_provider.dart';
 import '../application/google_sync_providers.dart';
@@ -114,7 +114,7 @@ class SettingsScreen extends ConsumerWidget {
           SizedBox(height: spacingMd),
           const ZmanimSettingsSection(),
           SizedBox(height: spacingMd),
-          const DailyHalachaSettingsSection(),
+          const DailyLearningTile(),
           SizedBox(height: spacingMd),
           const BackupSection(),
           SizedBox(height: spacingMd),

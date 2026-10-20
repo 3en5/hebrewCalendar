@@ -8,8 +8,8 @@ import '../../../l10n/app_localizations.dart';
 import '../application/daily_halacha_providers.dart';
 import 'daily_halacha_launcher.dart';
 
-/// Settings: the daily halacha switch, with the share of users who keep it
-/// on (owner request 2026-10-15), and a row that opens today's halacha.
+/// The daily halacha switch and a row that opens today's halacha, on the
+/// daily learning page (M26; the share of learners is at its top).
 class DailyHalachaSettingsSection extends ConsumerWidget {
   const DailyHalachaSettingsSection({super.key});
 
@@ -19,7 +19,6 @@ class DailyHalachaSettingsSection extends ConsumerWidget {
     final DailyHalachaSettings settings = ref.watch(
       dailyHalachaSettingsProvider,
     );
-    final double? share = ref.watch(dailyHalachaShareProvider).value;
     // Owner request 2026-10-15: a section like "זמני היום", every row on
     // one line.
     return Column(
@@ -44,13 +43,7 @@ class DailyHalachaSettingsSection extends ConsumerWidget {
             alignment: AlignmentDirectional.centerStart,
             child: Text(l10n.dailyHalachaSettingTitle, maxLines: 1),
           ),
-          subtitle: Text(
-            share == null
-                ? l10n.dailyHalachaSettingSubtitle
-                : l10n.dailyHalachaSettingShare(
-                    (share * 100).round().toString(),
-                  ),
-          ),
+          subtitle: Text(l10n.dailyHalachaSettingSubtitle),
           value: settings.enabled,
           onChanged: (bool value) => unawaited(
             ref

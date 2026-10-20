@@ -7,6 +7,7 @@ import '../../../data/halacha/daily_halacha_source.dart';
 import '../../../data/halacha/halacha_cloud.dart';
 import '../../../domain/halacha/daily_halacha.dart';
 import '../../auth/application/auth_providers.dart';
+import '../../learning/application/daily_parsha_providers.dart';
 
 /// Downloads and caches the daily files. Overridden in tests.
 final Provider<DailyHalachaSource> dailyHalachaSourceProvider =
@@ -92,13 +93,11 @@ class DailyHalachaSettingsNotifier extends Notifier<DailyHalachaSettings> {
   }
 
   /// Turns it on or off, from the dialog or settings, and moves this
-  /// device's vote in the anonymous counters.
+  /// device's vote in the anonymous counters, which count anyone with any
+  /// daily study on (M26, [learningVote]).
   Future<void> setEnabled(bool enabled) async {
-    final bool? before = switch (state.mode) {
-      DailyHalachaMode.undecided => null,
-      DailyHalachaMode.on => true,
-      DailyHalachaMode.off => false,
-    };
+    final bool parsha = ref.read(dailyParshaSettingsProvider).enabled;
+    final bool? before = learningVote(halacha: state.mode, parsha: parsha);
     _loaded = true;
     state = DailyHalachaSettings(
       mode: enabled ? DailyHalachaMode.on : DailyHalachaMode.off,
@@ -110,9 +109,11 @@ class DailyHalachaSettingsNotifier extends Notifier<DailyHalachaSettings> {
     } catch (_) {
       // Best effort.
     }
-    await ref
-        .read(halachaCloudProvider)
-        .recordChoice(from: before, to: enabled);
+    await recordLearningVote(
+      ref,
+      before,
+      learningVote(halacha: state.mode, parsha: parsha),
+    );
   }
 
   /// Marks [day] as shown, so it opens by itself once a day.
@@ -137,7 +138,8 @@ dailyHalachaSettingsProvider =
       DailyHalachaSettingsNotifier.new,
     );
 
-/// The share of users who keep it on, for the settings subtitle.
+/// The share of users who learn something every day (any daily study on),
+/// for the daily learning page.
 final FutureProvider<double?> dailyHalachaShareProvider =
     FutureProvider<double?>(
       (Ref ref) => ref.watch(halachaCloudProvider).enabledShare(),

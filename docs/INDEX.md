@@ -193,6 +193,20 @@
 | `lib/features/halacha/presentation/daily_halacha_launcher.dart` | M25: פתיחה בכניסה הראשונה ביום והורדת השבוע הקרוב |
 | `lib/features/halacha/presentation/daily_halacha_settings_section.dart` | M25: המתג בהגדרות עם האחוזים, ופתיחת ההלכה של היום |
 | `test/domain/halacha/daily_halacha_test.dart`, `test/data/halacha/daily_halacha_source_test.dart`, `test/features/halacha/daily_halacha_launcher_test.dart` | M25: טסטים |
+| `tool/learning/build_parsha.py` | M26: בונה את קבצי פרשת השבוע (מקרא, אונקלוס, רש״י) לפי העליות, עם בדיקת כיסוי של כל התורה |
+| `tool/learning/aliyot.json`, `tool/learning/aliyot.LICENSE` | M26: חלוקת העליות מ-`@hebcal/leyning` (BSD-2) |
+| `site/learning/parsha/` | M26: קובץ JSON לכל פרשה ועלייה (`<parsha>-<1..7>.json`, נבנה, לא לערוך ידנית) |
+| `site/learning/LICENSE-hebcal-leyning.txt` | M26: רישיון חלוקת העליות, לצד הקבצים |
+| `assets/fonts/NotoSerifHebrew.ttf`, `assets/fonts/OFL-NotoSerifHebrew.txt` | M26: גופן עם טעמי המקרא ורישיונו |
+| `assets/licenses/hebcal-leyning-BSD-2.txt` | M26: רישיון חלוקת העליות בעמוד הרישיונות |
+| `lib/domain/learning/daily_parsha.dart` | M26: מודל קטע היום (פסוקים, אונקלוס, רש״י) ו-`dailyParshaFor` (איזו עלייה של איזו פרשה) |
+| `lib/data/learning/daily_parsha_source.dart` | M26: הורדה ומטמון של קטעי השבוע הקרוב |
+| `lib/features/learning/application/daily_parsha_providers.dart` | M26: מתג הפרשה, דרך הלימוד, ומה סומן היום (✓) |
+| `lib/features/learning/presentation/daily_parsha_content.dart` | M26: תצוגת קטע היום (פעמיים, ת״א, רש״י) |
+| `lib/features/learning/presentation/daily_learning_dialog.dart` | M26: חלון הבוקר עם לשוניות הלכה ופרשה |
+| `lib/features/learning/presentation/daily_learning_launcher.dart` | M26: טעינת קטע היום ופתיחת חלון הלימוד |
+| `lib/features/learning/presentation/daily_learning_settings_screen.dart` | M26: שורת "לימוד יומי" בהגדרות והעמוד שלה |
+| `test/domain/learning/daily_parsha_test.dart`, `test/features/learning/daily_learning_test.dart` | M26: טסטים לבחירת העלייה, לקבצים, ללשוניות ולעמוד ההגדרות |
 | `lib/domain/text/text_links.dart` | איתור מספרי טלפון, מיילים וקישורים בטקסט, ומספר לוואטסאפ |
 | `lib/core/widgets/linkified_text.dart` | טקסט שבו מספרים, מיילים וקישורים לחיצים (חיוג/וואטסאפ/העתקה, מייל, דפדפן) |
 | `lib/features/event_editor/presentation/delete_event_flow.dart` | `confirmAndDeleteEvent`: אישור ומחיקה של אירוע (בודד או מופע/הבאים/כל הסדרה), משותף לחלון פרטי האירוע ולעורך |

@@ -104,6 +104,38 @@ class JewishDayInfo {
     return labels;
   }
 
+  /// M26: the parsha studied in [date]'s week (Sunday to Shabbat): the one
+  /// read on the coming Shabbat, or, when that Shabbat is a festival with
+  /// no weekly reading, the next Shabbat that has one. Its key is
+  /// kosher_dart's Parsha name in lower case ("lech_lecha",
+  /// "vayakhel_pekudei"), matching `site/learning/parsha/`. Null only if no
+  /// parsha is found within [_parshaWeeksAhead] weeks.
+  ({String key, String name})? weeklyParsha(
+    HebrewDate date, {
+    required bool inIsrael,
+  }) {
+    HebrewDate shabbat = _engine.addDays(date, 6 - _engine.weekdayIndex(date));
+    for (int week = 0; week < _parshaWeeksAhead; week++) {
+      final kosher.JewishCalendar calendar = kosher.JewishCalendar.fromDateTime(
+        _engine.toGregorian(shabbat),
+      );
+      calendar.inIsrael = inIsrael;
+      final kosher.Parsha parsha = calendar.getParshah();
+      if (parsha != kosher.Parsha.NONE) {
+        return (
+          key: parsha.name.toLowerCase(),
+          name: _formatter.hebrewParshaMap[parsha] ?? '',
+        );
+      }
+      shabbat = _engine.addDays(shabbat, 7);
+    }
+    return null;
+  }
+
+  /// Festival weeks in a row without a weekly reading are at most two
+  /// (Pesach, Sukkot); four is a safe bound.
+  static const int _parshaWeeksAhead = 4;
+
   /// Rosh Chodesh on day 30 belongs to the *next* month (ל׳ חשוון is the
   /// first day of Rosh Chodesh Kislev).
   String _roshChodeshMonthName(HebrewDate date) {

@@ -1642,10 +1642,10 @@ abstract class AppLocalizations {
   /// **'הצגה בכניסה הראשונה ביום'**
   String get dailyHalachaSettingTitle;
 
-  /// Settings subtitle: share of users who keep it on (M25).
+  /// Daily learning page: share of users with any daily study on (M25, M26).
   ///
   /// In he, this message translates to:
-  /// **'{percent}% קוראים הלכה יומית'**
+  /// **'{percent}% לומדים כל יום'**
   String dailyHalachaSettingShare(String percent);
 
   /// Settings subtitle when the share is unknown (M25).
@@ -1665,6 +1665,180 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'ההלכה של היום עדיין לא ירדה. נסו שוב כשיש חיבור לאינטרנט.'**
   String get dailyHalachaUnavailable;
+
+  /// Settings row and page: the daily learning (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'לימוד יומי'**
+  String get dailyLearningTitle;
+
+  /// Intro line of the daily learning page (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'מה יופיע בחלון הלימוד כשפותחים את האפליקציה בבוקר.'**
+  String get dailyLearningIntro;
+
+  /// Daily learning row subtitle when nothing is on (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'כבוי'**
+  String get dailyLearningOff;
+
+  /// Tab of the morning window: the daily halacha (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'הלכה'**
+  String get dailyLearningTabHalacha;
+
+  /// Tab of the morning window: the weekly portion (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'פרשה'**
+  String get dailyLearningTabParsha;
+
+  /// Daily learning page: the weekly portion section (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'פרשת השבוע'**
+  String get parshaSection;
+
+  /// Switch that turns the weekly portion on (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'לימוד הפרשה'**
+  String get parshaSwitch;
+
+  /// Subtitle of the weekly portion switch (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'עלייה אחת ביום, ראשון עד שבת'**
+  String get parshaSwitchHint;
+
+  /// Study mode / window title: verse twice and Onkelos (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'שניים מקרא ואחד תרגום'**
+  String get parshaModeTargum;
+
+  /// Hint of the targum study mode (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'כל פסוק פעמיים, ותרגום אונקלוס'**
+  String get parshaModeTargumHint;
+
+  /// Study mode / window title: verse twice, Onkelos and Rashi (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'שניים מקרא, תרגום ורש״י'**
+  String get parshaModeTargumRashi;
+
+  /// Hint of the targum and Rashi study mode (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'כמו הקודם, ופירוש רש״י מתחת לפסוק'**
+  String get parshaModeTargumRashiHint;
+
+  /// Study mode / window title: verse once with Rashi, as in Chitas (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'חומש עם רש״י'**
+  String get parshaModeChumashRashi;
+
+  /// Hint of the Chumash with Rashi study mode (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'הפסוק פעם אחת, ופירוש רש״י מתחתיו'**
+  String get parshaModeChumashRashiHint;
+
+  /// Note under the study modes: the Israel parsha schedule (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'הפרשות לפי לוח ארץ ישראל (מתוך ההגדרות הכלליות).'**
+  String get parshaCalendarIsrael;
+
+  /// Note under the study modes: the diaspora parsha schedule (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'הפרשות לפי לוח חו״ל (מתוך ההגדרות הכלליות).'**
+  String get parshaCalendarDiaspora;
+
+  /// Row that opens today's portion (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'הפרשה של היום'**
+  String get parshaOpenToday;
+
+  /// Snackbar when today's portion is neither cached nor reachable (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'הפרשה של היום עדיין לא ירדה. נסו שוב כשיש חיבור לאינטרנט.'**
+  String get parshaUnavailable;
+
+  /// Line under the window title in the twice-reading modes (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'כל פסוק קוראים פעמיים, ואחריו את התרגום פעם אחת.'**
+  String get parshaTwiceNote;
+
+  /// Tag next to each verse: read it twice (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'פעמיים'**
+  String get parshaTwiceTag;
+
+  /// Tag before Targum Onkelos (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'ת״א'**
+  String get parshaTargumTag;
+
+  /// Tag of the Rashi box (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'רש״י'**
+  String get parshaRashiTag;
+
+  /// Button that closes the day's portion (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'סיימתי'**
+  String get parshaDone;
+
+  /// Source line, targum mode (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'מקרא על פי המסורה (CC-BY-SA) · תרגום אונקלוס, תורת אמת (נחלת הכלל)'**
+  String get parshaSourceTargum;
+
+  /// Source line, targum and Rashi mode (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'מקרא על פי המסורה (CC-BY-SA) · אונקלוס, תורת אמת · רש״י, מהדורת רוזנבאום-זילברמן (נחלת הכלל)'**
+  String get parshaSourceTargumRashi;
+
+  /// Source line, Chumash with Rashi mode (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'מקרא על פי המסורה (CC-BY-SA) · רש״י, מהדורת רוזנבאום-זילברמן (נחלת הכלל)'**
+  String get parshaSourceRashi;
+
+  /// Line under the window title (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'פרשת {parsha} · {aliyah} · {range} · {date}'**
+  String parshaMeta(String parsha, String aliyah, String range, String date);
+
+  /// The aliyah of the day, 1 to 7 (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'{n, select, 1{ראשון} 2{שני} 3{שלישי} 4{רביעי} 5{חמישי} 6{שישי} other{שביעי}}'**
+  String parshaAliyah(String n);
+
+  /// Daily learning row subtitle part: the portion and its mode (M26).
+  ///
+  /// In he, this message translates to:
+  /// **'פרשת השבוע ({mode})'**
+  String dailyLearningSummaryParsha(String mode);
 }
 
 class _AppLocalizationsDelegate

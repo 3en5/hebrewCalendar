@@ -16,6 +16,9 @@ void main() {
     );
     expect(packages, contains('Rubik'));
     expect(packages.any((String p) => p.startsWith('Hebcal Learning')), isTrue);
+    // M26: the Torah font and the weekly portion's aliyot.
+    expect(packages, contains('Noto Serif Hebrew'));
+    expect(packages.any((String p) => p.startsWith('Hebcal Leyning')), isTrue);
     final LicenseEntry hebcal = entries.firstWhere(
       (LicenseEntry e) => e.packages.any((String p) => p.startsWith('Hebcal')),
     );
