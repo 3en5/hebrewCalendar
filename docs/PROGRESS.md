@@ -5,6 +5,11 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-20 — Kotlin 2.2.20 (בענף, עוד לא ב-main)
+- אזהרת הבנייה: firebase-auth נבנתה עם Kotlin 2.3, והאפליקציה קומפלה עם 2.1. ב-`android/settings.gradle.kts` עכשיו 2.2.20.
+- Kotlin 2.2 כבר לא מקבלת את `android { kotlinOptions { } }`. ב-`android/app/build.gradle.kts` עברנו ל-`kotlin { compilerOptions { jvmTarget } }`.
+- ריצת CI מס' 130 (workflow_dispatch על הענף) עברה: טסטים ובניית APK. נכנס ל-main במיזוג הבא, יחד עם תור ההעלאות ב-release.yml.
+
 ## 2026-10-20 — גרסה עם M27 (הודעה על גרסה חדשה) לבדיקה הפנימית
 - אישור הבעלים ("אפשר מבחינתי להוציא את הגרסה החדשה"). רק למסלול הפנימי: הטיוטה 1.0.0 (51) במסלול Alpha נשארת כמו שהיא, כי היא נשלחה לבדיקה של Google.
 - לקח: באפליקציה שעוד לא פורסמה במסלול ציבורי, ה-API מאפשר רק טיוטה מחוץ למסלול הפנימי (`draft: true` ב-release.yml). אחר כך שולחים לבדיקה מ-Play Console.

@@ -639,3 +639,6 @@
 - כל עוד לאפליקציה אין גרסה במסלול ציבורי, ה-API יוצר מחוץ למסלול הפנימי רק טיוטות. מריצים עם `draft: true`, ואז הבעלים שולח לבדיקה מ-Play Console.
 - באותו ערב: שתי ריצות release במקביל (internal ו-alpha) נכשלו בגלל "This edit has expired". ב-Play יש Edit פתוח אחד לאפליקציה, והשני מבטל את הראשון. הפתרון: `concurrency: play-upload` ב-release.yml, כך שהריצות עומדות בתור.
 
+## 2026-10-20 — שדרוג Kotlin ל-2.2
+- `kotlinOptions` בתוך `android { }` הוא שגיאה ב-Kotlin 2.2, לא רק אזהרה. מחליפים בבלוק `kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }` ברמת הקובץ.
+- תוספים של Flutter שעדיין משתמשים ב-kotlinOptions לא נשברו, כי כל תוסף נבנה עם הסקריפט שלו.
