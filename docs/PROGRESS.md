@@ -5,6 +5,12 @@
 (שיתוף והעשרה) נדחה בהחלטת משתמש — ראה WISHLIST.md. (ראה אבני דרך
 ב-ARCHITECTURE.md §9)
 
+## 2026-10-20 — "מתאריך לועזי לעברי" וצבע לאירוע (סקיצה 69)
+- בקשת הבעלים: למסך "תאריך משמעותי" (M24) לא היה צבע, והשם לא תיאר אותו (בעצם זו המרת תאריך). השם החדש: "מתאריך לועזי לעברי", בתפריט הפלוס, בכותרת המסך, במדריך, בדף הבית ובתיאור בחנות. "אירוע חדש" נקרא עכשיו "אירוע עברי חדש" (בקשת הבעלים), ונוספה לו שורת הסבר: "פגישה, תזכורת או אירוע חוזר". האייקון: חצים להמרה במקום עוגה.
+- `significant_date_screen.dart`: `EventColorPicker` מתחת לשם; `buildSignificantDateEvents(colorId:)` צובע את שני האירועים (העברי והלועזי).
+- `analysis_options.yaml`: הוחרג `**/node_modules/**`. firebase-tools 15 מגיע עם תבנית Dart שהשבירה את `flutter analyze` כשהתיקייה מותקנת מקומית.
+- המדריך וצילומי החנות צולמו מחדש. בדיקה: הצבע שנבחר נשמר באירוע.
+
 ## 2026-10-20 — עדכון כלי הבדיקה של Firestore (התראת Dependabot)
 - Dependabot התריע על 10 ספריות פגיעות (`tar` קריטית; `@grpc/grpc-js`, `basic-ftp` גבוהה; ועוד). כולן מ-`firebase/test/package-lock.json`, הכלים שמריצים את בדיקות ה-Rules ואת פרסומן ב-CI. לא באפליקציה ולא באתר.
 - `firebase/test/package.json`: firebase-tools 14→15.34, firebase 11→12.19, @firebase/rules-unit-testing 4→5.0.2. firebase 13 ו-rules-unit-testing 6 דורשים Node 24, ו-CI רץ על Node 22. `overrides`: `@grpc/grpc-js` ^1.14.6, `re2` ^1.27.0, `uuid` ^11.1.1, `@opentelemetry/core` ^2.8.0.

@@ -14,13 +14,15 @@ import '../../../l10n/app_localizations.dart';
 import '../../calendar/application/hebrew_date_engine_provider.dart';
 import '../application/event_editor_controller.dart';
 import '../application/event_repository_provider.dart';
+import 'widgets/event_color_picker.dart';
 import 'widgets/gregorian_date_dropdowns.dart';
 
 /// Whether the original moment was before or after sunset; unknown counts
 /// as before.
 enum _Sunset { before, after, unknown }
 
-/// M24 (owner decision 2026-10-14): turns a Gregorian birth, death or
+/// M24 (owner decision 2026-10-14; renamed "מתאריך לועזי לעברי" 2026-10-20,
+/// since it is really a date converter): turns a Gregorian birth, death or
 /// wedding date into a yearly Hebrew-date event in one step: the kind, a
 /// name, the original Gregorian day and the sunset question, with a live
 /// preview of the Hebrew date and its next occurrence. Optionally also
@@ -39,6 +41,10 @@ class _SignificantDateScreenState extends ConsumerState<SignificantDateScreen> {
   DateTime? _day;
   _Sunset _sunset = _Sunset.unknown;
   bool _alsoGregorian = false;
+
+  /// The events' color (owner request 2026-10-20: the regular editor has
+  /// one, this screen didn't); null is the default color.
+  String? _colorId;
   bool _saving = false;
 
   @override
@@ -81,6 +87,7 @@ class _SignificantDateScreenState extends ConsumerState<SignificantDateScreen> {
       gregorianTitle: _alsoGregorian ? titles.gregorian : null,
       ownerUid: kLocalOwnerUid,
       now: DateTime.now(),
+      colorId: _colorId,
     );
     final EventRepository repository = ref.read(eventRepositoryProvider);
     for (final Event event in events) {
@@ -150,7 +157,14 @@ class _SignificantDateScreenState extends ConsumerState<SignificantDateScreen> {
               border: const OutlineInputBorder(),
             ),
           ),
-          SizedBox(height: spacingSm),
+          Text(l10n.eventColorLabel),
+          SizedBox(height: spacingXs),
+          EventColorPicker(
+            key: const ValueKey<String>('significant-color'),
+            selectedColorId: _colorId,
+            onChanged: (String? id) => setState(() => _colorId = id),
+          ),
+          SizedBox(height: spacingMd),
           Text(l10n.significantDateLabel),
           SizedBox(height: spacingXs),
           GregorianDateDropdowns(

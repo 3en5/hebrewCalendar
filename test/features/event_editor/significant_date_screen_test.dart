@@ -49,7 +49,8 @@ void main() {
 
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
-    expect(find.text('אירוע חדש'), findsOneWidget);
+    expect(find.text('אירוע עברי חדש'), findsOneWidget);
+    expect(find.text('מתאריך לועזי לעברי'), findsOneWidget);
     await tester.tap(
       find.byKey(const ValueKey<String>('add-menu-significant-date')),
     );
@@ -62,11 +63,19 @@ void main() {
       find.byKey(const ValueKey<String>('significant-name')),
       'דוד',
     );
+    // Owner request 2026-10-20: a color, like the regular editor.
+    await tester.tap(find.byKey(const ValueKey<String>('event-color-10')));
+    await tester.pump();
     await pickGregorian(tester, day: '15', month: 'מרץ', year: '1985');
 
     expect(find.textContaining('כ״ב באדר תשמ״ה'), findsOneWidget);
 
-    await tester.ensureVisible(save);
+    // The color row pushed the button below the fold of the lazy list.
+    await tester.scrollUntilVisible(
+      save,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(save);
     await tester.pumpAndSettle();
 
@@ -74,6 +83,7 @@ void main() {
     expect(events, hasLength(1));
     expect(events.single.title, 'יום הולדת עברי – דוד');
     expect(events.single.recurrence.type, RecurrenceType.hebrewYearly);
+    expect(events.single.colorId, '10');
     expect(
       events.single.hebrewDate,
       const HebrewDate(year: 5745, month: HebrewMonth.adar, day: 22),

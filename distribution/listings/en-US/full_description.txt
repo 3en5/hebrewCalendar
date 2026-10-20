@@ -21,7 +21,7 @@ Daily halacha
 Events that repeat by the Hebrew date
 • Hebrew birthdays, anniversaries, yahrzeits, or any event on the same Hebrew date
 • Yearly, monthly, weekly or daily recurrence, by the Hebrew or the Gregorian date
-• "Significant date": enter a Gregorian birth, death or wedding date and the app works out the Hebrew date, before or after sunset
+• "Gregorian to Hebrew": enter a Gregorian birth, death or wedding date and the app works out the Hebrew date, before or after sunset
 • Correct handling of leap years (Adar I and Adar II) and 29-day months
 • Edit or delete one occurrence, this and following, or the whole series
 

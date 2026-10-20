@@ -14,6 +14,7 @@ analyzer:
     - "lib/l10n/app_localizations*.dart"
     - build/**
     - android/**
+    - "**/node_modules/**"
 
 linter:
   rules:

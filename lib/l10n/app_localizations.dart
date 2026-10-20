@@ -1291,25 +1291,31 @@ abstract class AppLocalizations {
   /// Add menu: open the regular event editor (M24).
   ///
   /// In he, this message translates to:
-  /// **'אירוע חדש'**
+  /// **'אירוע עברי חדש'**
   String get addMenuNewEvent;
+
+  /// Subtitle of the new-event entry in the add menu.
+  ///
+  /// In he, this message translates to:
+  /// **'פגישה, תזכורת או אירוע חוזר'**
+  String get addMenuNewEventHint;
 
   /// Add menu: open the significant-date tool (M24).
   ///
   /// In he, this message translates to:
-  /// **'תאריך משמעותי'**
+  /// **'מתאריך לועזי לעברי'**
   String get addMenuSignificantDate;
 
   /// Subtitle of the significant-date entry in the add menu (M24).
   ///
   /// In he, this message translates to:
-  /// **'יום הולדת, יארצייט, יום נישואין, לפי תאריך לועזי'**
+  /// **'יום הולדת, יארצייט, יום נישואין: אירוע שנתי עברי מתאריך לועזי'**
   String get addMenuSignificantDateHint;
 
   /// App bar title of the significant-date tool (M24).
   ///
   /// In he, this message translates to:
-  /// **'תאריך משמעותי'**
+  /// **'מתאריך לועזי לעברי'**
   String get significantTitle;
 
   /// Significant date kind (M24).

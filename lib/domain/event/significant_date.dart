@@ -66,6 +66,7 @@ List<Event> buildSignificantDateEvents({
   required String? gregorianTitle,
   required String ownerUid,
   required DateTime now,
+  String? colorId,
 }) {
   final HebrewDate anchor = significantHebrewDate(
     engine: engine,
@@ -79,6 +80,7 @@ List<Event> buildSignificantDateEvents({
     title: title,
     hebrewDate: date,
     recurrence: rule,
+    colorId: colorId,
     createdAt: now,
     updatedAt: now,
   );

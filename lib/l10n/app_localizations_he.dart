@@ -721,17 +721,20 @@ class AppLocalizationsHe extends AppLocalizations {
   String get searchRecurringNote => 'חוזר';
 
   @override
-  String get addMenuNewEvent => 'אירוע חדש';
+  String get addMenuNewEvent => 'אירוע עברי חדש';
 
   @override
-  String get addMenuSignificantDate => 'תאריך משמעותי';
+  String get addMenuNewEventHint => 'פגישה, תזכורת או אירוע חוזר';
+
+  @override
+  String get addMenuSignificantDate => 'מתאריך לועזי לעברי';
 
   @override
   String get addMenuSignificantDateHint =>
-      'יום הולדת, יארצייט, יום נישואין, לפי תאריך לועזי';
+      'יום הולדת, יארצייט, יום נישואין: אירוע שנתי עברי מתאריך לועזי';
 
   @override
-  String get significantTitle => 'תאריך משמעותי';
+  String get significantTitle => 'מתאריך לועזי לעברי';
 
   @override
   String get significantKindBirthday => 'יום הולדת';

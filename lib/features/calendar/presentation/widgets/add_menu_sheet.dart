@@ -22,11 +22,12 @@ Future<void> showAddMenuSheet(
             key: const ValueKey<String>('add-menu-new-event'),
             leading: const Icon(Icons.event),
             title: Text(l10n.addMenuNewEvent),
+            subtitle: Text(l10n.addMenuNewEventHint),
             onTap: () => Navigator.of(sheetContext).pop(onNewEvent),
           ),
           ListTile(
             key: const ValueKey<String>('add-menu-significant-date'),
-            leading: const Icon(Icons.cake_outlined),
+            leading: const Icon(Icons.swap_horiz),
             title: Text(l10n.addMenuSignificantDate),
             subtitle: Text(l10n.addMenuSignificantDateHint),
             onTap: () => Navigator.of(sheetContext).pop(onSignificantDate),
