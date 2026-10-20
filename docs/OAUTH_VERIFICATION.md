@@ -37,3 +37,10 @@ Hebrew Calendar is an Android calendar organized around the Hebrew (Jewish) date
 ## הסרטון (2026-10-13)
 - הועלה ל-YouTube: https://www.youtube.com/watch?v=TEMbhFNJrY4 (2:17, ערוך עם כתוביות באנגלית; הקובץ הערוך נבנה ב-ffmpeg מהקלטת המסך).
 - להגשה משתמשים בכתובת ה-watch (לא shorts). פרטיות: לא רשום (Unlisted).
+
+## ההגשה (2026-10-20)
+- ניסיון קודם (לפני אימות האתר ב-Search Console) נדחה על "The website of your home page URL ... is not registered to you". "I have fixed the issues" נדחה שוב מיד, אף ש-natanor.kalfa@gmail.com (בעלי הפרויקט ב-Cloud) רשום ב-Search Console כ"בעלים מאומת" של `https://hebrewcalendar-68363.web.app/`.
+- הוגש יחד: Branding (לוגו עדכני, תנאי שימוש), Data access עם הסרטון, וערעור "The finding is incorrect" על דף הבית (נכס URL-prefix מאומת; תת-דומיין של web.app אי אפשר לאמת כנכס דומיין). בשאלון: לא שימוש אישי, לא פנימי, לא בדיקות.
+- הסטטוס: "Your branding and data access are currently under review". לפי Google: מייל ראשון תוך 3–5 ימים, ועד 4–6 שבועות. התשובות מגיעות לכתובות הקשר (natanor.kalfa@gmail.com, natanor@natanor.co.il).
+- אם הערעור על דף הבית נדחה: דומיין מותאם ב-Firebase Hosting, תת-דומיין של natanor.co.il (שכבר מאומת כנכס דומיין באותו חשבון Search Console), ועדכון הכתובות באפליקציה, באתר, ב-Play וב-Branding.
+
