@@ -43,14 +43,43 @@ void main() {
     expect(snapshot.colorId, '9');
   });
 
-  test('M11: guests are sent as attendees; none sends no attendees', () {
+  test('M11: guests are sent as attendees; none sends an empty list', () {
     final Map<String, dynamic> json = googleEventToJson(
       _write(guests: <String>['a@example.com']),
     );
     expect(json['attendees'], <Map<String, String>>[
       <String, String>{'email': 'a@example.com'},
     ]);
-    expect(googleEventToJson(_write()).containsKey('attendees'), isFalse);
+    // Sent empty, so an update removes the guests from Google too.
+    expect(googleEventToJson(_write())['attendees'], isEmpty);
+  });
+
+  test('all-day and timed clear each other (a PATCH merges start/end)', () {
+    final Map<String, dynamic> allDay = googleEventToJson(_write());
+    expect(allDay['start'], <String, String?>{
+      'date': '2026-10-12',
+      'dateTime': null,
+    });
+    final Map<String, dynamic> timed = googleEventToJson(
+      GoogleEventWrite(
+        summary: 'פגישה',
+        description: '',
+        location: '',
+        isAllDay: false,
+        start: DateTime.utc(2026, 10, 12, 7),
+        end: DateTime.utc(2026, 10, 12, 8),
+        hebcalEventId: 'e1',
+        hebcalOccurrence: 'o1',
+      ),
+    );
+    expect(timed['start'], <String, String?>{
+      'date': null,
+      'dateTime': '2026-10-12T07:00:00.000Z',
+    });
+    expect(timed['end'], <String, String?>{
+      'date': null,
+      'dateTime': '2026-10-12T08:00:00.000Z',
+    });
   });
 
   test('M11: imported guests keep their reply; the owner is left out', () {

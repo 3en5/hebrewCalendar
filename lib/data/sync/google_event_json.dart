@@ -15,17 +15,18 @@ Map<String, dynamic> googleEventToJson(GoogleEventWrite event) =>
       // M10: Google's event color ("1".."11"); omitted = the calendar's color.
       if (event.colorId != null) 'colorId': event.colorId,
       // M11: Google sends the invitations (see `sendUpdates` on the request).
-      if (event.attendeeEmails.isNotEmpty)
-        'attendees': <Map<String, String>>[
-          for (final String email in event.attendeeEmails)
-            <String, String>{'email': email},
-        ],
-      'start': event.isAllDay
-          ? <String, String>{'date': _dateOnly(event.start)}
-          : <String, String>{'dateTime': event.start.toUtc().toIso8601String()},
-      'end': event.isAllDay
-          ? <String, String>{'date': _dateOnly(event.end)}
-          : <String, String>{'dateTime': event.end.toUtc().toIso8601String()},
+      // Always sent, even empty: an update is a PATCH, and a missing list
+      // would leave the removed guests in Google.
+      'attendees': <Map<String, String>>[
+        for (final String email in event.attendeeEmails)
+          <String, String>{'email': email},
+      ],
+      // The other kind is sent as null: a PATCH merges `start`/`end`, so an
+      // all-day event made timed (or back) would otherwise keep its old
+      // `date` beside the new `dateTime`, and Google rejects the update
+      // (device report 2026-11-04).
+      'start': _when(event.isAllDay, event.start),
+      'end': _when(event.isAllDay, event.end),
       'extendedProperties': <String, dynamic>{
         'private': <String, String>{
           'hebcalEventId': event.hebcalEventId,
@@ -33,6 +34,10 @@ Map<String, dynamic> googleEventToJson(GoogleEventWrite event) =>
         },
       },
     };
+
+Map<String, String?> _when(bool allDay, DateTime at) => allDay
+    ? <String, String?>{'date': _dateOnly(at), 'dateTime': null}
+    : <String, String?>{'date': null, 'dateTime': at.toUtc().toIso8601String()};
 
 String _dateOnly(DateTime dt) =>
     '${dt.year.toString().padLeft(4, '0')}-'
